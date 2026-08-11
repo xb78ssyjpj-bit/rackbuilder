@@ -17,6 +17,11 @@ Conventions:
 
 ## 2026-08-11 — rack duplication, right-click, side-view dragging
 
+*Version control began during this session, so all of it sits in the baseline
+commit rather than in commits of its own. Splitting it out afterwards would have
+meant inventing file states that were never committed. From the next change on,
+one commit each.*
+
 **Added**
 
 - **Duplicate rack** in the inspector. Copies contents and all. Every copied
