@@ -999,6 +999,7 @@ export function createFlow(ctx) {
     if (!host || host.querySelector('.splitnote')) return;
     const box = document.createElement('div');
     box.className = 'splitnote';
+    box.dataset.ui = 'notice';
     box.innerHTML =
       '<b>That socket now has more than one cable.</b>'
       + '<p>Which is fine on paper and needs hardware in the rack — a Y-split, '
@@ -1204,11 +1205,22 @@ export function createFlow(ctx) {
     const world = $('#flowWorld');
 
     host.addEventListener('pointerdown', (ev) => {
-      // The matrix floats *inside* the canvas, so a press on it would otherwise
-      // fall through to the pan branch below — and setPointerCapture() on the
-      // host retargets the following click to the host, which silently ate
-      // every button in the pane. Overlay UI is not canvas; leave it alone.
-      if (ev.target.closest('.matrix')) return;
+      // Anything marked as chrome is chrome, and this handler keeps its hands
+      // off it entirely.
+      //
+      // This rule exists because the same bug has now been fixed four separate
+      // times: the matrix close button, the panel resizers, the card `edit`
+      // button, and the split notice. Every one had the same shape — an overlay
+      // control lives inside the canvas, the press falls through to the pan
+      // branch, grabPointer() captures the pointer, and the browser retargets
+      // the click to the host, so the button's onclick never runs. It fails
+      // silently and only under a real pointer, which is why it kept surviving.
+      //
+      // So the rule is inverted: instead of listing what to ignore, anything
+      // that is UI declares itself with `data-ui` and is skipped. Mark new
+      // overlays with it and they work; forget to and they break the same way,
+      // which is at least a known failure with a known fix.
+      if (ev.target.closest('[data-ui]')) return;
       const row = ev.target.closest('.prow');
       const pa = ev.target.closest('.pa');
       // While a card is in edit mode its rows reorder instead of patching.

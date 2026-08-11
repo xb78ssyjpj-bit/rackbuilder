@@ -13,6 +13,7 @@ import {
   autoLayout, sizeMM, heightMM, MM, FACE_L, FACE_R, PATCH_TYPES,
 } from '../panel.js';
 import { devicePorts, portLabel, familyOf, FAMILIES } from '../flow.js';
+import { readFileSync } from 'node:fs';
 
 let fail = 0;
 const bad = (msg) => { console.log(`  ${msg}`); fail++; };
@@ -73,6 +74,26 @@ for (const d of D) {
   for (const [l, n] of seenLabel) {
     if (n > 1) bad(`${d.id}: ${n} sockets both labelled "${l}"`);
   }
+}
+
+// --- overlay controls must be reachable ------------------------------------
+// The flow canvas swallows presses that are not marked as UI: the pointer gets
+// captured and the click is retargeted, so the control silently stops working
+// under a real pointer while still passing any test that calls .click().
+// This has bitten four times, so it is checked rather than remembered.
+const flowSrc = readFileSync(new URL('../flow.js', import.meta.url), 'utf8');
+const htmlSrc = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+
+if (!flowSrc.includes("closest('[data-ui]')")) {
+  bad('flow.js: the pointerdown handler no longer skips [data-ui] — every '
+    + 'overlay control inside the canvas will stop responding');
+}
+// Every overlay that lives inside #flowView has to declare itself.
+for (const [name, marker] of [['.matrix', 'data-ui'], ['.splitnote', 'dataset.ui']]) {
+  const declared = name === '.matrix'
+    ? /class="matrix"[^>]*data-ui/.test(htmlSrc)
+    : /className = 'splitnote';\s*\n\s*\w+\.dataset\.ui/.test(flowSrc);
+  if (!declared) bad(`${name} is inside the flow canvas but does not carry ${marker}`);
 }
 
 console.log(`${panels} auto panels, ${sockets} sockets, ${named} manufacturer-named`);

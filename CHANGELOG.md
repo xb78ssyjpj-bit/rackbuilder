@@ -19,6 +19,35 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.2.1 — 2026-08-11
+
+**Fixed**
+
+- **The split notice's "Got it" and "Stop telling me" buttons did nothing.**
+  The notice sits inside the flow canvas, so pressing it fell through to the pan
+  branch, `setPointerCapture` grabbed the pointer, and the browser retargeted the
+  click to the canvas. The button's `onclick` never ran.
+
+  This is the **fourth** time the same bug has been fixed — matrix close button,
+  panel resizers, card `edit` button, now this. So the rule is inverted rather
+  than patched again: the canvas handler no longer lists what to ignore, it
+  skips anything carrying **`data-ui`**, and every overlay declares itself. Mark
+  a new overlay and it works; forget and it fails the same known way.
+
+  `tools/check.mjs` now enforces it — it fails if the handler stops honouring
+  `data-ui`, or if a known overlay stops declaring it. Verified the check bites
+  by breaking it deliberately.
+
+**Note on how this kept getting through**
+
+Every instance failed **only under a real pointer**. A test that calls
+`.click()` bypasses pointer capture entirely and passes on broken code, which is
+exactly what happened here — the buttons were "verified" with `.click()` and
+shipped broken. Overlay controls are now tested with a full
+pointerdown / pointerup / click sequence at real coordinates.
+
+---
+
 ## v1.2.0 — 2026-08-11
 
 **Fixed**
