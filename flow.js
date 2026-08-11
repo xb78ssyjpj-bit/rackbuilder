@@ -222,6 +222,11 @@ export function createFlow(ctx) {
   const byKey = new Map();
   let selCable = null;
   let matrixOpen = false;
+  // "I know, stop telling me" for the split-socket notice. A view preference,
+  // so it lives beside the others rather than in the project file.
+  const SPLIT_KEY = 'rackbuilder.splitnotice';
+  let splitNoticeOff = false;
+  try { splitNoticeOff = localStorage.getItem(SPLIT_KEY) === 'off'; } catch { /* ignore */ }
   let filterFam = 'all';
   let matrixQ = '';
 
@@ -296,6 +301,19 @@ export function createFlow(ctx) {
     return s;
   };
 
+  // How many cables land on one socket. More than one is legal — a Y-split or a
+  // passive splitter is a real thing — but it is worth showing, because on
+  // paper it looks like a mistake and in the rack it needs hardware.
+  function cableCounts(key) {
+    const m = new Map();
+    const bump = (id) => m.set(id, (m.get(id) || 0) + 1);
+    flow().cables.forEach((c) => {
+      if (c.a.node === key) bump(c.a.port);
+      if (c.b.node === key) bump(c.b.port);
+    });
+    return m;
+  }
+
   // Which port rows a node is currently showing, and where each sits.
   function visiblePorts(n) {
     // While reordering, every socket is shown — you cannot drag a row into a
@@ -322,6 +340,7 @@ export function createFlow(ctx) {
   // of cards: the U number in each header tells you where a device lives, but
   // only once you are close enough to read it.
   const ZONE_TINTS = ['#35b39a', '#5b9bd5', '#e0a34a', '#d16b8a', '#8f7fd1', '#7cc45e'];
+  const zoneMembers = new Map();   // zone key -> node keys, set by drawZones
 
   function drawZones() {
     const host = $('#flowZones');
@@ -329,11 +348,15 @@ export function createFlow(ctx) {
     host.innerHTML = '';
     const f = flow();
     const groups = state.project.racks.map((r, i) => ({
-      name: r.name, tint: ZONE_TINTS[i % ZONE_TINTS.length], keys: r.items.map((it) => it.uid),
+      key: r.id || `rack${i}`, name: r.name,
+      tint: ZONE_TINTS[i % ZONE_TINTS.length], keys: r.items.map((it) => it.uid),
     }));
     if (f.ext.length) {
-      groups.push({ name: 'External', ext: true, tint: '#8b9997', keys: f.ext.map((x) => x.id) });
+      groups.push({ key: 'ext', name: 'External', ext: true, tint: '#8b9997',
+                    keys: f.ext.map((x) => x.id) });
     }
+    zoneMembers.clear();
+    groups.forEach((g) => zoneMembers.set(g.key, g.keys));
 
     groups.forEach((g) => {
       const ns = g.keys.map((k) => byKey.get(k)).filter(Boolean);
@@ -349,7 +372,11 @@ export function createFlow(ctx) {
       d.className = 'fzone' + (g.ext ? ' ext' : '');
       d.style.cssText = `left:${x0 - PAD}px;top:${y0 - PAD - CAP}px;`
         + `width:${x1 - x0 + PAD * 2}px;height:${y1 - y0 + PAD * 2 + CAP}px;--z:${g.tint}`;
-      d.innerHTML = `<span>${esc(g.name)}</span>`;
+      // The name strip is a handle: drag it and the whole rack moves together.
+      // Rearranging a graph a card at a time when what you mean is "this rack
+      // goes over there" is the tedious part of tidying up.
+      d.innerHTML = `<span class="zgrab" data-zone="${esc(g.key)}"`
+        + ` title="Drag to move the whole rack">${esc(g.name)}</span>`;
       host.appendChild(d);
     });
   }
@@ -388,6 +415,35 @@ export function createFlow(ctx) {
              y: (p1.y + 3 * (p1.y + bow) + 3 * (p2.y + bow) + p2.y) / 8 };
   };
 
+  // Does the straight-ish run between two points cross a card it does not
+  // belong to? Sampling the curve is cheap and exact enough — a cable drawn
+  // through the middle of an unrelated device is the single worst thing on a
+  // busy canvas, because it reads as a connection to that device.
+  function crossings(p1, p2, bow, self, skip) {
+    const cards = nodes
+      .filter((n) => !skip.has(n.key))
+      .map((n) => ({
+        x0: n.pos.x - 3, y0: n.pos.y - 3,
+        x1: n.pos.x + NODE_W + 3,
+        y1: n.pos.y + nodeHeight(visiblePorts(n).length) + 3,
+      }));
+    if (!cards.length) return 0;
+    const d = Math.max(46, Math.abs(p2.x - p1.x) * 0.45);
+    const out = SELF_OUT + Math.abs(bow) * 0.6;
+    const c1 = self ? { x: p1.x + out, y: p1.y } : { x: p1.x + d, y: p1.y + bow };
+    const c2 = self ? { x: p2.x + out, y: p2.y } : { x: p2.x - d, y: p2.y + bow };
+    let hits = 0;
+    for (let i = 1; i < 16; i++) {
+      const t = i / 16, u = 1 - t;
+      const x = u * u * u * p1.x + 3 * u * u * t * c1.x
+              + 3 * u * t * t * c2.x + t * t * t * p2.x;
+      const y = u * u * u * p1.y + 3 * u * u * t * c1.y
+              + 3 * u * t * t * c2.y + t * t * t * p2.y;
+      if (cards.some((c) => x > c.x0 && x < c.x1 && y > c.y0 && y < c.y1)) hits++;
+    }
+    return hits;
+  }
+
   // How far each cable is bowed: cables sharing a pair of endpoints fan out
   // symmetrically about the straight run, so a bundle of four reads as four.
   function bowOf(cables) {
@@ -407,6 +463,28 @@ export function createFlow(ctx) {
       if (ids.length < 2) { bow.set(ids[0], 0); return; }
       const step = Math.min(26, 90 / ids.length);
       ids.forEach((id, i) => bow.set(id, (i - (ids.length - 1) / 2) * step * 2));
+    });
+
+    // Second pass: steer around cards in the way. Both directions are tried at
+    // each step and the better one kept, so a cable goes over or under whichever
+    // is actually clearer rather than always picking the same way.
+    cables.forEach((c) => {
+      const self = c.a.node === c.b.node;
+      const a = anchor(c.a.node, c.a.port, 'r');
+      const b = anchor(c.b.node, c.b.port, self ? 'r' : 'l');
+      if (!a || !b) return;
+      const skip = new Set([c.a.node, c.b.node]);
+      let best = bow.get(c.id) || 0;
+      let bestHits = crossings(a, b, best, self, skip);
+      if (!bestHits) return;
+      for (let step = 40; step <= 320 && bestHits; step += 40) {
+        for (const dir of [-1, 1]) {
+          const cand = (bow.get(c.id) || 0) + dir * step;
+          const hits = crossings(a, b, cand, self, skip);
+          if (hits < bestHits) { bestHits = hits; best = cand; }
+        }
+      }
+      bow.set(c.id, best);
     });
     return bow;
   }
@@ -535,14 +613,17 @@ export function createFlow(ctx) {
                 : `Show ${n.ports.length} sockets`}</button>`
             : '');
 
+      const counts = cableCounts(n.key);
       const editMode = editing === n.key;
       if (editMode) d.classList.add('editing');
       const list = d.querySelector('.fports');
       vis.forEach((p) => {
         const row = document.createElement('div');
+        const nCables = counts.get(p.id) || 0;
         row.className = 'prow' + (on.has(p.id) ? ' used' : '')
           + (isPicked(n.key, p.id) ? ' picked' : '')
-          + (editMode ? ' reorder' : '');
+          + (editMode ? ' reorder' : '')
+          + (nCables > 1 ? ' split' : '');
         row.dataset.node = n.key;
         row.dataset.port = p.id;
         row.title = portTitle(p);
@@ -551,6 +632,10 @@ export function createFlow(ctx) {
           + (editMode ? '' : `<i class="pa l" data-side="l"></i>`)
           + `<span class="pdot" style="background:${colorOf(p.t, p.sig)}"></span>`
           + `<span class="plab">${esc(labelFor(n, p))}</span>`
+          + (nCables > 1
+              ? `<span class="psplit" title="${nCables} cables on this socket `
+                + `— needs a Y-split or a passive splitter">${nCables}</span>`
+              : '')
           + (g ? `<span class="pdir ${g}">${g}</span>` : '')
           + (editMode ? '' : `<i class="pa r" data-side="r"></i>`);
         list.appendChild(row);
@@ -840,6 +925,13 @@ export function createFlow(ctx) {
       toast(`Patched ${FAMILIES[familyOf(pa.t, pa.sig)].label.toLowerCase()} to `
           + `${FAMILIES[familyOf(pb.t, pb.sig)].label.toLowerCase()} — check that.`, true);
     }
+    // Was either end already carrying something? Legal, but it means hardware.
+    const busy = f.cables.some((c) =>
+      (c.a.node === from.node && c.a.port === from.port)
+      || (c.b.node === from.node && c.b.port === from.port)
+      || (c.a.node === to.node && c.a.port === to.port)
+      || (c.b.node === to.node && c.b.port === to.port));
+
     f.cables.push({
       id: uid(), n: ++f.seq, fam: familyOf(ps.t, ps.sig),
       a: { node: src.node, port: src.port },
@@ -847,7 +939,8 @@ export function createFlow(ctx) {
       label: '',
     });
     if (!quiet) { save(); render(); }
-    return { ok: true, mismatch };
+    if (busy && !quiet) showSplitNotice();
+    return { ok: true, mismatch, split: busy };
   }
 
   // Map a picked run onto consecutive sockets from the drop point. Runs off the
@@ -862,14 +955,14 @@ export function createFlow(ctx) {
 
     // Drag from anywhere in the run; the run still maps from its own start.
     const ids = pick.ids;
-    let made = 0, dupes = 0, mismatched = 0;
+    let made = 0, dupes = 0, mismatched = 0, splits = 0;
     for (let i = 0; i < ids.length; i++) {
       const target = vis[start + i];
       if (!target) break;
       if (to.node === pick.node && target === ids[i]) continue;
       const r = patch({ node: pick.node, port: ids[i], side: from.side },
                       { node: to.node, port: target }, true);
-      if (r.ok) { made++; if (r.mismatch) mismatched++; }
+      if (r.ok) { made++; if (r.mismatch) mismatched++; if (r.split) splits++; }
       else if (r.reason === 'duplicate') dupes++;
     }
     const short = ids.length - (made + dupes);
@@ -880,6 +973,7 @@ export function createFlow(ctx) {
     if (dupes) notes.push(`${dupes} already patched`);
     if (short > 0) notes.push(`ran out of sockets after ${made}`);
     if (mismatched) notes.push(`${mismatched} crossed signal families`);
+    if (splits) { notes.push(`${splits} landed on a used socket`); showSplitNotice(); }
     toast(`Patched ${made} cable${made === 1 ? '' : 's'}`
       + (notes.length ? ` — ${notes.join(', ')}.` : '.'), !!(short > 0 || mismatched));
   }
@@ -893,6 +987,36 @@ export function createFlow(ctx) {
     if (selCable === id) selCable = null;
     save(); render();
     toast(`Removed cable ${n}.`);
+  }
+
+  // A notice rather than a toast: a toast slides away after four seconds, and
+  // this is the kind of thing you want to still be there when you look up. It
+  // is not a refusal — the patch is already made — so it explains and offers to
+  // stop mentioning it.
+  function showSplitNotice() {
+    if (splitNoticeOff) return;
+    const host = $('#flowView');
+    if (!host || host.querySelector('.splitnote')) return;
+    const box = document.createElement('div');
+    box.className = 'splitnote';
+    box.innerHTML =
+      '<b>That socket now has more than one cable.</b>'
+      + '<p>Which is fine on paper and needs hardware in the rack — a Y-split, '
+      + 'or a passive splitter. Sockets carrying more than one cable are marked '
+      + 'with a count.</p>'
+      + '<menu><button type="button" class="btn sm" data-x="ok">Got it</button>'
+      + '<button type="button" class="btn sm" data-x="never">Stop telling me</button>'
+      + '</menu>';
+    box.querySelectorAll('button').forEach((b) => {
+      b.onclick = () => {
+        if (b.dataset.x === 'never') {
+          splitNoticeOff = true;
+          try { localStorage.setItem(SPLIT_KEY, 'off'); } catch { /* quota */ }
+        }
+        box.remove();
+      };
+    });
+    host.appendChild(box);
   }
 
   // --- connection matrix ---------------------------------------------------
@@ -1062,8 +1186,9 @@ export function createFlow(ctx) {
   }
 
   // --- input ---------------------------------------------------------------
-  let drag = null;    // { key, dx, dy } while moving a node
-  let pan = null;     // { x, y, vx, vy } while panning the canvas
+  let drag = null;      // { key, dx, dy } while moving a node
+  let zoneDrag = null;  // { keys, from, x0, y0 } while moving a whole rack
+  let pan = null;       // { x, y, vx, vy } while panning the canvas
 
   // Capture keeps a drag alive when the pointer leaves the element, but it
   // throws if the browser has no active pointer with that id — and an exception
@@ -1107,6 +1232,30 @@ export function createFlow(ctx) {
         render();
         return;
       }
+      // Grab a zone's name strip and the whole rack moves as one.
+      const zg = ev.target.closest('.zgrab');
+      if (zg) {
+        const keys = (zoneMembers.get(zg.dataset.zone) || [])
+          .filter((k) => byKey.has(k));
+        if (keys.length) {
+          ev.preventDefault();
+          grabPointer(host, ev.pointerId);
+          const p0 = worldPt(ev);
+          zoneDrag = {
+            keys,
+            from: keys.map((k) => ({ k, x: byKey.get(k).pos.x, y: byKey.get(k).pos.y })),
+            x0: p0.x, y0: p0.y,
+          };
+          return;
+        }
+      }
+
+      // A button in the header is a button, not a drag handle. Without this the
+      // press starts a node drag and grabPointer() retargets the click away
+      // from the button, so `edit` and the ext node's `x` never fired at all.
+      // Same failure the matrix close button had.
+      if (ev.target.closest('.fhead button')) return;
+
       const head = ev.target.closest('.fhead');
       if (head) {                            // move a node
         const key = head.parentElement.dataset.node;
@@ -1129,6 +1278,22 @@ export function createFlow(ctx) {
 
     host.addEventListener('pointermove', (ev) => {
       if (link) { moveLink(ev); return; }
+      if (zoneDrag) {
+        const p = worldPt(ev);
+        const dx = p.x - zoneDrag.x0, dy = p.y - zoneDrag.y0;
+        const f = flow();
+        zoneDrag.from.forEach((o) => {
+          const n = byKey.get(o.k);
+          if (!n) return;
+          n.pos.x = Math.max(0, Math.round(o.x + dx));
+          n.pos.y = Math.max(0, Math.round(o.y + dy));
+          f.pos[o.k] = n.pos;
+          const el = world.querySelector(`.fnode[data-node="${o.k}"]`);
+          if (el) { el.style.left = n.pos.x + 'px'; el.style.top = n.pos.y + 'px'; }
+        });
+        drawZones(); drawWires();
+        return;
+      }
       if (drag) {
         const p = worldPt(ev);
         const n = byKey.get(drag.key);
@@ -1150,6 +1315,7 @@ export function createFlow(ctx) {
     });
 
     const finish = (ev) => {
+      if (zoneDrag) { zoneDrag = null; save(); }
       if (link) endLink(ev);
       if (drag) { drag.el.classList.remove('moving'); drag = null; save(); }
       if (pan) { pan = null; host.classList.remove('panning'); save(); }

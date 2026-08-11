@@ -1838,10 +1838,26 @@ const PANE_MIN = 190, PANE_MAX = 620;
 let paneW = { lib: 264, insp: 272 };
 try { Object.assign(paneW, JSON.parse(localStorage.getItem(PANE_W) || '{}')); } catch { /* ignore */ }
 
+// Dragging a panel below its minimum collapses it to nothing rather than
+// stopping at the minimum — the canvas is the point of the app, and on a laptop
+// 530 px of chrome is most of the screen. A tab on the edge brings it back.
+const PANE_HIDE = 120;
+
 function applyPanes() {
   const r = document.documentElement.style;
-  r.setProperty('--lib-w', paneW.lib + 'px');
-  r.setProperty('--insp-w', paneW.insp + 'px');
+  r.setProperty('--lib-w', (paneW.libOff ? 0 : paneW.lib) + 'px');
+  r.setProperty('--insp-w', (paneW.inspOff ? 0 : paneW.insp) + 'px');
+  document.body.classList.toggle('lib-off', !!paneW.libOff);
+  document.body.classList.toggle('insp-off', !!paneW.inspOff);
+  $('#showLib').hidden = !paneW.libOff;
+  $('#showInsp').hidden = !paneW.inspOff;
+}
+
+function setPane(key, off) {
+  paneW[`${key}Off`] = off;
+  applyPanes();
+  try { localStorage.setItem(PANE_W, JSON.stringify(paneW)); } catch { /* quota */ }
+  if (state.view !== 'flow') sizeU();
 }
 applyPanes();
 
@@ -1858,6 +1874,12 @@ function dragPane(handle, key, edge) {
       // `edge` is which way the panel grows: the library grows rightwards, the
       // inspector leftwards, so one of them takes the delta negated.
       const w = w0 + (e.clientX - x0) * edge;
+      if (w < PANE_HIDE) {                    // dragged shut
+        paneW[`${key}Off`] = true;
+        applyPanes();
+        return;
+      }
+      paneW[`${key}Off`] = false;
       paneW[key] = Math.round(Math.min(PANE_MAX, Math.max(PANE_MIN, w)));
       applyPanes();
     };
@@ -1890,6 +1912,10 @@ function dragPane(handle, key, edge) {
 }
 dragPane($('#rzLib'), 'lib', 1);
 dragPane($('#rzInsp'), 'insp', -1);
+$('#showLib').onclick = () => setPane('lib', false);
+$('#showInsp').onclick = () => setPane('insp', false);
+$('#hideLib').onclick = () => setPane('lib', true);
+$('#hideInsp').onclick = () => setPane('insp', true);
 
 // The flow canvas is a third view rather than a separate page: it shares the
 // project, so a device dropped into a rack turns up on the graph immediately.

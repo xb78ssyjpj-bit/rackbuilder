@@ -19,6 +19,39 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.2.0 — 2026-08-11
+
+**Fixed**
+
+- **The `edit` button on a flow card did nothing at all.** It sits inside the
+  card header, which is the drag handle, so pressing it started a node drag and
+  `setPointerCapture` retargeted the click away from the button. The ext node's
+  `×` was broken the same way and nobody had noticed. Buttons in a header are
+  buttons now, not drag handles — the same failure the matrix close button had.
+- **Cables ran straight through cards they had nothing to do with**, which reads
+  as a connection to that device. Routing now samples the curve, and any cable
+  crossing an unrelated card is bowed over or under it — both directions are
+  tried and the clearer one kept.
+
+**Added**
+
+- **Move a whole rack in the flow view** by dragging its zone's name strip.
+  Rearranging a graph a card at a time when what you mean is "this rack goes
+  over there" was the tedious part of tidying up.
+- **Double-patching a socket is explicit rather than silent.** It was always
+  allowed — a Y-split or a passive splitter is a real thing — but nothing said
+  so. A socket carrying more than one cable now shows a count, and a dismissible
+  notice explains it the first time, with a "stop telling me" that sticks.
+- **The side panels collapse completely.** Drag one shut past 120 px, or use the
+  tab on its inner edge; a tab against the window edge brings it back. On a
+  laptop, 530 px of chrome was most of the screen.
+- **d&b D90, D12 and D6.** All three from d&b's own hardware manuals, which —
+  unlike the D20's — do extract. Every one carries a **real mains figure**,
+  because d&b publish a power balance table nobody else in the amplifier section
+  does. The D12 is **three** rack units; retail listings routinely say two.
+
+---
+
 ## v1.1.0 — 2026-08-11
 
 **Added**

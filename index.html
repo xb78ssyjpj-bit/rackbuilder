@@ -43,6 +43,8 @@
     <div class="libfoot"><span id="libCount"></span></div>
     <button type="button" class="rz right" id="rzLib"
             aria-label="Resize library panel"></button>
+    <button type="button" class="panehide left" id="hideLib"
+            title="Hide the library">&lsaquo;</button>
   </aside>
 
   <!-- canvas -------------------------------------------------------------- -->
@@ -88,6 +90,8 @@
   <aside class="insp">
     <button type="button" class="rz left" id="rzInsp"
             aria-label="Resize inspector panel"></button>
+    <button type="button" class="panehide right" id="hideInsp"
+            title="Hide the inspector">&rsaquo;</button>
     <div class="panelbox" id="inspBox">
       <h3>Nothing selected</h3>
       <p class="hint">Click a device in the rack to rename, colour or group it.</p>
@@ -121,6 +125,10 @@
       </p>
     </div>
   </aside>
+  <button type="button" class="paneshow left" id="showLib" hidden
+          title="Show the library">&rsaquo;</button>
+  <button type="button" class="paneshow right" id="showInsp" hidden
+          title="Show the inspector">&lsaquo;</button>
 </main>
 
 <!-- add-device dialog ------------------------------------------------------ -->

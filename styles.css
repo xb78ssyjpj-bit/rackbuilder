@@ -559,12 +559,20 @@ dialog menu {
 .fzone.ext { border-style: dotted; }
 .fzone span {
   position: absolute;
-  top: 5px; left: 12px;
+  top: 3px; left: 8px;
+  padding: 2px 6px; border-radius: 4px;
+  pointer-events: auto;          /* the one part of a zone you can grab */
+  cursor: grab;
   font: 600 10px var(--mono);
   letter-spacing: .12em;
   text-transform: uppercase;
   color: color-mix(in srgb, var(--z) 78%, var(--fg));
 }
+.fzone span:hover {
+  background: color-mix(in srgb, var(--z) 22%, transparent);
+  color: var(--fg);
+}
+.fzone span:active { cursor: grabbing; }
 
 .flowwires { position: absolute; left: 0; top: 0; overflow: visible; }
 .flowwires .hit { stroke: transparent; stroke-width: 14; fill: none; cursor: pointer; }
@@ -889,3 +897,55 @@ dialog menu {
   box-shadow: inset 0 3px 0 -2px var(--line-2);
   opacity: .8;
 }
+
+/* --- split-socket notice --------------------------------------------------- */
+/* Deliberately not a toast: this is worth still being on screen when you look
+   up from the patch you just made. */
+.splitnote {
+  position: absolute; left: 14px; bottom: 14px; z-index: 12;
+  width: min(330px, calc(100% - 28px));
+  background: var(--bg-1); border: 1px solid #7a6330; border-left: 3px solid #d9a441;
+  border-radius: 8px; padding: 11px 13px;
+  box-shadow: 0 12px 34px rgb(0 0 0 / .5);
+}
+.splitnote b { display: block; font: 600 12px var(--sans); color: #e8c375; }
+.splitnote p { margin: 5px 0 9px; font-size: 11.5px; color: var(--dim); line-height: 1.45; }
+.splitnote menu { display: flex; gap: 6px; margin: 0; padding: 0; }
+
+/* A socket carrying more than one cable. */
+.psplit {
+  flex: none; min-width: 12px; height: 11px; padding: 0 3px;
+  border-radius: 3px; background: #d9a441; color: #1a1206;
+  font: 700 8px/11px var(--mono); text-align: center;
+}
+.prow.split .plab { color: #e8c375; }
+
+/* --- collapsing the side panels -------------------------------------------- */
+/* Drag a panel shut, or use the tab on its inner edge. A hidden panel leaves a
+   small tab against the window edge rather than disappearing without trace. */
+.panehide, .paneshow {
+  position: absolute; z-index: 7;
+  background: var(--bg-2); border: 1px solid var(--line);
+  color: var(--dim); cursor: pointer; padding: 0;
+  font: 400 13px/1 var(--mono);
+}
+.panehide {
+  top: 8px; width: 14px; height: 22px;
+}
+.panehide.left { right: 6px; border-radius: 4px 0 0 4px; }
+.panehide.right { left: 6px; border-radius: 0 4px 4px 0; }
+.panehide:hover, .paneshow:hover { color: var(--fg); border-color: var(--accent); }
+
+.paneshow {
+  top: 50%; transform: translateY(-50%);
+  width: 15px; height: 54px;
+}
+.paneshow.left { left: 0; border-radius: 0 5px 5px 0; border-left: 0; }
+.paneshow.right { right: 0; border-radius: 5px 0 0 5px; border-right: 0; }
+
+/* A collapsed panel takes no width and none of its contents can be tabbed to. */
+body.lib-off .lib, body.insp-off .insp {
+  overflow: hidden; border: 0; padding: 0; pointer-events: none;
+}
+body.lib-off .lib > *, body.insp-off .insp > * { display: none; }
+main { position: relative; }

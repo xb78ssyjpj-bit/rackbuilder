@@ -2537,6 +2537,102 @@ const D = [
   // than carrying a made-up number — which matters, because in an amp rack these
   // are the whole electrical load. See TODO.
 
+  // --- d&b D90, D12, D6 ----------------------------------------------------
+  // All three from d&b's own hardware manuals, which — unlike the D20's — do
+  // extract. That matters twice over: the connector lists are stated rather
+  // than inferred from the house grammar, AND every one carries a real mains
+  // figure, because d&b publish a power balance table (input power against
+  // crest factor) that nobody else in the amplifier section does.
+  //
+  // `power` takes the realistic-programme row so it is comparable with the QSC
+  // amps' 1/8-power figure: CF 4.0 for the D6, CF 3.5 for the D12, and d&b's
+  // own CF 12 dB reference for the D90. Drive any of them into heavy clipping
+  // and the draw is 2-3x that — the manuals give those rows too.
+  //
+  // Note the D12 is THREE rack units. Retail listings routinely say two.
+
+  // 2 RU x 19" x 465 mm, 18.8 kg. 4 x 2700 W into 8 ohm.
+  // Mains: powerCON-HC, a 32 A connector the library has no primitive for —
+  // drawn as a standard powerCON, which is the closest honest thing.
+  { id: 'db-d90', brand: 'd&b audiotechnik', model: 'D90', category: 'audio',
+    ru: 2, depth: 465, weight: 18.8, power: 1775,
+    src: 'https://www.dbaudio.com/global/en/products/amplifiers/d90/',
+    front: { elements: [
+      { t: 'display', x: 250, y: 100, w: 200, h: 92 },
+      { t: 'encoder', x: 380, y: 100, r: 22 },
+      { t: 'button', x: 560, y: 62, w: 40, h: 20, n: 4, gap: 58 },
+      { t: 'button', x: 560, y: 138, w: 40, h: 20, n: 4, gap: 58 },
+      { t: 'led', x: 560, y: 100, n: 4, gap: 58 },
+      { t: 'button', x: 880, y: 100, w: 30, h: 30 },
+    ], labels: [
+      { text: 'D90', x: 90, y: 88, size: 22, ls: 1 },
+      { text: 'd&b audiotechnik', x: 90, y: 120, size: 9, ls: .4 },
+      { text: 'A     B     C     D', x: 647, y: 182, size: 8, ls: .5, anchor: 'middle' },
+    ] },
+    rear: { auto: [
+      { t: 'powercon_in', n: 1, lbl: 'MAINS' },
+      { t: 'ethercon', n: 2, lbl: 'NETWORK' },
+      { t: 'xlrf', n: 4, lbl: 'IN A' },
+      { t: 'xlrm', n: 4, lbl: 'LINK A' },
+      { t: 'xlrf', n: 2, sig: 'aes3', lbl: ['IN D1/2', 'IN D3/4'] },
+      { t: 'xlrm', n: 2, sig: 'aes3', lbl: ['OUT D1/2', 'OUT D3/4'] },
+      { t: 'nl4', n: 4, lbl: 'OUT' },
+      { t: 'nl4', n: 2, lbl: ['MIX A/B', 'MIX C/D'] },
+    ] } },
+
+  // 3 RU x 19" x 353 mm, 13 kg. Two channels. Speaker outputs ship as EP5, NL4
+  // or NL8 depending on the loudspeaker — NL4 is drawn as the common case.
+  { id: 'db-d12', brand: 'd&b audiotechnik', model: 'D12', category: 'audio',
+    ru: 3, depth: 353, weight: 13, power: 640,
+    src: 'https://www.dbaudio.com/global/en/products/heritage/d12/',
+    front: { elements: [
+      { t: 'display', x: 300, y: 150, w: 160, h: 60 },
+      { t: 'encoder', x: 420, y: 150, r: 20 },
+      { t: 'button', x: 560, y: 120, w: 44, h: 22, n: 2, gap: 74 },
+      { t: 'led', x: 560, y: 176, n: 2, gap: 74 },
+      { t: 'led', x: 596, y: 176, n: 2, gap: 74 },
+      { t: 'button', x: 880, y: 150, w: 30, h: 30 },
+    ], labels: [
+      { text: 'D12', x: 90, y: 138, size: 22, ls: 1 },
+      { text: 'd&b audiotechnik', x: 90, y: 170, size: 9, ls: .4 },
+      { text: 'A          B', x: 597, y: 208, size: 8, ls: .5, anchor: 'middle' },
+    ] },
+    rear: { auto: [
+      { t: 'powercon_in', n: 1, lbl: 'MAINS' },
+      { t: 'rj45', n: 2, lbl: 'REMOTE' },
+      { t: 'xlrf', n: 2, lbl: ['IN A', 'IN B'] },
+      { t: 'xlrm', n: 2, lbl: ['LINK A', 'LINK B'] },
+      { t: 'xlrf', n: 1, sig: 'aes3', lbl: 'AES3 IN' },
+      { t: 'xlrm', n: 1, sig: 'aes3', lbl: 'AES3 LINK' },
+      { t: 'nl4', n: 2, lbl: ['OUT A', 'OUT B'] },
+    ] } },
+
+  // 2 RU x 19" x 351 mm, 8 kg. Two channels, the small one of the family.
+  { id: 'db-d6', brand: 'd&b audiotechnik', model: 'D6', category: 'audio',
+    ru: 2, depth: 351, weight: 8, power: 215,
+    src: 'https://www.dbaudio.com/assets/products/downloads/manuals-documentation/electronics/dbaudio-manual-hardware-d6-1.9-en.pdf',
+    front: { elements: [
+      { t: 'display', x: 300, y: 100, w: 150, h: 52 },
+      { t: 'encoder', x: 410, y: 100, r: 20 },
+      { t: 'button', x: 560, y: 74, w: 44, h: 22, n: 2, gap: 74 },
+      { t: 'led', x: 560, y: 128, n: 2, gap: 74 },
+      { t: 'led', x: 596, y: 128, n: 2, gap: 74 },
+      { t: 'button', x: 880, y: 100, w: 30, h: 30 },
+    ], labels: [
+      { text: 'D6', x: 90, y: 88, size: 22, ls: 1 },
+      { text: 'd&b audiotechnik', x: 90, y: 120, size: 9, ls: .4 },
+      { text: 'A          B', x: 597, y: 160, size: 8, ls: .5, anchor: 'middle' },
+    ] },
+    rear: { auto: [
+      { t: 'powercon_in', n: 1, lbl: 'MAINS' },
+      { t: 'rj45', n: 2, lbl: 'REMOTE' },
+      { t: 'xlrf', n: 2, lbl: ['IN A', 'IN B'] },
+      { t: 'xlrm', n: 2, lbl: ['LINK A', 'LINK B'] },
+      { t: 'xlrf', n: 1, sig: 'aes3', lbl: 'AES3 IN' },
+      { t: 'xlrm', n: 1, sig: 'aes3', lbl: 'AES3 LINK' },
+      { t: 'nl4', n: 2, lbl: ['OUT A', 'OUT B'] },
+    ] } },
+
   { id: 'db-d80', brand: 'd&b audiotechnik', model: 'D80', category: 'audio',
     ru: 2, depth: 530, weight: 19, approx: true,
     src: 'https://www.dbaudio.com/global/en/products/amplifiers/d80/',
