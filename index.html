@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rack Builder</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="bar">
+  <div class="brand">RACK<span>BUILDER</span></div>
+  <input id="projName" class="projname" value="New Tour" aria-label="Project name">
+  <div class="spacer"></div>
+  <div class="seg" role="group" aria-label="View">
+    <button data-view="front" class="on">Front</button>
+    <button data-view="rear">Rear</button>
+    <button data-view="side">Side</button>
+    <button data-view="flow">Flow</button>
+  </div>
+  <button id="btnAdd" class="btn">+ Device</button>
+  <button id="btnFind" class="btn">Find specs</button>
+  <div class="menu">
+    <button id="btnFile" class="btn">File</button>
+    <div class="dropdown" id="fileMenu" hidden>
+      <button data-act="new">New project</button>
+      <button data-act="save">Save .json</button>
+      <button data-act="load">Load .json</button>
+      <hr>
+      <button data-act="svg">Export SVG</button>
+      <button data-act="png">Export PNG</button>
+      <button data-act="print">Print / PDF</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- library ------------------------------------------------------------ -->
+  <aside class="lib">
+    <input id="libSearch" class="search" placeholder="Search devices…" aria-label="Search devices">
+    <div class="cats" id="libCats"></div>
+    <div class="liblist" id="libList"></div>
+    <div class="libfoot"><span id="libCount"></span></div>
+    <button type="button" class="rz right" id="rzLib"
+            aria-label="Resize library panel"></button>
+  </aside>
+
+  <!-- canvas -------------------------------------------------------------- -->
+  <section class="stage">
+    <div class="tabrow" id="rackBar">
+      <div class="racktabs" id="rackTabs"></div>
+      <div class="zoom">
+        <button id="zOut" title="Zoom out">&minus;</button>
+        <button id="zFit" title="Fit to window">Fit</button>
+        <button id="zIn" title="Zoom in">+</button>
+      </div>
+    </div>
+
+    <div class="tabrow flowbar" id="flowBar" hidden>
+      <div class="flowtools">
+        <button id="fArrange" class="btn sm">Arrange</button>
+        <button id="fAddNode" class="btn sm">+ External</button>
+        <button id="fMatrix" class="btn sm">Cables 0</button>
+        <span class="fhint">Drag socket &rarr; socket to patch · click then shift-click to pick a run · double-click a label to rename</span>
+      </div>
+      <div class="zoom">
+        <button id="fOut" title="Zoom out">&minus;</button>
+        <button id="fFit" title="Fit to window">Fit</button>
+        <button id="fIn" title="Zoom in">+</button>
+      </div>
+    </div>
+
+    <div class="canvas" id="canvas">
+      <div class="rackwrap" id="rackWrap"></div>
+      <div class="rackwrap sidewrap" id="sideWrap" hidden></div>
+    </div>
+
+    <div class="flowview" id="flowView" hidden>
+      <div class="flowworld" id="flowWorld">
+        <div class="fzones" id="flowZones"></div>
+        <svg class="flowwires" id="flowWires" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <aside class="matrix" id="flowMatrix" hidden></aside>
+    </div>
+  </section>
+
+  <!-- inspector ----------------------------------------------------------- -->
+  <aside class="insp">
+    <button type="button" class="rz left" id="rzInsp"
+            aria-label="Resize inspector panel"></button>
+    <div class="panelbox" id="inspBox">
+      <h3>Nothing selected</h3>
+      <p class="hint">Click a device in the rack to rename, colour or group it.</p>
+    </div>
+
+    <div class="panelbox">
+      <h3>Rack</h3>
+      <label class="row"><span>Name</span>
+        <input id="rackName" type="text"></label>
+      <label class="row"><span>Height (U)</span>
+        <input id="rackU" type="number" min="1" max="52" step="1"></label>
+      <label class="row"><span>Weight kg</span>
+        <input id="rackW" type="number" min="0" step="0.5" placeholder="optional"></label>
+      <label class="row"><span>Depth mm</span>
+        <input id="rackD" type="number" min="0" step="10" placeholder="optional"></label>
+      <div class="row"><span>Contents</span>
+        <button id="btnClearRack" type="button" class="btn sm danger">Clear front &amp; rear</button></div>
+      <div class="row btns">
+        <button id="btnAddRack" class="btn sm">Add rack</button>
+        <button id="btnDupRack" class="btn sm">Duplicate</button>
+        <button id="btnDelRack" class="btn sm danger">Delete rack</button>
+      </div>
+    </div>
+
+    <div class="panelbox">
+      <h3>Summary</h3>
+      <table class="summary" id="summary"></table>
+      <p class="warn" id="approxWarn" hidden>
+        Some figures are approximate — verify against datasheets before rigging
+        or power sign-off.
+      </p>
+    </div>
+  </aside>
+</main>
+
+<!-- add-device dialog ------------------------------------------------------ -->
+<dialog id="dlgAdd">
+  <form method="dialog" id="formAdd">
+    <h2>New device</h2>
+    <div class="grid2">
+      <label>Brand<input name="brand" required autocomplete="off"></label>
+      <label>Model<input name="model" required autocomplete="off"></label>
+      <label>Rack units<input name="ru" type="number" min="1" max="20" value="1" required></label>
+      <label>Category
+        <select name="category" id="addCat"></select></label>
+      <label>Depth mm<input name="depth" type="number" min="0" value="250"></label>
+      <label>Weight kg<input name="weight" type="number" min="0" step="0.1" value="3"></label>
+      <label>Power W<input name="power" type="number" min="0" value="30"></label>
+    </div>
+
+    <h3>Front panel</h3>
+    <p class="hint">Add connectors and controls — the panel drawing is generated
+       from this list. Leave empty for a plain labelled panel.</p>
+    <div id="connRows" class="connrows"></div>
+    <button type="button" id="btnConnAdd" class="btn sm">+ Add row</button>
+
+    <div class="preview"><div id="addPreview"></div></div>
+
+    <menu>
+      <button type="button" class="btn" id="addCancel">Cancel</button>
+      <button type="button" class="btn primary" id="addOk">Add to library</button>
+    </menu>
+  </form>
+</dialog>
+
+<!-- find-specs dialog ------------------------------------------------------ -->
+<dialog id="dlgFind">
+  <form method="dialog">
+    <h2>Find specs</h2>
+    <p class="hint">
+      This app runs entirely offline, so it can't search the web itself.
+      Paste a brand and model into your Claude session and ask for a device
+      record — you'll get a JSON block to paste below.
+    </p>
+    <pre class="snippet" id="findSnippet"></pre>
+    <label>Paste device JSON
+      <textarea name="json" id="findJson" rows="7"
+        placeholder='{"brand":"…","model":"…","ru":1, …}'></textarea></label>
+    <p class="err" id="findErr" hidden></p>
+    <menu>
+      <button type="button" class="btn" id="findCancel">Cancel</button>
+      <button type="button" class="btn primary" id="findOk">Add to library</button>
+    </menu>
+  </form>
+</dialog>
+
+<!-- external flow node dialog ---------------------------------------------- -->
+<dialog id="dlgExt">
+  <form method="dialog" id="formExt">
+    <h2>External node</h2>
+    <p class="hint">Anything the racks don't contain — the console at FOH, a
+       stage box, PA, a mic position. Give it the sockets you need to patch to.</p>
+    <div class="grid2">
+      <label>Name<input name="name" required autocomplete="off" placeholder="FOH console"></label>
+      <label>Detail<input name="sub" autocomplete="off" placeholder="DiGiCo SD12"></label>
+    </div>
+    <div id="extRows" class="connrows"></div>
+    <button type="button" id="extAddRow" class="btn sm">+ Add sockets</button>
+    <menu>
+      <button type="button" class="btn" id="extCancel">Cancel</button>
+      <button type="button" class="btn primary" id="extOk">Add node</button>
+    </menu>
+  </form>
+</dialog>
+
+<!-- the export sheet is rendered here for printing; hidden on screen -->
+<div id="printArea" aria-hidden="true"></div>
+
+<input type="file" id="fileInput" accept="application/json" hidden>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

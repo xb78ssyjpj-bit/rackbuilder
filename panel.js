@@ -1,0 +1,932 @@
+// Parametric front/rear panel renderer.
+//
+// Coordinate space: 1000 units wide x 100 units per rack unit.
+// Same convention StageRack and the NetBox elevation images use.
+//
+// SIZING: every connector carries `mm` — the real width of its panel face — and
+// `nat`, the width its draw function happens to produce. renderPanel scales by
+// (mm * MM) / nat, so at scale 1 a connector is drawn at its TRUE size relative
+// to the 19" panel. That is what stops twelve 16 A CEE fitting into 1U.
+
+export const NS = 'http://www.w3.org/2000/svg';
+
+export const U = 100;        // units per rack unit
+export const W = 1000;       // panel width
+export const EAR_L = 62;     // left rack ear inner edge
+export const EAR_R = 938;    // right rack ear inner edge
+export const FACE_L = 78;    // usable face, left
+export const FACE_R = 922;   // usable face, right
+
+export const MM = W / 482.6;          // 2.0721 units per mm (19" = 482.6 mm)
+export const U_MM = 44.45;            // one rack unit in mm
+export const FACE_MM = (FACE_R - FACE_L) / MM;   // usable face width in mm (~407)
+
+export const el = (n, a = {}) => {
+  const e = document.createElementNS(NS, n);
+  for (const k in a) if (a[k] != null) e.setAttribute(k, a[k]);
+  return e;
+};
+
+const txt = (s, a) => {
+  const t = el('text', {
+    'font-family': 'ui-monospace, SFMono-Regular, Menlo, monospace',
+    stroke: 'none', fill: 'currentColor', ...a,
+  });
+  t.textContent = s;
+  return t;
+};
+
+const ring = (g, x, y, r) => g.appendChild(el('circle', { cx: x, cy: y, r }));
+const pin = (g, x, y, r) => g.appendChild(el('circle', {
+  cx: x, cy: y, r, fill: 'currentColor', stroke: 'none',
+}));
+const path = (g, d) => g.appendChild(el('path', { d }));
+const rect = (g, x, y, w, h, rx = 0) => g.appendChild(el('rect', {
+  x: x - w / 2, y: y - h / 2, width: w, height: h, rx,
+}));
+// Shaded disc — the "dark inside" that separates male from female at a glance.
+const shade = (g, x, y, r) => g.appendChild(el('circle', {
+  cx: x, cy: y, r, fill: 'currentColor', 'fill-opacity': 0.3, stroke: 'none',
+}));
+const p1 = (n) => Math.round(n * 10) / 10;
+
+// ---------------------------------------------------------------------------
+// Shared drawing helpers. `male` = pins (a plug / inlet); otherwise holes.
+// ---------------------------------------------------------------------------
+// Neutrik D-series panel connector: a 24 x 31 mm flange plate with the round
+// connector bore centred and two countersunk screw holes on the diagonal.
+// Drawing the flange is what makes these read as PANEL connectors rather than
+// as bare circles, and it is the shape every D-type shares.
+const D_W = 42, D_H = 54, BORE = 17;
+
+function dFlange(g, x, y) {
+  rect(g, x, y, D_W, D_H, 5);
+  ring(g, x - 14.5, y - 20.5, 3.2);
+  ring(g, x + 14.5, y + 20.5, 3.2);
+}
+const bore = (g, x, y, r = BORE) => ring(g, x, y, r);
+
+// Centred numeral, used where the pole count is the only useful difference.
+function numeral(g, x, y, s, size) {
+  const t = el('text', {
+    x, y: y + size * 0.35, 'font-size': size, 'font-weight': 700,
+    'font-family': 'Inter, Helvetica, Arial, sans-serif',
+    'text-anchor': 'middle', fill: 'currentColor', stroke: 'none',
+  });
+  t.textContent = s;
+  g.appendChild(t);
+}
+
+const XLR3 = [[0, -6], [-5.2, 3.4], [5.2, 3.4]];
+
+// Contacts arranged on a pitch circle.
+function contacts(g, x, y, n, pr, cr, male) {
+  for (let i = 0; i < n; i++) {
+    const a = -Math.PI / 2 + (i / n) * Math.PI * 2;
+    const px = p1(x + Math.cos(a) * pr);
+    const py = p1(y + Math.sin(a) * pr);
+    if (male) pin(g, px, py, cr); else ring(g, px, py, cr);
+  }
+}
+
+// IEC 60309 "CEE": round shell, keyway lug at 6 o'clock, contacts on a circle.
+function drawCee(g, x, y, pins, r, male) {
+  ring(g, x, y, r);
+  ring(g, x, y, r * 0.78);
+  path(g, `M${p1(x - r * 0.2)},${p1(y + r * 0.78)} L${p1(x - r * 0.16)},${p1(y + r)} `
+        + `L${p1(x + r * 0.16)},${p1(y + r)} L${p1(x + r * 0.2)},${p1(y + r * 0.78)}`);
+  contacts(g, x, y, pins, r * 0.44, r * 0.13, male);
+}
+
+// Circular multipin (Socapex / VEAM family).
+function drawMultipin(g, x, y, r, rings, male) {
+  ring(g, x, y, r);
+  ring(g, x, y, r * 0.82);
+  path(g, `M${p1(x - r * 0.16)},${p1(y - r * 0.82)} v${p1(-r * 0.18)}`);
+  if (male) pin(g, x, y, r * 0.09); else ring(g, x, y, r * 0.09);
+  rings.forEach(([count, frac]) => contacts(g, x, y, count, r * frac, r * 0.075, male));
+}
+
+// Neutrik speakON (NL2/NL4/NL8 panel). The bore and keyway are near-identical
+// across pole counts on a real connector, so the pole count is spelled out —
+// that is the only thing anyone actually needs to read off a rack drawing.
+function drawSpeakon(g, x, y, poles) {
+  dFlange(g, x, y);
+  bore(g, x, y);
+  // the speakON key: a notch cut into the bore at 12 o'clock
+  path(g, `M${p1(x - 5)},${p1(y - BORE)} l3,5 h4 l3,-5`);
+  numeral(g, x, y, String(poles), 17);
+}
+
+// Neutrik powerCON (NAC3MP): D-flange, bore, and the keyed insert with its
+// characteristic flat chord. IN gets solid contacts, THRU open ones.
+function drawPowercon(g, x, y, male) {
+  dFlange(g, x, y);
+  bore(g, x, y);
+  const ir = 12;
+  // insert: circle with a flat chord across the top
+  path(g, `M${p1(x - 10.4)},${p1(y - 6)} h20.8 `
+        + `A${ir},${ir} 0 1,1 ${p1(x - 10.4)},${p1(y - 6)} Z`);
+  const c = 3;
+  [[0, 1.5], [-6, 7], [6, 7]].forEach(([a, b]) => {
+    if (male) pin(g, x + a, y + b, c); else ring(g, x + a, y + b, c);
+  });
+}
+
+// Neutrik powerCON TRUE1 (NAC3MPX): the square latching collar inside the bore
+// is what separates it from a standard powerCON at a glance.
+function drawTrue1(g, x, y, male) {
+  dFlange(g, x, y);
+  bore(g, x, y);
+  rect(g, x, y, 21, 21, 4);
+  const c = 2.8;
+  [[0, -4.5], [-5, 4], [5, 4]].forEach(([a, b]) => {
+    if (male) pin(g, x + a, y + b, c); else ring(g, x + a, y + b, c);
+  });
+  // latch tab on the shell
+  rect(g, x, y + BORE + 3.5, 9, 5, 1.5);
+}
+
+// IEC C13 outlet / C14 inlet — the chamfered-top aperture is the giveaway.
+function drawIec(g, x, y, male) {
+  rect(g, x, y, 38, 30, 3);
+  path(g, `M${x - 13},${y + 9.5} L${x - 13},${y - 4} L${x - 7.5},${y - 9.5} `
+        + `L${x + 7.5},${y - 9.5} L${x + 13},${y - 4} L${x + 13},${y + 9.5} Z`);
+  const c = 2.4;
+  if (male) {
+    pin(g, x, y - 4, c); pin(g, x - 7, y + 4.5, c); pin(g, x + 7, y + 4.5, c);
+  } else {
+    ring(g, x, y - 4, c); ring(g, x - 7, y + 4.5, c); ring(g, x + 7, y + 4.5, c);
+  }
+}
+
+// Single-pole (Powerlock family).
+function drawPowerlock(g, x, y, r, male) {
+  ring(g, x, y, r); ring(g, x, y, r * 0.72);
+  if (male) pin(g, x, y, r * 0.32); else ring(g, x, y, r * 0.32);
+  rect(g, x, y - r * 1.16, r * 0.4, r * 0.36, 2);
+}
+
+// Shared by `jack`, `trs` and `ts` — same hole, same nut, same 15 mm pitch.
+const JACK_1_4 = { mm: 15, nat: 30, d(g, x, y) { ring(g, x, y, 15); ring(g, x, y, 7); } };
+
+// ---------------------------------------------------------------------------
+// Primitive registry.
+//   mm  = real width of the panel face (used for true sizing + fit checks)
+//   mmH = real height, when it differs from mm
+//   nat = width the draw function naturally produces, in units
+// ---------------------------------------------------------------------------
+const P = {
+  // --- audio ---------------------------------------------------------------
+  // All D-types share the Neutrik flange. Female = open holes and the latch
+  // tab a panel-mount NC3FD really has; male = shaded bore and solid pins.
+  xlrf: { mm: 24, mmH: 31, nat: D_W, d(g, x, y) {
+    dFlange(g, x, y); bore(g, x, y); ring(g, x, y, 12);
+    XLR3.forEach(([a, b]) => ring(g, x + a, y + b, 2.6));
+    rect(g, x, y - 13.5, 6, 5, 1.4);
+  } },
+  xlrm: { mm: 24, mmH: 31, nat: D_W, d(g, x, y) {
+    dFlange(g, x, y); bore(g, x, y); shade(g, x, y, 12); ring(g, x, y, 12);
+    XLR3.forEach(([a, b]) => pin(g, x + a, y + b, 3.6));
+  } },
+  combo: { mm: 24, mmH: 31, nat: D_W, d(g, x, y) {
+    dFlange(g, x, y); bore(g, x, y); ring(g, x, y, 12);
+    XLR3.forEach(([a, b]) => ring(g, x + a, y + b, 2.6));
+    ring(g, x, y, 6);
+  } },
+  // A 1/4" socket is a 1/4" socket: you cannot tell TRS from TS by looking at
+  // the panel, so all three draw identically and share one primitive. The type
+  // exists to carry what the *cable* has to be, which is what a patch list is
+  // for. `jack` stays as the honest "not recorded" case — see the README.
+  jack: JACK_1_4, trs: JACK_1_4, ts: JACK_1_4,
+  // 3-pin Phoenix / Euroblock at 5.08 mm pitch — the install-audio standard, and
+  // what the whole AHM range uses instead of XLR.
+  euroblock: { mm: 16, mmH: 14, nat: 30, d(g, x, y) {
+    rect(g, x, y, 30, 24, 2);
+    [-9, 0, 9].forEach((dx) => {
+      ring(g, x + dx, y - 3, 3.4);
+      path(g, `M${x + dx - 2.4},${y - 3} h4.8`);
+    });
+  } },
+  minijack: { mm: 9, nat: 20, d(g, x, y) { ring(g, x, y, 10); ring(g, x, y, 4.5); } },
+
+  // RCA phono — coaxial S/PDIF and unbalanced line. Smaller than a BNC, which
+  // is what tells them apart at rack scale.
+  rca: { mm: 10, nat: 20, d(g, x, y) { ring(g, x, y, 10); ring(g, x, y, 3.2); } },
+  // ADAT / optical S-PDIF — a TOSLINK panel jack: square face, shuttered bore.
+  toslink: { mm: 13, mmH: 11, nat: 26, d(g, x, y) {
+    rect(g, x, y, 26, 22, 3);
+    rect(g, x, y, 15, 12, 1.5);
+    path(g, `M${x - 7.5},${y - 6.5} h15`);
+  } },
+  // MIDI — 5-pin DIN. Five pins in an arc above the keyway, which is what makes
+  // it read as a DIN rather than as any other round connector.
+  midi: { mm: 21, nat: 34, d(g, x, y) {
+    ring(g, x, y, 17);
+    ring(g, x, y, 12);
+    [180, 135, 90, 45, 0].forEach((deg) => {
+      const a = (deg * Math.PI) / 180;
+      ring(g, x + Math.cos(a) * 7.5, y - Math.sin(a) * 7.5, 1.7);
+    });
+    path(g, `M${x - 4},${y + 12} h8`);
+  } },
+
+  // speakON — NL2/NL4 are D-size; NL8 uses a larger flange
+  nl2: { mm: 24, mmH: 31, nat: D_W, d(g, x, y) { drawSpeakon(g, x, y, 2); } },
+  nl4: { mm: 24, mmH: 31, nat: D_W, d(g, x, y) { drawSpeakon(g, x, y, 4); } },
+  nl8: { mm: 44, mmH: 44, nat: D_W, d(g, x, y) { drawSpeakon(g, x, y, 8); } },
+
+  // --- video / data --------------------------------------------------------
+  bnc: { mm: 16, nat: 26, d(g, x, y) { ring(g, x, y, 13); ring(g, x, y, 4.5); } },
+  // 5.5/2.1 mm coaxial DC barrel — RF distros feed their receivers with these
+  dcjack: { mm: 11, nat: 22, d(g, x, y) {
+    ring(g, x, y, 11); ring(g, x, y, 6); path(g, `M${x},${y - 2.6} v5.2`);
+  } },
+  // 15 mm is the pitch of a stacked RJ45 switch port, not the 18 mm of a lone
+  // panel jack. It is what decides whether 48 ports fit across a 19" face.
+  rj45: { mm: 15, nat: 26, d(g, x, y) {
+    path(g, `M${x - 13},${y - 11} h26 v15 h-8 v7 h-10 v-7 h-8 z`);
+  } },
+  // QSFP is a wider cage than SFP — 40/100G uplinks are not the same size.
+  qsfp: { mm: 22, nat: 44, d(g, x, y) {
+    rect(g, x, y, 44, 20); rect(g, x, y, 32, 9);
+  } },
+  ethercon: { mm: 24, mmH: 31, nat: D_W, d(g, x, y) {
+    dFlange(g, x, y); bore(g, x, y); P.rj45.d(g, x, y);
+  } },
+  opticalcon: { mm: 24, mmH: 31, nat: D_W, d(g, x, y) {
+    dFlange(g, x, y); bore(g, x, y); rect(g, x, y, 15, 12, 1.5);
+    ring(g, x - 4, y, 2.4); ring(g, x + 4, y, 2.4);
+  } },
+  sfp: { mm: 20, nat: 40, d(g, x, y) { rect(g, x, y, 40, 20); rect(g, x, y, 28, 8); } },
+  hdmi: { mm: 21, nat: 38, d(g, x, y) {
+    path(g, `M${x - 19},${y - 8} h38 v10 l-5,5 h-28 l-5,-5 z`);
+  } },
+  usba: { mm: 15, nat: 26, d(g, x, y) {
+    rect(g, x, y, 26, 12); path(g, `M${x - 8},${y - 2} h16`);
+  } },
+  usbb: { mm: 18, nat: 22, d(g, x, y) {
+    path(g, `M${x - 11},${y + 8} h22 v-11 l-4,-5 h-14 l-4,5 z`);
+  } },
+  usbc: { mm: 12, nat: 22, d(g, x, y) { rect(g, x, y, 22, 9, 4.5); } },
+  // DB25 flange: 53.04 x 12.55 mm. Wide but short — which is why analogue
+  // multicore breakouts get away with two rows of them in a single U.
+  dsub: { mm: 53, mmH: 12.6, nat: 68, d(g, x, y) {
+    path(g, `M${x - 26},${y - 8} h52 l-4,16 h-44 z`);
+    ring(g, x - 34, y, 4); ring(g, x + 34, y, 4);
+  } },
+
+  // --- power: every type has an IN (pins) and a THRU (holes) variant --------
+  powercon_in:   { mm: 24, mmH: 31, nat: D_W, d(g, x, y) { drawPowercon(g, x, y, true); } },
+  powercon_thru: { mm: 24, mmH: 31, nat: D_W, d(g, x, y) { drawPowercon(g, x, y, false); } },
+  true1_in:      { mm: 24, mmH: 31, nat: D_W, d(g, x, y) { drawTrue1(g, x, y, true); } },
+  true1_thru:    { mm: 24, mmH: 31, nat: D_W, d(g, x, y) { drawTrue1(g, x, y, false); } },
+  iec_in:        { mm: 27, nat: 38, d(g, x, y) { drawIec(g, x, y, true); } },
+  iec_thru:      { mm: 27, nat: 38, d(g, x, y) { drawIec(g, x, y, false); } },
+
+  // Schuko and BS1363 are outlet-only in practice, but panel inlets exist.
+  socket_thru: { mm: 45, mmH: 44, nat: 46, d(g, x, y) {
+    ring(g, x, y, 23);
+    ring(g, x - 9, y, 3.4); ring(g, x + 9, y, 3.4);
+    path(g, `M${x - 7.5},${y - 20.5} h15`); path(g, `M${x - 7.5},${y + 20.5} h15`);
+  } },
+  socket_in: { mm: 45, mmH: 44, nat: 46, d(g, x, y) {
+    ring(g, x, y, 23);
+    pin(g, x - 9, y, 3.6); pin(g, x + 9, y, 3.6);
+    path(g, `M${x - 7.5},${y - 20.5} h15`); path(g, `M${x - 7.5},${y + 20.5} h15`);
+  } },
+  bs13a_thru: { mm: 46, mmH: 44, nat: 50, d(g, x, y) {
+    rect(g, x, y, 50, 50, 5);
+    rect(g, x, y - 12.5, 7, 14, 1.2);
+    rect(g, x - 10, y + 7, 14, 6.5, 1.2); rect(g, x + 10, y + 7, 14, 6.5, 1.2);
+  } },
+  // IEC 60309 — sizes are the real panel flanges, which is why a 16 A needs 2U
+  cee16_in:     { mm: 65,  nat: 52, d(g, x, y) { drawCee(g, x, y, 3, 26, true); } },
+  cee16_thru:   { mm: 65,  nat: 52, d(g, x, y) { drawCee(g, x, y, 3, 26, false); } },
+  cee32_1_in:   { mm: 75,  nat: 60, d(g, x, y) { drawCee(g, x, y, 3, 30, true); } },
+  cee32_1_thru: { mm: 75,  nat: 60, d(g, x, y) { drawCee(g, x, y, 3, 30, false); } },
+  cee32_3_in:   { mm: 80,  nat: 66, d(g, x, y) { drawCee(g, x, y, 5, 33, true); } },
+  cee32_3_thru: { mm: 80,  nat: 66, d(g, x, y) { drawCee(g, x, y, 5, 33, false); } },
+  cee63_1_in:   { mm: 95,  nat: 74, d(g, x, y) { drawCee(g, x, y, 3, 37, true); } },
+  cee63_1_thru: { mm: 95,  nat: 74, d(g, x, y) { drawCee(g, x, y, 3, 37, false); } },
+  cee125_3_in:  { mm: 125, nat: 88, d(g, x, y) { drawCee(g, x, y, 5, 44, true); } },
+  cee125_3_thru:{ mm: 125, nat: 88, d(g, x, y) { drawCee(g, x, y, 5, 44, false); } },
+
+  powerlock_in:   { mm: 50, nat: 50, d(g, x, y) { drawPowerlock(g, x, y, 25, true); } },
+  powerlock_thru: { mm: 50, nat: 50, d(g, x, y) { drawPowerlock(g, x, y, 25, false); } },
+
+  breaker: { mm: 18, nat: 24, d(g, x, y) {
+    rect(g, x, y, 24, 40); rect(g, x, y - 6.5, 14, 11);
+  } },
+
+  // --- multipin ------------------------------------------------------------
+  socapex_in:   { mm: 50, nat: 68, d(g, x, y) { drawMultipin(g, x, y, 34, [[6, 0.34], [12, 0.62]], true); } },
+  socapex_thru: { mm: 50, nat: 68, d(g, x, y) { drawMultipin(g, x, y, 34, [[6, 0.34], [12, 0.62]], false); } },
+  veam_in:      { mm: 60, nat: 80, d(g, x, y) { drawMultipin(g, x, y, 40, [[8, 0.36], [16, 0.66]], true); } },
+  veam_thru:    { mm: 60, nat: 80, d(g, x, y) { drawMultipin(g, x, y, 40, [[8, 0.36], [16, 0.66]], false); } },
+
+  // --- controls ------------------------------------------------------------
+  knob: { d(g, x, y, o = {}) {
+    const r = o.r || 16; ring(g, x, y, r); path(g, `M${x},${y} L${x},${y - r + 3}`);
+  } },
+  encoder: { d(g, x, y, o = {}) {
+    const r = o.r || 16; ring(g, x, y, r); ring(g, x, y, r - 5);
+    path(g, `M${x},${y - r + 5} v-5`);
+  } },
+  button: { d(g, x, y, o = {}) { rect(g, x, y, o.w || 26, o.h || 17, 3); } },
+  led: { d(g, x, y) { ring(g, x, y, 4.5); } },
+  meter: { d(g, x, y, o = {}) {
+    const n = o.n || 8, h = o.h || 56, step = h / n;
+    for (let i = 0; i < n; i++) {
+      g.appendChild(el('rect', {
+        x: x - 5, y: y - h / 2 + i * step + 1, width: 10, height: step - 2, rx: 1.5 }));
+    }
+  } },
+  fader: { d(g, x, y, o = {}) {
+    const h = o.h || 60; path(g, `M${x},${y - h / 2} v${h}`); rect(g, x, y, 18, 12, 2);
+  } },
+  display: { d(g, x, y, o = {}) {
+    const w = o.w || 150, h = o.h || 52;
+    rect(g, x, y, w, h, 4); rect(g, x, y, w - 12, h - 12, 2);
+  } },
+  vent: { d(g, x, y, o = {}) {
+    const w = o.w || 200, h = o.h || 44, pitch = o.pitch || 13;
+    const n = Math.max(1, Math.floor(w / pitch)), span = (n - 1) * pitch;
+    for (let i = 0; i < n; i++) {
+      g.appendChild(el('rect', {
+        x: x - span / 2 + i * pitch - 2.5, y: y - h / 2, width: 5, height: h, rx: 2.5 }));
+    }
+  } },
+  mesh: { d(g, x, y, o = {}) {
+    const w = o.w || 200, h = o.h || 44, p = 11;
+    for (let cy = y - h / 2 + p / 2; cy < y + h / 2; cy += p) {
+      for (let cx = x - w / 2 + p / 2; cx < x + w / 2; cx += p) ring(g, cx, cy, 2.6);
+    }
+  } },
+  bar: { d(g, x, y, o = {}) { rect(g, x, y, o.w || 120, o.h || 20, o.rx ?? 4); } },
+  fan: { d(g, x, y, o = {}) {
+    const r = o.r || 40;
+    ring(g, x, y, r); ring(g, x, y, p1(r * 0.2));
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2;
+      path(g, `M${p1(x + Math.cos(a) * r * 0.26)},${p1(y + Math.sin(a) * r * 0.26)} `
+           + `Q${p1(x + Math.cos(a + 0.35) * r * 0.78)},${p1(y + Math.sin(a + 0.35) * r * 0.78)} `
+           + `${p1(x + Math.cos(a + 0.95) * r * 0.9)},${p1(y + Math.sin(a + 0.95) * r * 0.9)}`);
+    }
+  } },
+  brush: { d(g, x, y, o = {}) {
+    const w = o.w || 700, h = o.h || 32;
+    rect(g, x, y, w, h, 3);
+    for (let i = x - w / 2 + 7; i < x + w / 2 - 3; i += 7) {
+      path(g, `M${Math.round(i)},${y - h / 2 + 5} v${h - 10}`);
+    }
+  } },
+  handle: { d(g, x, y, o = {}) {
+    const h = o.h || 50; rect(g, x, y, 20, h, 3);
+    path(g, `M${x - 10},${y - h / 2 + 12} h20`);
+  } },
+  line: { d(g, x, y, o = {}) { const w = o.w || 200; path(g, `M${x - w / 2},${y} h${w}`); } },
+  vline: { d(g, x, y, o = {}) { const h = o.h || 60; path(g, `M${x},${y - h / 2} v${h}`); } },
+  screw: { d(g, x, y) { ring(g, x, y, 6); path(g, `M${x - 4},${y} h8`); } },
+};
+
+export const PRIMS = P;
+
+// Intrinsic scale that renders a primitive at its real physical size.
+export const intrinsic = (t) => {
+  const p = P[t];
+  return p && p.mm && p.nat ? (p.mm * MM) / p.nat : 1;
+};
+export const sizeMM = (t) => (P[t] && P[t].mm) || 0;
+export const heightMM = (t) => (P[t] && (P[t].mmH || P[t].mm)) || 0;
+
+// ---------------------------------------------------------------------------
+export const CONNECTOR_GROUPS = [
+  ['Audio', [
+    ['xlrf', 'XLR female'], ['xlrm', 'XLR male'], ['combo', 'Combo XLR/jack'],
+    ['trs', '1/4" TRS (balanced / stereo)'], ['ts', '1/4" TS (unbalanced)'],
+    ['jack', '1/4" jack — type not recorded'], ['minijack', '3.5 mm jack'],
+    ['euroblock', 'Euroblock 3-pin'],
+    ['toslink', 'ADAT / optical'], ['midi', 'MIDI 5-pin DIN'],
+    ['rca', 'RCA phono'],
+    ['nl2', 'speakON NL2'], ['nl4', 'speakON NL4'], ['nl8', 'speakON NL8'],
+  ]],
+  ['Data / video', [
+    ['bnc', 'BNC'], ['rj45', 'RJ45'], ['ethercon', 'etherCON'],
+    ['opticalcon', 'opticalCON'], ['sfp', 'SFP/SFP+'], ['qsfp', 'QSFP'],
+    ['hdmi', 'HDMI'],
+    ['usba', 'USB-A'], ['usbb', 'USB-B'], ['usbc', 'USB-C'], ['dsub', 'D-sub'],
+    ['dcjack', 'DC barrel'],
+  ]],
+  ['Power — in', [
+    ['socket_in', 'Schuko inlet'],
+    ['iec_in', 'IEC C14 inlet'], ['powercon_in', 'powerCON in'],
+    ['true1_in', 'TRUE1 in'], ['cee16_in', 'CEE 16 A in'],
+    ['cee32_1_in', 'CEE 32 A 1ph in'], ['cee32_3_in', 'CEE 32 A 3ph in'],
+    ['cee63_1_in', 'CEE 63 A 1ph in'], ['cee125_3_in', 'CEE 125 A 3ph in'],
+    ['powerlock_in', 'Powerlock in'],
+  ]],
+  ['Power — thru', [
+    ['bs13a_thru', '13 A outlet'], ['socket_thru', 'Schuko outlet'],
+    ['iec_thru', 'IEC C13 outlet'], ['powercon_thru', 'powerCON thru'],
+    ['true1_thru', 'TRUE1 thru'], ['cee16_thru', 'CEE 16 A thru'],
+    ['cee32_1_thru', 'CEE 32 A 1ph thru'], ['cee32_3_thru', 'CEE 32 A 3ph thru'],
+    ['cee63_1_thru', 'CEE 63 A 1ph thru'], ['cee125_3_thru', 'CEE 125 A 3ph thru'],
+    ['powerlock_thru', 'Powerlock thru'], ['breaker', 'Breaker'],
+  ]],
+  ['Multipin', [
+    ['socapex_in', 'Socapex 19p in'], ['socapex_thru', 'Socapex 19p thru'],
+    ['veam_in', 'VEAM in'], ['veam_thru', 'VEAM thru'],
+  ]],
+  ['Controls / panel', [
+    ['knob', 'Knob'], ['encoder', 'Encoder'], ['button', 'Button'],
+    ['led', 'LED'], ['meter', 'Meter'], ['fader', 'Fader'],
+    ['display', 'Display'], ['vent', 'Vent'], ['mesh', 'Mesh'],
+    ['handle', 'Handle'], ['fan', 'Fan'], ['brush', 'Brush strip'],
+    ['bar', 'Bar / pull'],
+  ]],
+];
+
+export const CONNECTOR_TYPES = CONNECTOR_GROUPS.flatMap(([, l]) => l);
+export const PATCH_GROUPS = CONNECTOR_GROUPS.filter(([n]) => n !== 'Controls / panel');
+export const PATCH_TYPES = PATCH_GROUPS.flatMap(([, l]) => l);
+// Compact codes for the patch-grid cells — "spe" told you nothing.
+// Suffix i / o distinguishes inlet from outlet where both exist.
+export const SHORT = {
+  xlrf: 'XLRf', xlrm: 'XLRm', combo: 'XLR/TRS',
+  trs: 'TRS', ts: 'TS', jack: 'JACK', minijack: '3.5',
+  euroblock: 'EURO', toslink: 'ADAT', midi: 'MIDI', rca: 'RCA',
+  nl2: 'NL2', nl4: 'NL4', nl8: 'NL8',
+  bnc: 'BNC', rj45: 'RJ45', ethercon: 'EC', opticalcon: 'OC',
+  sfp: 'SFP', qsfp: 'QSFP',
+  hdmi: 'HDMI', usba: 'USBa', usbb: 'USBb', usbc: 'USBc', dsub: 'DSUB',
+  dcjack: 'DC',
+  socket_in: 'SKOi', socket_thru: 'SKO', bs13a_thru: '13A',
+  // Kept distinct on purpose: the code is the only thing telling an inlet from
+  // an outlet in a patch cell or on a flow port row.
+  iec_in: 'IEC in', iec_thru: 'IEC out',
+  powercon_in: 'PCi', powercon_thru: 'PCo', true1_in: 'T1i', true1_thru: 'T1o',
+  cee16_in: '16Ai', cee16_thru: '16Ao',
+  cee32_1_in: '32/1i', cee32_1_thru: '32/1', cee32_3_in: '32/3i', cee32_3_thru: '32/3',
+  cee63_1_in: '63/1i', cee63_1_thru: '63/1', cee125_3_in: '125i', cee125_3_thru: '125',
+  powerlock_in: 'PLi', powerlock_thru: 'PLo', breaker: 'MCB',
+  socapex_in: 'SOCi', socapex_thru: 'SOCo', veam_in: 'VMi', veam_thru: 'VMo',
+};
+export const shortCode = (t) => SHORT[t] || (t || '').slice(0, 4);
+
+export const typeLabel = (t) =>
+  (CONNECTOR_TYPES.find(([v]) => v === t) || [, t])[1];
+
+// ---------------------------------------------------------------------------
+// Auto-layout: bare connector list -> positioned elements.
+// ---------------------------------------------------------------------------
+// `left`/`right` bound the usable face. They default to a full 19" panel, but a
+// half-width device has no ears and only half the room, so it passes its own.
+//
+// Stacking. Real 1U rears very often run their 1/4" jacks two deep rather than
+// in one long line, because a jack is 15 mm across but also only 15 mm tall:
+// two rows cost 30 mm of the 44 mm U and halve the face width the bank eats.
+// A D-shell cannot do that — 31 mm twice over does not fit in a U — and the
+// height test in `depthLimit` is what enforces it, so no list of exceptions has
+// to be maintained. Declare it per run with `stack: 2`; runs that overflow the
+// face get stacked automatically, which beats the old behaviour of shrinking
+// connectors below their real size to make them fit.
+const MAX_STACK = 3;
+
+// How many rows of `t` will honestly fit in a band `bandH` units tall.
+function depthLimit(t, bandH) {
+  const h = (heightMM(t) || 20) * MM;
+  let s = 1;
+  while (s < MAX_STACK && (s + 1) * h + s * 6 <= bandH - 12) s++;
+  return s;
+}
+
+// Split a band into contiguous runs of one connector type. A run is the unit
+// that gets stacked, so that a stacked bank reads as one tidy grid.
+function runsOf(list) {
+  const runs = [];
+  list.forEach((it) => {
+    const want = Math.max(1, it.stack || 1);
+    const last = runs[runs.length - 1];
+    if (last && last.t === it.t && last.want === want) last.items.push(it);
+    else runs.push({ t: it.t, want, items: [it] });
+  });
+  return runs;
+}
+
+export function autoLayout(items, ru = 1, left = FACE_L, right = FACE_R) {
+  const flat = [];
+  items.forEach((it) => {
+    const n = it.n || it.count || 1;
+    // `_i` / `_n` survive the flattening so a declaration carrying `lbl` can
+    // still tell which of its own sockets each one is. Nothing draws them.
+    for (let i = 0; i < n; i++) flat.push({ ...it, t: it.t, n: 1, _i: i, _n: n });
+  });
+  if (!flat.length) return [];
+
+  const faceW = right - left;
+  const out = [];
+  const width = (t) => (sizeMM(t) ? sizeMM(t) * MM : 40) + 12;
+
+  const rows = [];
+  let row = [], used = 0;
+  flat.forEach((it) => {
+    const w = width(it.t);
+    if (row.length && used + w > faceW && rows.length < ru - 1) {
+      rows.push(row); row = []; used = 0;
+    }
+    row.push(it); used += w;
+  });
+  if (row.length) rows.push(row);
+
+  const bandH = (ru * U) / rows.length;
+
+  rows.forEach((r, ri) => {
+    const runs = runsOf(r);
+    const cols = (run) => Math.ceil(run.items.length / run.stack);
+    const runW = (run) => cols(run) * width(run.t);
+    const totalW = () => runs.reduce((a, run) => a + runW(run), 0);
+
+    runs.forEach((run) => {
+      run.max = Math.min(depthLimit(run.t, bandH), run.items.length);
+      run.stack = Math.min(run.want, run.max);
+    });
+    // Deepen the widest run that still has room, until the band fits. Only
+    // banks of three or more get folded automatically: turning a lone S/PDIF
+    // pair into a 1-wide column buys almost no width and says something about
+    // the panel that was never checked. Declare `stack` if a pair really does
+    // sit one above the other.
+    while (totalW() > faceW) {
+      const cand = runs.filter((run) => run.stack < run.max && run.items.length >= 3)
+        .sort((a, b) => runW(b) - runW(a))[0];
+      if (!cand) break;
+      cand.stack++;
+    }
+
+    const total = totalW();
+    const scale = total > faceW ? faceW / total : 1;
+    let x = left + (faceW - total * scale) / 2;
+    const cy = (ru * U) * ((ri + 0.5) / rows.length);
+
+    runs.forEach((run) => {
+      const w = width(run.t) * scale;
+      const nc = cols(run);
+      const pitch = run.stack > 1
+        ? Math.min((heightMM(run.t) || 20) * MM + 6, (bandH - 16) / run.stack)
+        : 0;
+      run.items.forEach((it, i) => {
+        out.push({
+          ...it, n: 1,
+          x: x + w * ((i % nc) + 0.5),
+          y: cy + (Math.floor(i / nc) - (run.stack - 1) / 2) * pitch,
+        });
+      });
+      x += w * nc;
+    });
+  });
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+function chassis(g, ru, H, bg) {
+  g.appendChild(el('rect', {
+    x: 3, y: 3, width: W - 6, height: H - 6, rx: 4, fill: bg || 'none',
+  }));
+  path(g, `M${EAR_L},8 V${H - 8} M${EAR_R},8 V${H - 8}`);
+  for (let u = 0; u < ru; u++) {
+    [31, W - 31].forEach((ex) => {
+      [u * U + 24, u * U + 60].forEach((hy) => {
+        g.appendChild(el('rect', { x: ex - 7, y: hy, width: 14, height: 21, rx: 7 }));
+      });
+    });
+  }
+}
+
+function drawElements(g, spec, sw) {
+  (spec.elements || []).forEach((e) => {
+    const prim = P[e.t];
+    if (!prim) return;
+    const s = intrinsic(e.t) * (e.scale || 1);
+    const n = e.n || 1;
+    const gap = e.gap || 0;
+    for (let i = 0; i < n; i++) {
+      const cx = e.x + i * gap;
+      if (Math.abs(s - 1) > 0.001) {
+        const sg = el('g', {
+          transform: `translate(${p1(cx)} ${p1(e.y)}) scale(${p1(s)}) `
+                   + `translate(${p1(-cx)} ${p1(-e.y)})`,
+          'stroke-width': p1(sw / s),
+        });
+        g.appendChild(sg);
+        prim.d(sg, cx, e.y, e);
+      } else {
+        prim.d(g, cx, e.y, e);
+      }
+    }
+  });
+  (spec.labels || []).forEach((l) => {
+    g.appendChild(txt(l.text, {
+      x: l.x, y: l.y, 'font-size': l.size || 19,
+      'letter-spacing': l.ls ?? 1.5, 'text-anchor': l.anchor || 'start',
+    }));
+  });
+}
+
+function panelSvg(width, H, sw) {
+  const svg = el('svg', {
+    viewBox: `0 0 ${width} ${H}`, class: 'panel', preserveAspectRatio: 'none',
+  });
+  const g = el('g', {
+    fill: 'none', stroke: 'currentColor', 'stroke-width': sw,
+    'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+  });
+  svg.appendChild(g);
+  return { svg, g };
+}
+
+export function renderPanel(spec, opt = {}) {
+  const ru = spec.ru || 1;
+  const H = U * ru;
+  const sw = opt.stroke || 3;
+  const { svg, g } = panelSvg(W, H, sw);
+  chassis(g, ru, H, opt.bg);
+  drawElements(g, spec, sw);
+  if (opt.hatch) hatchBacking(svg, g, H, { key: opt.hatchKey });
+  return svg;
+}
+
+// Half-width devices are desktop boxes sitting on a shelf, not rack-mounted, so
+// they get a plain body outline with no ears and no mounting holes.
+//
+// WIDTH: half of the interior between the ears (EAR_L..EAR_R = 876), NOT half of
+// the 1000-unit panel — the 19" figure includes the mounting ears, so halving it
+// makes the box too wide and it collides with the ears of whatever it sits on.
+// 438 units = 211.4 mm, against a real half-rack width of ~215.9 mm.
+export const HALF_W = (EAR_R - EAR_L) / 2;        // 438
+export const HALF_L = EAR_L;                      // left box starts here
+export const HALF_R = EAR_L + HALF_W;             // right box starts here
+// Margin between a half-width body's edge and its usable face, matching the
+// FACE_L inset on a full panel.
+export const HALF_INSET = FACE_L - EAR_L;         // 16
+
+// Plenty of half-rack RF gear ships with rack ears and bolts straight in, no tray.
+// Such a unit's drawing is one ear wider than its body, with the ear on the OUTER
+// side, so the whole thing spans from the rack rail to the centre line: a left
+// unit covers rack x 0..500, a right unit 500..1000. `opt.ears` is which side the
+// ear goes on IN THE DRAWING, which the caller flips for the rear view.
+export const HALF_EAR_W = EAR_L;                  // 62 — same ear a full panel has
+
+const earedWidth = (ears) => (ears ? EAR_L + HALF_W : HALF_W);
+const earedBodyX = (ears) => (ears === 'left' ? EAR_L : 0);
+
+function halfBody(g, H, bodyX, bg) {
+  g.appendChild(el('rect', {
+    x: bodyX + 8, y: 7, width: HALF_W - 16, height: H - 14, rx: 9, fill: bg || 'none',
+  }));
+}
+
+// The ear itself, drawn to the same geometry as a full panel's: it runs right up
+// to the rail with two mounting holes per U on the ear's centre line.
+function halfEar(g, ru, H, side, bg) {
+  const x0 = side === 'left' ? 0 : HALF_W;
+  g.appendChild(el('rect', {
+    x: x0 + 3, y: 3, width: EAR_L - 3, height: H - 6, rx: 4, fill: bg || 'none',
+  }));
+  for (let u = 0; u < ru; u++) {
+    [u * U + 24, u * U + 60].forEach((hy) => {
+      g.appendChild(el('rect', {
+        x: x0 + 31 - 7, y: hy, width: 14, height: 21, rx: 7,
+      }));
+    });
+  }
+}
+
+export function renderHalfPanel(spec, opt = {}) {
+  const ru = spec.ru || 1;
+  const H = U * ru;
+  const sw = opt.stroke || 3;
+  const ears = opt.ears === 'left' || opt.ears === 'right' ? opt.ears : null;
+  const bodyX = earedBodyX(ears);
+  const { svg, g } = panelSvg(earedWidth(ears), H, sw);
+  halfBody(g, H, bodyX, opt.bg);
+  if (ears) halfEar(g, ru, H, ears, opt.bg);
+  // Panel detail is authored in body coordinates, so shift it onto the body
+  // rather than teaching every device about the ear.
+  const cg = bodyX
+    ? el('g', { transform: `translate(${bodyX} 0)` })
+    : g;
+  if (cg !== g) g.appendChild(cg);
+  drawElements(cg, spec, sw);
+  if (opt.hatch) {
+    hatchBacking(svg, g, H,
+      { x0: bodyX + 12, x1: bodyX + HALF_W - 12, key: opt.hatchKey });
+  }
+  return svg;
+}
+
+// A shelf carrying half-rack gear: draw only the mounting ears. The shelf body
+// behind the gear is hidden, but the ears still read at the sides.
+export function renderEarsOnly(ru, opt = {}) {
+  const H = U * ru;
+  const { svg, g } = panelSvg(W, H, 3);
+  g.appendChild(el('rect', { x: 3, y: 3, width: EAR_L - 3, height: H - 6, rx: 4,
+                             fill: opt.bg || 'none' }));
+  g.appendChild(el('rect', { x: EAR_R, y: 3, width: W - 3 - EAR_R, height: H - 6, rx: 4,
+                             fill: opt.bg || 'none' }));
+  for (let u = 0; u < ru; u++) {
+    [31, W - 31].forEach((ex) => {
+      [u * U + 24, u * U + 60].forEach((hy) => {
+        g.appendChild(el('rect', { x: ex - 7, y: hy, width: 14, height: 21, rx: 7 }));
+      });
+    });
+  }
+  return svg;
+}
+
+// True when the device actually documents its rear panel.
+export const hasRear = (dev) => !!(dev && dev.rear
+  && (Array.isArray(dev.rear.elements) || dev.rear.auto));
+
+// The diagonal hatch that says "you are looking at the back of this". Used for
+// every rear face — with connectors drawn over it when we know them, with a
+// note when we don't — so the rear elevation reads as one thing.
+export function hatchBacking(svg, g, H, opts = {}) {
+  const x0 = opts.x0 ?? EAR_L + 4;
+  const x1 = opts.x1 ?? EAR_R - 4;
+  const key = `${opts.key || ''}${x0}_${x1}_${H}`;
+  const cid = 'hx' + Math.abs(hashStr(key)).toString(36);
+
+  const defs = el('defs');
+  const cp = el('clipPath', { id: cid });
+  cp.appendChild(el('rect', { x: x0, y: 8, width: x1 - x0, height: H - 16 }));
+  defs.appendChild(cp);
+  svg.insertBefore(defs, svg.firstChild);
+
+  const hg = el('g', {
+    'clip-path': `url(#${cid})`,
+    'stroke-opacity': String(opts.opacity ?? 0.16),
+  });
+  // After the chassis fill (which is opaque and would cover it) but before the
+  // panel detail, so connectors stay legible on top.
+  g.insertBefore(hg, g.childNodes[1] || null);
+  for (let x = x0 - H; x < x1 + H; x += 30) path(hg, `M${x},${H - 8} L${x + H},8`);
+}
+
+// Rear face we have no drawing for. `quiet` drops the centred caption, used when
+// something in front partly covers this panel and the text would collide.
+export function renderNoRear(dev, ru, opt = {}) {
+  const H = U * ru;
+  // A half-width device needs a half-width hatch — drawing a full 19" panel into
+  // a half-width slot squashed the whole thing.
+  if (dev.half) {
+    const ears = opt.ears === 'left' || opt.ears === 'right' ? opt.ears : null;
+    const bodyX = earedBodyX(ears);
+    const { svg, g } = panelSvg(earedWidth(ears), H, 3);
+    halfBody(g, H, bodyX, opt.bg);
+    if (ears) halfEar(g, ru, H, ears, opt.bg);
+    hatchBacking(svg, g, H,
+      { x0: bodyX + 12, x1: bodyX + HALF_W - 12, key: dev.id + ru, opacity: 0.22 });
+    if (opt.quiet) return svg;
+    const cx = bodyX + HALF_W / 2;
+    g.appendChild(txt(dev.model, {
+      x: cx, y: H / 2 - 1, 'font-size': 15, 'letter-spacing': 1.2,
+      'text-anchor': 'middle',
+    }));
+    g.appendChild(txt('rear not documented', {
+      x: cx, y: H / 2 + 16, 'font-size': 10, 'letter-spacing': 1,
+      'text-anchor': 'middle', 'fill-opacity': '0.55',
+    }));
+    return svg;
+  }
+
+  const { svg, g } = panelSvg(W, H, 3);
+  chassis(g, ru, H, opt.bg);
+  hatchBacking(svg, g, H, { key: dev.id + ru, opacity: 0.22 });
+  if (opt.quiet) return svg;
+
+  g.appendChild(txt(`${dev.brand}  ${dev.model}`, {
+    x: W / 2, y: H / 2 - 2, 'font-size': 22, 'letter-spacing': 2,
+    'text-anchor': 'middle',
+  }));
+  g.appendChild(txt('rear not documented', {
+    x: W / 2, y: H / 2 + 22, 'font-size': 14, 'letter-spacing': 1.5,
+    'text-anchor': 'middle', 'fill-opacity': '0.55',
+  }));
+  return svg;
+}
+
+function hashStr(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0;
+  return h;
+}
+
+export function renderBlock(dev, opt = {}) {
+  const ru = dev.ru || 1;
+  const H = U * ru;
+  const svg = el('svg', {
+    viewBox: `0 0 ${W} ${H}`, class: 'panel', preserveAspectRatio: 'none',
+  });
+  const g = el('g', {
+    fill: 'none', stroke: 'currentColor', 'stroke-width': 3,
+    'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+  });
+  svg.appendChild(g);
+  chassis(g, ru, H, opt.bg);
+  g.appendChild(txt(`${dev.brand}  ${dev.model}`, {
+    x: W / 2, y: H / 2 + 8, 'font-size': 24, 'letter-spacing': 3, 'text-anchor': 'middle',
+  }));
+  return svg;
+}
+
+// ---------------------------------------------------------------------------
+// Custom patch panels — the punched holes live on the rack item, not the device.
+//   item: { ru, cols, slots: [type|null, ...] }  length ru*cols, row-major
+// ---------------------------------------------------------------------------
+export const patchRU = (dev, item) => (item && item.ru) || dev.ru || 1;
+export const patchCols = (dev, item) => (item && item.cols) || dev.cols || 12;
+// Rows are deliberately NOT tied to plate height: a 2U plate with one row gives
+// each connector 88 mm of height, which is how you actually mount a 16 A CEE.
+export const patchRows = (dev, item) =>
+  (item && item.rows) || patchRU(dev, item);
+
+export function patchSlotXY(ru, rows, cols, index) {
+  const row = Math.floor(index / cols);
+  const col = index % cols;
+  const faceW = FACE_R - FACE_L;
+  return {
+    x: FACE_L + (faceW * (col + 0.5)) / cols,
+    y: (U * ru * (row + 0.5)) / rows,
+  };
+}
+
+// Per-row physical fit. Connectors are drawn at true size, so a row can be
+// genuinely impossible in two ways: too wide, or taller than the row itself.
+export function patchFit(ru, rows, cols, slots) {
+  const rowMM = (ru * U_MM) / rows;
+  const out = [];
+  for (let r = 0; r < rows; r++) {
+    let widthMM = 0, tallestMM = 0, count = 0;
+    for (let c = 0; c < cols; c++) {
+      const t = slots?.[r * cols + c];
+      if (!t || !P[t]) continue;
+      count += 1;
+      widthMM += sizeMM(t);
+      tallestMM = Math.max(tallestMM, heightMM(t));
+    }
+    out.push({
+      row: r + 1, count, widthMM: Math.round(widthMM), tallestMM,
+      rowMM: Math.round(rowMM),
+      tooWide: widthMM > FACE_MM,
+      tooTall: tallestMM > rowMM,
+      widthPct: Math.round((widthMM / FACE_MM) * 100),
+    });
+  }
+  return out;
+}
+
+export function renderPatch(dev, item, opt = {}) {
+  const ru = patchRU(dev, item);
+  const rows = patchRows(dev, item);
+  const cols = patchCols(dev, item);
+  const slots = (item && item.slots) || [];
+  const elements = [];
+  for (let i = 0; i < rows * cols; i++) {
+    const t = slots[i];
+    if (!t || !P[t]) continue;
+    elements.push({ t, ...patchSlotXY(ru, rows, cols, i) });
+  }
+  return renderPanel({ ru, elements }, opt);
+}
+
+export function renderDevice(dev, view = 'front', item = null, opt = {}) {
+  if (dev.patch) return renderPatch(dev, item, opt);
+  const layout = dev[view];
+  const o = { ...opt };
+  if (o.hatch) o.hatchKey = dev.id + view + (dev.ru || 1);
+  if (dev.half) {
+    if (layout && Array.isArray(layout.elements)) {
+      return renderHalfPanel({ ru: dev.ru, ...layout }, o);
+    }
+    // A half-width face has no ears, so auto-layout gets its own narrower bounds.
+    if (layout && layout.auto) {
+      return renderHalfPanel({
+        ru: dev.ru,
+        elements: autoLayout(layout.auto, dev.ru, HALF_INSET, HALF_W - HALF_INSET),
+        labels: layout.labels,
+      }, o);
+    }
+    return renderHalfPanel({ ru: dev.ru, elements: [], labels: [
+      { text: `${dev.brand} ${dev.model}`, x: HALF_W / 2, y: (U * dev.ru) / 2 + 7,
+        size: 20, ls: 2, anchor: 'middle' }] }, o);
+  }
+  // An explicitly empty `elements` array is a real layout — a blank panel.
+  if (layout && Array.isArray(layout.elements)) {
+    return renderPanel({ ru: dev.ru, ...layout }, o);
+  }
+  if (layout && layout.auto) {
+    return renderPanel({ ru: dev.ru, elements: autoLayout(layout.auto, dev.ru),
+                         labels: layout.labels }, o);
+  }
+  return renderBlock(dev, o);
+}

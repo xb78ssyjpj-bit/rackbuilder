@@ -1,0 +1,844 @@
+/* Rack Builder — standalone tool UI. Deliberately its own visual language,
+   separate from the site design system in ../DESIGN.md. */
+
+:root {
+  --bg: #0c0e0f;
+  --bg-1: #111415;
+  --bg-2: #171b1c;
+  --line: #242a2b;
+  --line-2: #323a3b;
+  --fg: #e9ecec;
+  --dim: #8b9997;
+  --accent: #35b39a;
+  --danger: #e2665c;
+  --u: 46px;              /* rendered height of 1U, set by JS */
+  --sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 14px/1.5 var(--sans);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------------- header -- */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+
+.brand {
+  font: 600 13px/1 var(--mono);
+  letter-spacing: .16em;
+  color: var(--accent);
+}
+.brand span { color: var(--dim); }
+
+.projname {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  color: var(--fg);
+  font: 500 15px var(--sans);
+  padding: 5px 9px;
+  min-width: 180px;
+}
+.projname:hover { border-color: var(--line); }
+.projname:focus { border-color: var(--accent); outline: none; background: var(--bg); }
+
+.spacer { flex: 1; }
+
+.btn {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  color: var(--fg);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font: 500 13px var(--sans);
+  cursor: pointer;
+}
+.btn:hover { border-color: var(--line-2); background: #1d2223; }
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #04120f; }
+.btn.primary:hover { background: #40c7ac; }
+.btn.danger { color: var(--danger); }
+.btn.sm { padding: 4px 9px; font-size: 12px; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn:disabled:hover { background: var(--bg-2); border-color: var(--line); }
+/* a destructive button waiting for its second click */
+.btn.arm, .dropdown button.arm {
+  background: var(--danger); border-color: var(--danger); color: #180706;
+}
+
+.toast {
+  position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 12px);
+  background: var(--bg-2); border: 1px solid var(--line-2); color: var(--fg);
+  border-radius: 8px; padding: 9px 16px; font: 500 13px var(--sans);
+  box-shadow: 0 10px 30px rgba(0,0,0,.55); z-index: 200;
+  opacity: 0; pointer-events: none; transition: opacity .16s, transform .16s;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.bad { border-color: var(--danger); color: var(--danger); }
+
+.seg { display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button {
+  background: var(--bg-2); border: 0; color: var(--dim);
+  padding: 6px 14px; font: 500 13px var(--sans); cursor: pointer;
+}
+.seg button.on { background: var(--accent); color: #04120f; }
+.seg.sm { flex: 1; }
+.seg.sm button { padding: 4px 10px; font-size: 12px; flex: 1; }
+
+.menu { position: relative; }
+.dropdown {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 40;
+  background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: 8px; padding: 5px; min-width: 172px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.55);
+}
+.dropdown button {
+  display: block; width: 100%; text-align: left;
+  background: none; border: 0; color: var(--fg);
+  padding: 7px 10px; border-radius: 5px; font: 400 13px var(--sans); cursor: pointer;
+}
+.dropdown button:hover { background: #232a2b; }
+.dropdown hr { border: 0; border-top: 1px solid var(--line); margin: 5px 2px; }
+
+/* ----------------------------------------------------------------- layout -- */
+main {
+  flex: 1;
+  display: grid;
+  /* Both side columns are draggable; the widths live in custom properties so
+     the handles only ever write one value each. Persisted in localStorage. */
+  grid-template-columns: var(--lib-w, 264px) 1fr var(--insp-w, 272px);
+  min-height: 0;
+}
+
+.lib, .insp {
+  background: var(--bg-1);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.lib { border-right: 1px solid var(--line); position: relative; }
+.insp {
+  border-left: 1px solid var(--line); overflow-y: auto; padding: 12px; gap: 12px;
+  position: relative;
+}
+
+/* Drag handles. Wider than they look so they are catchable, and they sit over
+   the border rather than stealing width from the panel. */
+.rz {
+  position: absolute; top: 0; bottom: 0; width: 9px; z-index: 6;
+  cursor: col-resize; background: transparent;
+  border: 0; padding: 0;
+}
+.rz.right { right: -5px; }
+.rz.left { left: -5px; }
+.rz::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 4px; width: 1px;
+  background: var(--accent); opacity: 0; transition: opacity .12s;
+}
+.rz:hover::after, .rz.on::after { opacity: .85; }
+body.rzing { cursor: col-resize; user-select: none; }
+
+/* -------------------------------------------------------------- library --- */
+.search {
+  margin: 12px; padding: 8px 10px;
+  background: var(--bg); border: 1px solid var(--line);
+  border-radius: 6px; color: var(--fg); font: 400 13px var(--sans);
+}
+.search:focus { outline: none; border-color: var(--accent); }
+
+/* Ten categories and counting, so the chips are tight enough to stay on two
+   rows rather than eating a third of the sidebar. */
+.cats { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 12px 10px; }
+.cats button {
+  background: var(--bg-2); border: 1px solid var(--line); color: var(--dim);
+  border-radius: 99px; padding: 2px 8px; font: 500 10.5px var(--sans); cursor: pointer;
+}
+.cats button:hover { color: var(--fg); }
+.cats button.on { border-color: var(--accent); color: var(--accent); }
+
+.liblist { flex: 1; overflow-y: auto; padding: 0 8px 8px; }
+
+/* Brand groups collapse. With ~180 devices the list of BRANDS is the thing
+   worth scanning; the models inside it are a second step. */
+.libgroup {
+  display: flex; align-items: center; gap: 7px; width: 100%;
+  position: sticky; top: 0; z-index: 1;
+  background: var(--bg-1); border: 0; border-radius: 5px;
+  margin-top: 2px; padding: 7px 6px;
+  font: 600 10px var(--mono); letter-spacing: .13em; text-transform: uppercase;
+  color: var(--dim); text-align: left; cursor: pointer;
+}
+.libgroup:hover { color: var(--fg); background: var(--bg-2); }
+.libgroup .tw {
+  flex: none; width: 7px; height: 7px; border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor; transform: rotate(-45deg);
+  transition: transform .12s ease; margin-left: 2px;
+}
+.libgroup.open .tw { transform: rotate(45deg); }
+.libgroup .gn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.libgroup .gc { flex: none; letter-spacing: 0; opacity: .75; }
+
+.libitem {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 8px 5px 22px; border-radius: 6px; cursor: grab;
+  border: 1px solid transparent;
+}
+.libitem:hover { background: var(--bg-2); border-color: var(--line); }
+.libitem:active { cursor: grabbing; }
+.libitem .b {
+  flex: 1; min-width: 0; font-size: 12.5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.libitem .cat {
+  flex: none; font-size: 10.5px; color: var(--dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 34%;
+}
+/* min-width so 4U and 10U badges line up down the column */
+.libitem .ru {
+  flex: none; font: 600 10px var(--mono); color: var(--dim); text-align: center;
+  border: 1px solid var(--line); border-radius: 4px; padding: 2px 5px;
+  min-width: 30px;
+}
+
+.libempty { margin: 18px 8px; color: var(--dim); font-size: 12px; line-height: 1.5; }
+.libitem .del {
+  background: none; border: 0; color: var(--dim); cursor: pointer;
+  font-size: 15px; line-height: 1; padding: 0 3px; opacity: 0;
+}
+.libitem:hover .del { opacity: 1; }
+.libitem .del:hover { color: var(--danger); }
+
+/* drag a rack item back over the library to remove it */
+.lib.dropremove { outline: 2px dashed var(--danger); outline-offset: -6px; }
+.lib.dropremove .liblist { opacity: .35; }
+.lib.dropremove::after {
+  content: 'Drop to remove';
+  position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
+  text-align: center; color: var(--danger);
+  font: 600 12px var(--sans); letter-spacing: .06em; pointer-events: none;
+}
+
+.ghost.removing { opacity: .5; }
+.ghost.removing svg { color: var(--danger); }
+
+.libfoot {
+  padding: 8px 14px; border-top: 1px solid var(--line);
+  font: 400 11px var(--mono); color: var(--dim);
+}
+.libfoot #libCount { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.libfoot button {
+  background: none; border: 0; padding: 0; cursor: pointer;
+  font: 400 11px var(--mono); color: var(--dim); text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.libfoot button:hover { color: var(--accent); }
+
+/* ---------------------------------------------------------------- stage --- */
+.stage { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+
+.tabrow {
+  display: flex; align-items: flex-end; gap: 12px;
+  padding: 8px 12px 0; border-bottom: 1px solid var(--line); flex: none;
+}
+.racktabs { display: flex; gap: 2px; overflow-x: auto; flex: 1; min-width: 0; }
+
+.zoom { display: flex; gap: 2px; padding-bottom: 6px; flex: none; }
+.zoom button {
+  background: var(--bg-2); border: 1px solid var(--line); color: var(--dim);
+  border-radius: 5px; padding: 3px 9px; cursor: pointer;
+  font: 500 12px var(--mono); min-width: 28px;
+}
+.zoom button:hover { color: var(--fg); border-color: var(--line-2); }
+.racktabs button {
+  background: none; border: 1px solid transparent; border-bottom: 0;
+  color: var(--dim); padding: 6px 14px; border-radius: 6px 6px 0 0;
+  font: 500 12.5px var(--sans); cursor: pointer; white-space: nowrap;
+}
+.racktabs button.on {
+  background: var(--bg); border-color: var(--line); color: var(--fg);
+  margin-bottom: -1px;
+}
+
+/* `justify-content:center` clips the overflowing edge of a scroll container and
+   makes it unreachable. `margin:auto` on the child centres AND scrolls. */
+.canvas { flex: 1; overflow: auto; padding: 30px; display: flex; }
+.rackwrap { display: flex; gap: 12px; align-items: flex-start; margin: auto; }
+
+.ruler { display: flex; flex-direction: column; padding-top: 14px; flex: none; }
+.ruler div {
+  height: var(--u); width: 30px;
+  display: flex; align-items: center; justify-content: flex-end;
+  padding-right: 7px;
+  font: 400 10px var(--mono); color: var(--dim);
+}
+
+.bay {
+  position: relative;
+  width: 700px; flex: none;   /* overridden by sizeU() */
+  border: 2px solid var(--line-2);
+  border-radius: 5px;
+  padding: 12px;
+  background: var(--bg-1);
+}
+/* Rear view mirrors POSITIONS — the device on the front-left is on your right
+   when you walk round the back — but each device's own panel must read the
+   right way round, so the item counter-mirrors itself. */
+.bay.rear .slots { transform: scaleX(-1); }
+.bay.rear .item { transform: scaleX(-1); }
+
+.slots { position: relative; }
+
+.uslot {
+  position: absolute; left: 0; right: 0; height: var(--u);
+  border: 1px dashed #1b2122; border-radius: 3px;
+}
+.uslot.hot { border-color: var(--accent); background: rgba(53,179,154,.09); }
+.uslot.bad { border-color: var(--danger); background: rgba(226,102,92,.10); }
+
+.item {
+  position: absolute; left: 0; right: 0;
+  cursor: grab; color: var(--fg);
+}
+.item.sel { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 3px; }
+
+/* Half-width units span half the interior BETWEEN the ears, not half the 19"
+   panel — 62..500 and 500..938 of 1000, i.e. 43.8% wide. Halving the full width
+   would overlap the ears of the shelf underneath. Keep in sync with HALF_W. */
+.item.half { right: auto; width: 43.8%; }
+.item.half.left { left: 6.2%; }
+.item.half.right { left: 50%; }
+/* A half-rack unit with its own rack ears reaches from the rail to the centre
+   line, so it is exactly half the full panel rather than half the interior. */
+.item.half.eared { width: 50%; }
+.item.half.eared.left { left: 0; }
+.item.half.eared.right { left: 50%; }
+.item.noshelf svg.panel { color: var(--danger); }
+
+/* drop preview narrows to the half being targeted */
+.uslot.halfleft { left: 6.2%; right: 50%; }
+.uslot.halfright { left: 50%; right: 6.2%; }
+.item.drag { opacity: .35; }
+.item svg.panel { display: block; width: 100%; height: 100%; }
+
+.labelcol {
+  position: relative; width: 160px; flex: none;
+  margin-top: 14px; align-self: stretch;
+}
+.labelcol .lbl {
+  position: absolute; left: 0; right: 0;
+  display: flex; align-items: center;
+  /* The bar is a data channel, not decoration: it appears only when the device
+     has a group colour. Ungrouped labels keep the 3px as transparent padding so
+     text stays on the same baseline. */
+  padding-left: 9px; border-left: 3px solid transparent;
+  font: 500 11.5px var(--sans); color: var(--fg);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Two lines in rear view: what you called it, and what it actually is. */
+.labelcol .lbl {
+  flex-direction: column; align-items: flex-start; justify-content: center;
+  gap: 1px;
+}
+.labelcol .lbl .l1,
+.labelcol .lbl .l2 {
+  display: block; max-width: 100%;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.labelcol .lbl .l2 { font: 400 10px var(--sans); color: var(--dim); }
+/* what is mounted on the far side of this U, hidden from this view */
+.labelcol .lbl .l3 {
+  display: block; max-width: 100%;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font: 400 9.5px var(--sans); color: var(--dim); opacity: .8;
+}
+.labelcol .lbl .l2.norear { color: #d9a441; }
+/* RF band — set per unit, so it reads as data rather than as part of the name */
+.labelcol .lbl .lband {
+  display: block; max-width: 100%;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font: 500 9.5px var(--mono); letter-spacing: .3px; color: var(--accent);
+}
+
+/* Two half-width units split a row, so there is no height for two lines —
+   put the name inline after the label instead. */
+.labelcol .lbl.half { flex-direction: row; align-items: baseline; gap: 4px;
+                      font-size: 10.5px; }
+.labelcol .lbl.half .l1 { flex: 0 0 auto; }  /* the label never truncates first */
+.labelcol .lbl.half .l2 { flex: 1 1 auto; min-width: 0; font-size: 9.5px; }
+.labelcol .lbl.half .l3 { flex: 0 1 auto; min-width: 0; font-size: 9px; }
+.labelcol .lbl.half .l2::before { content: '· '; }
+.labelcol .lbl.half .lband { flex: 0 0 auto; font-size: 9px; }
+
+/* the back of something on the far face — the hatch already says so */
+
+.item .grp {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  border-radius: 2px 0 0 2px;
+}
+
+.ghost {
+  position: fixed; z-index: 60; pointer-events: none;
+  width: 300px; opacity: .9; color: var(--fg);
+}
+.ghost svg { display: block; width: 100%; }
+
+/* ------------------------------------------------------------ inspector --- */
+.panelbox {
+  background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: 8px; padding: 12px;
+}
+.panelbox h3 {
+  margin: 0 0 9px; font: 600 10px var(--mono);
+  letter-spacing: .13em; text-transform: uppercase; color: var(--accent);
+}
+.hint { margin: 0; color: var(--dim); font-size: 12px; }
+.warn { margin: 8px 0 0; color: #d9a441; font-size: 11.5px; line-height: 1.45; }
+/* a settled fact rather than a control — e.g. "Rack ears fitted" */
+.row > span.ok { width: auto; color: var(--accent); font-size: 11.5px; }
+.err  { margin: 6px 0 0; color: var(--danger); font-size: 12px; }
+
+.row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+.row > span { flex: none; width: 82px; color: var(--dim); font-size: 12px; }
+.row input, .row select {
+  flex: 1; min-width: 0;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 5px;
+  color: var(--fg); padding: 5px 8px; font: 400 12.5px var(--sans);
+}
+.row input:focus, .row select:focus { outline: none; border-color: var(--accent); }
+.row.btns { justify-content: space-between; margin-top: 10px; }
+
+.swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+.swatches button {
+  width: 20px; height: 20px; border-radius: 5px;
+  border: 2px solid transparent; cursor: pointer;
+}
+.swatches button.on { border-color: var(--fg); }
+
+.patchedit { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
+.pgrid { display: grid; gap: 2px; margin: 8px 0; }
+.pcell {
+  aspect-ratio: 1; min-width: 0; padding: 0;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 3px;
+  color: var(--dim); font: 600 7px var(--mono); cursor: pointer;
+  overflow: hidden; line-height: 1.05;
+  /* Codes like XLR/TRS and IEC out do not fit a square cell on one line, so
+     they wrap rather than being clipped to something ambiguous. */
+  display: flex; align-items: center; justify-content: center;
+  text-align: center; overflow-wrap: anywhere;
+}
+.pcell.long { font-size: 6px; letter-spacing: -.02em; }
+.pcell:hover { border-color: var(--accent); }
+.pcell.on { background: rgba(53,179,154,.16); border-color: var(--accent); color: var(--fg); }
+
+.summary { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.summary td { padding: 4px 0; border-bottom: 1px solid var(--line); }
+.summary td:last-child { text-align: right; font-family: var(--mono); }
+.summary tr:last-child td { border-bottom: 0; font-weight: 600; }
+
+/* --------------------------------------------------------------- dialog --- */
+dialog {
+  background: var(--bg-1); color: var(--fg);
+  border: 1px solid var(--line); border-radius: 12px;
+  padding: 20px; width: min(660px, 94vw);
+  box-shadow: 0 24px 70px rgba(0,0,0,.6);
+}
+dialog::backdrop { background: rgba(0,0,0,.62); }
+dialog h2 { margin: 0 0 4px; font-size: 17px; }
+dialog h3 { margin: 18px 0 6px; font-size: 13px; }
+dialog label { display: block; font-size: 12px; color: var(--dim); margin-bottom: 8px; }
+dialog input, dialog select, dialog textarea {
+  display: block; width: 100%; margin-top: 3px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 5px;
+  color: var(--fg); padding: 6px 9px; font: 400 13px var(--sans);
+}
+dialog textarea { font-family: var(--mono); font-size: 12px; resize: vertical; }
+dialog input:focus, dialog select:focus, dialog textarea:focus {
+  outline: none; border-color: var(--accent);
+}
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+dialog menu {
+  display: flex; justify-content: flex-end; gap: 8px;
+  margin: 18px 0 0; padding: 0;
+}
+.snippet {
+  background: var(--bg); border: 1px solid var(--line); border-radius: 6px;
+  padding: 10px; font: 400 11.5px/1.5 var(--mono); color: var(--dim);
+  white-space: pre-wrap; word-break: break-word; margin: 8px 0 14px;
+  max-height: 130px; overflow: auto;
+}
+
+.connrows { display: flex; flex-direction: column; gap: 6px; }
+.connrow { display: flex; gap: 6px; align-items: center; }
+.connrow select { flex: 1; margin: 0; }
+.connrow input { width: 74px; margin: 0; }
+.connrow button {
+  background: none; border: 0; color: var(--dim);
+  cursor: pointer; font-size: 16px; padding: 0 4px;
+}
+.connrow button:hover { color: var(--danger); }
+
+.preview {
+  margin-top: 14px; padding: 12px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 6px;
+}
+.preview svg { display: block; width: 100%; }
+
+/* ---------------------------------------------------------------- print --- */
+/* Printing must give you the EXPORT SHEET, not the app. window.print() on the
+   live DOM produced the dark UI with a single rack in it, which is useless.
+   The sheet is rendered into #printArea and everything else is hidden. */
+#printArea { display: none; }
+
+@media print {
+  body { background: #fff; color: #000; overflow: visible; display: block; }
+  body > * { display: none !important; }
+  #printArea { display: block !important; }
+  #printArea svg { width: 100%; height: auto; display: block; }
+  /* the sheet is wide; name the paper explicitly or it prints sideways */
+  @page { size: A4 landscape; margin: 8mm; }
+}
+
+/* ============================================================== flow view ==
+   Signal-flow canvas. Nodes are HTML inside a transformed world so text stays
+   selectable and editable; cables are one SVG layer underneath, drawn in the
+   same world coordinates. Node geometry is mirrored in flow.js (NODE_W,
+   HEAD_H, ROW_H) so port anchors can be computed instead of measured — change
+   one and you must change the other. */
+
+/* Several of these panels carry display: flex, which beats the UA sheet's rule
+   for [hidden]. Without this the flow canvas and the rack canvas both show. */
+[hidden] { display: none !important; }
+
+.flowview {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 1px 1px, var(--line) 1px, transparent 0) 0 0 / 22px 22px,
+    var(--bg);
+  touch-action: none;
+  cursor: default;
+}
+.flowview.panning { cursor: grabbing; }
+
+.flowworld {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+/* One region per rack, behind the wires and the cards. Never interactive —
+   it is a backdrop, and swallowing drags here would break panning. */
+.fzones { position: absolute; inset: 0; pointer-events: none; }
+.fzone {
+  position: absolute;
+  border: 1px dashed color-mix(in srgb, var(--z) 45%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--z) 7%, transparent);
+}
+.fzone.ext { border-style: dotted; }
+.fzone span {
+  position: absolute;
+  top: 5px; left: 12px;
+  font: 600 10px var(--mono);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--z) 78%, var(--fg));
+}
+
+.flowwires { position: absolute; left: 0; top: 0; overflow: visible; }
+.flowwires .hit { stroke: transparent; stroke-width: 14; fill: none; cursor: pointer; }
+.flowwires .wire { cursor: pointer; }
+.flowwires .wire:hover path:nth-child(2) { stroke-width: 3; }
+.flowwires .wire.on path:nth-child(2) { filter: drop-shadow(0 0 5px currentColor); }
+.flowwires .chip { stroke: var(--bg); stroke-width: 1.5; }
+.flowwires .chipn {
+  font: 600 10px var(--mono);
+  fill: #0c0e0f;
+  pointer-events: none;
+}
+.ghostwire { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 5 4; }
+
+/* --- node ---------------------------------------------------------------- */
+.fnode {
+  position: absolute;
+  background: var(--bg-1);
+  border: 1px solid var(--line-2);
+  border-radius: 7px;
+  box-shadow: 0 6px 18px rgb(0 0 0 / .45);
+  padding-bottom: 8px;
+  user-select: none;
+}
+.fnode.moving { box-shadow: 0 12px 30px rgb(0 0 0 / .6); border-color: var(--accent); }
+.fnode.ext { border-style: dashed; }
+
+.fhead {
+  height: 38px;
+  padding: 5px 9px;
+  border-bottom: 1px solid var(--line);
+  border-radius: 6px 6px 0 0;
+  background: var(--bg-2);
+  cursor: grab;
+  overflow: hidden;
+  position: relative;
+}
+.fhead:active { cursor: grabbing; }
+.fhead b {
+  display: block;
+  font: 600 12px/1.25 var(--sans);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.fhead span {
+  display: block;
+  font: 10px/1.2 var(--mono);
+  color: var(--dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.fkill {
+  position: absolute; top: 4px; right: 4px;
+  width: 18px; height: 18px; padding: 0;
+  background: transparent; border: 0; border-radius: 4px;
+  color: var(--dim); font-size: 15px; line-height: 1; cursor: pointer;
+}
+.fkill:hover { background: var(--danger); color: #fff; }
+
+/* --- port row ------------------------------------------------------------ */
+.prow {
+  height: 17px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  position: relative;
+  font: 10px/1 var(--mono);
+  color: var(--dim);
+}
+.prow.used { color: var(--fg); }
+.prow:hover { background: var(--bg-2); }
+/* A picked run — click a socket, shift-click another, then drag once. */
+.prow.picked { background: rgba(53,179,154,.18); color: var(--fg); }
+.prow.picked .pdot { box-shadow: 0 0 0 2px rgba(53,179,154,.5); }
+
+.pdot { width: 7px; height: 7px; border-radius: 50%; flex: none; opacity: .75; }
+.prow.used .pdot { opacity: 1; }
+.plab {
+  flex: 1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  cursor: text;
+}
+.pdir {
+  font-size: 8px;
+  letter-spacing: .06em;
+  padding: 0 3px;
+  border-radius: 3px;
+  border: 1px solid var(--line-2);
+  color: var(--dim);
+  flex: none;
+}
+.pdir.in { border-color: #3c5a52; }
+.pdir.out { border-color: #5a4a3c; }
+
+/* The anchors sit half outside the card so a cable visibly leaves the edge. */
+.pa {
+  position: absolute;
+  top: 4px;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  cursor: crosshair;
+}
+.pa.l { left: -5px; }
+.pa.r { right: -5px; }
+.pa:hover { background: var(--accent); border-color: var(--accent); transform: scale(1.35); }
+.prow.used .pa { background: var(--line-2); }
+
+.pedit {
+  flex: 1; min-width: 0;
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  color: var(--fg);
+  font: 10px var(--mono);
+  padding: 0 3px;
+}
+
+.fmore {
+  display: block;
+  width: calc(100% - 18px);
+  margin: 4px 9px 0;
+  padding: 3px 0;
+  background: transparent;
+  border: 1px dashed var(--line-2);
+  border-radius: 4px;
+  color: var(--dim);
+  font: 9px var(--mono);
+  cursor: pointer;
+}
+.fmore:hover { border-color: var(--accent); color: var(--accent); }
+
+/* --- toolbar ------------------------------------------------------------- */
+.flowbar .flowtools { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.flowbar .flowtools .btn { white-space: nowrap; }
+.flowbar .fhint {
+  font: 10px var(--mono);
+  color: var(--dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#fMatrix.on { border-color: var(--accent); color: var(--accent); }
+
+/* --- connection matrix --------------------------------------------------- */
+.matrix {
+  position: absolute;
+  top: 12px; right: 12px; bottom: 12px;
+  /* Never let the pane eat the canvas it is describing — on a narrow window it
+     gives way rather than covering the graph entirely. */
+  width: min(380px, 60%);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-1);
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  box-shadow: 0 10px 34px rgb(0 0 0 / .55);
+  overflow: hidden;
+}
+.matrix header {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.matrix header h3 { margin: 0; font: 600 12px var(--sans); letter-spacing: .04em; }
+.matrix header span { font: 10px var(--mono); color: var(--dim); flex: 1; }
+.matrix .fx {
+  background: transparent; border: 0; color: var(--dim);
+  font-size: 17px; line-height: 1; cursor: pointer; padding: 0 2px;
+}
+.matrix .fx:hover { color: var(--fg); }
+
+.fchips { display: flex; flex-wrap: wrap; gap: 5px; padding: 9px 12px 4px; }
+.fchip {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  color: var(--dim);
+  font: 10px var(--mono);
+  padding: 3px 9px;
+  cursor: pointer;
+}
+.fchip i { width: 7px; height: 7px; border-radius: 50%; }
+.fchip b { color: var(--fg); font-weight: 600; }
+.fchip.on { border-color: var(--accent); color: var(--fg); }
+
+.msearch {
+  margin: 6px 12px 8px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  color: var(--fg);
+  font: 11px var(--sans);
+  padding: 6px 9px;
+}
+.msearch:focus { outline: none; border-color: var(--accent); }
+
+.mrows { flex: 1; overflow: auto; padding: 0 6px 6px; }
+.mrow {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 6px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.mrow:hover { background: var(--bg-2); }
+.mrow.on { background: var(--bg-2); box-shadow: inset 2px 0 0 var(--accent); }
+.mn {
+  flex: none;
+  min-width: 22px; height: 18px;
+  border-radius: 4px;
+  color: #0c0e0f;
+  font: 600 10px/18px var(--mono);
+  text-align: center;
+}
+.mend { flex: 1; min-width: 0; }
+.mend b {
+  display: block; font: 500 11px var(--sans);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mend span { display: block; font: 9px var(--mono); color: var(--dim); }
+.marr { color: var(--dim); flex: none; }
+.mdel {
+  flex: none; width: 18px; height: 18px; padding: 0;
+  background: transparent; border: 0; border-radius: 4px;
+  color: var(--dim); font-size: 14px; line-height: 1; cursor: pointer;
+  opacity: 0;
+}
+.mrow:hover .mdel { opacity: 1; }
+.mdel:hover { background: var(--danger); color: #fff; }
+
+.mempty { flex: 1; margin: 0; padding: 18px 14px; font-size: 12px; color: var(--dim); }
+.mfoot { padding: 8px 12px; border-top: 1px solid var(--line); }
+
+/* --- external node dialog ------------------------------------------------ */
+.extrow { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+.extrow .et { flex: 2; min-width: 0; }
+.extrow .en { width: 62px; }
+.extrow .el { flex: 1.4; min-width: 0; }
+.extrow .fx {
+  background: transparent; border: 0; color: var(--dim);
+  font-size: 16px; cursor: pointer; padding: 0 4px;
+}
+.extrow .fx:hover { color: var(--danger); }
+
+/* --------------------------------------------------------- side elevation -- */
+/* True millimetres on both axes — 44.45 mm per U and real depth — so a device
+   that will not fit is visibly too long rather than a note in the summary. */
+.sidewrap { margin: auto; width: 100%; max-width: 1100px; padding: 8px; }
+.sidesvg { width: 100%; height: auto; display: block; }
+
+.sidesvg .scase { fill: none; stroke: var(--line-2); stroke-width: 1.2; }
+.sidesvg .srail { fill: var(--bg-2); stroke: var(--line-2); stroke-width: .8; }
+.sidesvg .sgrid { stroke: var(--line); stroke-width: .5; }
+.sidesvg .sru {
+  fill: var(--dim); font: 400 9px var(--mono);
+}
+.sidesvg .sax {
+  fill: var(--dim); font: 500 8px var(--mono); letter-spacing: .08em;
+}
+.sidesvg .sax.warn { fill: #d9a441; }
+
+.sidesvg .sitem rect {
+  fill: var(--bg-2); stroke: var(--accent); stroke-width: 1;
+}
+.sidesvg .sitem.half rect { stroke-dasharray: 4 2.5; }
+.sidesvg .sitem.bad rect { stroke: var(--danger); fill: rgba(226,102,92,.14); }
+.sidesvg .slab {
+  fill: var(--fg); font: 500 8.5px var(--sans); pointer-events: none;
+}
+.sidesvg .sitem.bad .slab { fill: var(--danger); }
+
+.sempty { color: var(--dim); font-size: 12.5px; text-align: center; margin: 18px 0 0; }
+
+.sidesvg .sitem { cursor: grab; }
+.sidesvg .sitem.moving { cursor: grabbing; }
+.sidesvg .sitem.moving rect { stroke-width: 1.8; }
+.sidesvg .sitem.sel rect { stroke-width: 1.8; filter: drop-shadow(0 0 3px currentColor); }
+.sidesvg .sitem:hover rect { fill: #1d2223; }
