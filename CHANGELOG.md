@@ -19,6 +19,17 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.2.2 — 2026-08-11
+
+**Fixed**
+
+- **The split-socket notice used an accent rail down its left edge**, which
+  matches nothing else in the app. Warning state here is signalled with the
+  whole border — `.toast.bad` does exactly that — so the notice now does too.
+  Also removes a one-off `#7a6330` that existed only to support the rail.
+
+---
+
 ## v1.2.1 — 2026-08-11
 
 **Fixed**
