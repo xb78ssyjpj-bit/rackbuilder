@@ -32,11 +32,79 @@ git -C rackbuilder log --oneline
 To compare two points, including a specific file:
 
 ```bash
-git -C rackbuilder diff <old> <new> -- devices.js
+git -C rackbuilder diff v1.0.0 v1.1.0 -- devices.js
 ```
 
-One commit per coherent change, with the reasoning in the commit body. `dist/`
-is a build artefact and is not tracked — rebuild it rather than committing it.
+One commit per coherent change, with the reasoning in the commit body. Every
+release is tagged. `dist/` is a build artefact and is not tracked — rebuild it
+rather than committing it.
+
+## Working on this with somebody else
+
+### Getting the newest build
+
+Go to the repository's **Releases** page and download
+`rackbuilder-vX.Y.Z.html`. One file, double-click it, done — no server, no
+install. The release notes are that version's changelog entry, so what changed
+sits next to the thing that changed.
+
+Storage is per-file-location, so a new version opens with no projects in it.
+**File → Save .json** before switching, and load it into the new one.
+
+### Cutting a release
+
+```bash
+python3 tools/release.py minor      # or patch, or major
+```
+
+Bumps `version.js`, rebuilds, commits, tags, pushes, and creates the GitHub
+release with the standalone build attached. It refuses to run on a dirty tree,
+refuses if the checks fail, and refuses if `CHANGELOG.md` has no heading for the
+new version — the entry is written by hand on purpose. Generating one from
+commit subjects produces something nobody reads; the point of a changelog is the
+*why*.
+
+`--dry-run` shows what would happen without touching anything.
+
+### Adding a device
+
+1. Add the entry to `devices.js`, **inside its brand's existing section** rather
+   than at the end of the file. This is the whole conflict-avoidance strategy —
+   see below.
+2. `node tools/check.mjs` — catches duplicate ids, undeclared categories,
+   connectors that fall off the panel, and two sockets sharing a label.
+3. Commit with the source you used in the message. The library's value is that
+   every figure is traceable; a device with no `src` is a device somebody has to
+   re-research later.
+
+Follow the existing policy: **work from the manufacturer's own documentation, and
+where it does not say, leave it out and note it in `TODO.md` rather than guess.**
+Half the entries here carry a comment explaining what was and was not verified.
+
+### Two people editing devices.js
+
+It is one 3,800-line array, which sounds like a merge nightmare and mostly is
+not — git merges edits that are far apart in a file without complaint. Conflicts
+come from two habits, both avoidable:
+
+- **Appending new devices at the end of the file.** Two people doing that on the
+  same day conflict every time. Add inside the relevant brand's section instead;
+  those are spread throughout the file, so you are rarely in the same place.
+- **Reformatting.** A tidy-up that touches lines you did not mean to change
+  turns a clean merge into a manual one. Leave formatting alone.
+
+Before pushing:
+
+```bash
+git pull --rebase && node tools/check.mjs
+```
+
+The rebase replays your commits on top of theirs, so the history stays a
+straight line rather than filling with merge commits. Re-running the checks
+afterwards is the important half: **a merge that resolves cleanly can still be
+wrong** — two people adding the same device under different ids, or the same id
+under different names, is a textual success and a semantic conflict. That is
+exactly what `check.mjs` catches.
 
 ## Handing it to somebody else
 

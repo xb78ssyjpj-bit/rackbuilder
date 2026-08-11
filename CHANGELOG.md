@@ -9,9 +9,13 @@ what changed and, where it matters, why.
 Conventions:
 
 - One commit per coherent change, with the reasoning in the commit body.
-- A dated heading here per working session.
+- A `## vX.Y.Z` heading per release. `tools/release.py` refuses to run without
+  one, and uses it verbatim as the GitHub release notes.
 - `dist/` is a build artefact and is not tracked. Rebuild with
-  `python3 tools/bundle.py`.
+  `python3 tools/bundle.py`, or let `tools/release.py` do it.
+
+Versioning: **major** breaks saved projects or rewrites a view, **minor** adds a
+capability, **patch** is fixes and data corrections.
 
 ---
 
