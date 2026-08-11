@@ -212,11 +212,13 @@ export function createFlow(ctx) {
     f.labels ||= {};     // nodeKey -> portId -> label
     f.open ||= {};       // nodeKey -> bool (port list expanded)
     f.view ||= { x: 40, y: 40, k: 1 };
+    f.order ||= {};      // nodeKey -> [portId] when reordered by hand
     f.seq ||= 0;         // last cable number handed out
     return f;
   }
 
   let nodes = [];                    // rebuilt every render
+  let editing = null;                // nodeKey whose ports are being reordered
   const byKey = new Map();
   let selCable = null;
   let matrixOpen = false;
@@ -268,6 +270,18 @@ export function createFlow(ctx) {
   const labelFor = (n, p) =>
     (flow().labels[n.key] || {})[p.id] || portLabel(p, n.both);
 
+  // A hand-set order wins over the declared one. Applied as a sort rather than
+  // a replacement so a device whose ports changed since — a repunched patch
+  // panel, an edited library entry — keeps its unknown sockets instead of
+  // losing them.
+  function ordered(n, ports) {
+    const ord = flow().order[n.key];
+    if (!ord || !ord.length) return ports;
+    const at = new Map(ord.map((id, i) => [id, i]));
+    return ports.slice().sort((a, b) =>
+      (at.has(a.id) ? at.get(a.id) : 1e6) - (at.has(b.id) ? at.get(b.id) : 1e6));
+  }
+
   const isOpen = (n) => {
     const f = flow();
     return f.open[n.key] ?? (n.ports.length <= 14);
@@ -284,9 +298,11 @@ export function createFlow(ctx) {
 
   // Which port rows a node is currently showing, and where each sits.
   function visiblePorts(n) {
-    if (isOpen(n)) return n.ports;
+    // While reordering, every socket is shown — you cannot drag a row into a
+    // position that is not on screen.
+    if (editing === n.key || isOpen(n)) return ordered(n, n.ports);
     const on = connectedIds(n.key);
-    return n.ports.filter((p) => on.has(p.id));
+    return ordered(n, n.ports.filter((p) => on.has(p.id)));
   }
 
   function anchor(nodeKey, portId, side) {
@@ -343,13 +359,30 @@ export function createFlow(ctx) {
   // that share both endpoints — which happens whenever a node is collapsed and
   // several wires land on its header — would otherwise be drawn exactly on top
   // of one another and read as a single cable.
-  function wirePath(p1, p2, bow = 0) {
+  // A cable between two sockets on the SAME card would otherwise be drawn
+  // straight through the card — leaving from the right edge, arriving at the
+  // left, crossing every port row on the way and reading as a cable to some
+  // other device. So a self-patch loops out to the right instead, clear of the
+  // card, which is what it physically is: a short jumper on one box.
+  const SELF_OUT = 74;
+
+  function wirePath(p1, p2, bow = 0, self = false) {
+    if (self) {
+      const out = SELF_OUT + Math.abs(bow) * 0.6;
+      return `M${p1.x},${p1.y} C${p1.x + out},${p1.y} `
+        + `${p2.x + out},${p2.y} ${p2.x},${p2.y}`;
+    }
     const d = Math.max(46, Math.abs(p2.x - p1.x) * 0.45);
     return `M${p1.x},${p1.y} `
       + `C${p1.x + d},${p1.y + bow} ${p2.x - d},${p2.y + bow} ${p2.x},${p2.y}`;
   }
   // The cubic at t = 0.5, for the number chip.
-  const wireMid = (p1, p2, bow = 0) => {
+  const wireMid = (p1, p2, bow = 0, self = false) => {
+    if (self) {
+      const out = SELF_OUT + Math.abs(bow) * 0.6;
+      return { x: (p1.x + 3 * (p1.x + out) + 3 * (p2.x + out) + p2.x) / 8,
+               y: (p1.y + 3 * p1.y + 3 * p2.y + p2.y) / 8 };
+    }
     const d = Math.max(46, Math.abs(p2.x - p1.x) * 0.45);
     return { x: (p1.x + 3 * (p1.x + d) + 3 * (p2.x - d) + p2.x) / 8,
              y: (p1.y + 3 * (p1.y + bow) + 3 * (p2.y + bow) + p2.y) / 8 };
@@ -360,10 +393,12 @@ export function createFlow(ctx) {
   function bowOf(cables) {
     const groups = new Map();
     cables.forEach((c) => {
+      const self = c.a.node === c.b.node;
       const a = anchor(c.a.node, c.a.port, 'r');
-      const b = anchor(c.b.node, c.b.port, 'l');
+      const b = anchor(c.b.node, c.b.port, self ? 'r' : 'l');
       if (!a || !b) return;
-      const k = `${Math.round(a.x)},${Math.round(a.y)}|${Math.round(b.x)},${Math.round(b.y)}`;
+      const k = `${self ? 'S' : ''}${Math.round(a.x)},${Math.round(a.y)}`
+        + `|${Math.round(b.x)},${Math.round(b.y)}`;
       if (!groups.has(k)) groups.set(k, []);
       groups.get(k).push(c.id);
     });
@@ -379,22 +414,39 @@ export function createFlow(ctx) {
   // Chips still collide when unrelated cables happen to cross mid-run, so slide
   // any that land on top of a chip already placed. Walking outward from the
   // midpoint keeps the chip on its own curve rather than floating free of it.
-  function placeChip(p1, p2, bow, taken) {
+  function placeChip(p1, p2, bow, taken, self = false) {
     const CLEAR = 21;
-    for (const t of [0.5, 0.42, 0.58, 0.34, 0.66, 0.26, 0.74]) {
-      const d = Math.max(46, Math.abs(p2.x - p1.x) * 0.45);
+    // A chip over a card is unreadable and hides a port row, so the node
+    // rectangles are obstacles as much as the other chips are.
+    const cards = nodes.map((n) => ({
+      x0: n.pos.x - 4, y0: n.pos.y - 4,
+      x1: n.pos.x + NODE_W + 4,
+      y1: n.pos.y + nodeHeight(visiblePorts(n).length) + 4,
+    }));
+    const overCard = (pt) => cards.some((c) =>
+      pt.x > c.x0 && pt.x < c.x1 && pt.y > c.y0 && pt.y < c.y1);
+
+    const ts = [0.5, 0.42, 0.58, 0.34, 0.66, 0.26, 0.74, 0.18, 0.82];
+    let fallback = null;
+    for (const t of ts) {
       const u = 1 - t;
+      const d = Math.max(46, Math.abs(p2.x - p1.x) * 0.45);
+      const out = SELF_OUT + Math.abs(bow) * 0.6;
+      const c1 = self ? { x: p1.x + out, y: p1.y } : { x: p1.x + d, y: p1.y + bow };
+      const c2 = self ? { x: p2.x + out, y: p2.y } : { x: p2.x - d, y: p2.y + bow };
       const pt = {
-        x: u * u * u * p1.x + 3 * u * u * t * (p1.x + d)
-           + 3 * u * t * t * (p2.x - d) + t * t * t * p2.x,
-        y: u * u * u * p1.y + 3 * u * u * t * (p1.y + bow)
-           + 3 * u * t * t * (p2.y + bow) + t * t * t * p2.y,
+        x: u * u * u * p1.x + 3 * u * u * t * c1.x + 3 * u * t * t * c2.x + t * t * t * p2.x,
+        y: u * u * u * p1.y + 3 * u * u * t * c1.y + 3 * u * t * t * c2.y + t * t * t * p2.y,
       };
+      if (!fallback) fallback = pt;
       const clash = taken.some((q) =>
         Math.abs(q.x - pt.x) < CLEAR * 1.6 && Math.abs(q.y - pt.y) < CLEAR);
-      if (!clash || t === 0.74) { taken.push(pt); return pt; }
+      if (!clash && !overCard(pt)) { taken.push(pt); return pt; }
     }
-    return wireMid(p1, p2, bow);
+    // Nowhere clean on the curve — take the midpoint rather than drop the
+    // number, because an unnumbered cable is worse than a crowded one.
+    taken.push(fallback);
+    return fallback;
   }
 
   function drawWires() {
@@ -413,19 +465,20 @@ export function createFlow(ctx) {
     const bows = bowOf(f.cables);
     const chips = [];
     f.cables.forEach((c) => {
+      const self = c.a.node === c.b.node;
       const a = anchor(c.a.node, c.a.port, 'r');
-      const b = anchor(c.b.node, c.b.port, 'l');
+      const b = anchor(c.b.node, c.b.port, self ? 'r' : 'l');
       if (!a || !b) return;
       const bow = bows.get(c.id) || 0;
       const col = FAMILIES[c.fam] ? FAMILIES[c.fam].color : '#888';
       const on = selCable === c.id;
       const g = sel('g', { class: 'wire' + (on ? ' on' : ''), 'data-cable': c.id });
-      g.appendChild(sel('path', { d: wirePath(a, b, bow), class: 'hit' }));
+      g.appendChild(sel('path', { d: wirePath(a, b, bow, self), class: 'hit' }));
       g.appendChild(sel('path', {
-        d: wirePath(a, b, bow), stroke: col, fill: 'none',
+        d: wirePath(a, b, bow, self), stroke: col, fill: 'none',
         'stroke-width': on ? 3 : 1.8, 'stroke-linecap': 'round',
       }));
-      const m = placeChip(a, b, bow, chips);
+      const m = placeChip(a, b, bow, chips, self);
       g.appendChild(sel('rect', {
         x: m.x - 11, y: m.y - 8, width: 22, height: 16, rx: 4,
         fill: col, class: 'chip',
@@ -464,6 +517,9 @@ export function createFlow(ctx) {
         `<header class="fhead" title="${esc(n.sub)} ${esc(n.name)} — drag to move">`
         + `<b>${esc(n.name)}</b>`
         + `<span>${esc(n.sub)}${n.meta ? ' · ' + esc(n.meta) : ''}</span>`
+        + `<button type="button" class="fedit" title="${editing === n.key
+             ? 'Done reordering' : 'Reorder sockets'}">`
+        + `${editing === n.key ? 'done' : 'edit'}</button>`
         + (n.kind === 'ext'
             ? `<button type="button" class="fkill" title="Remove this node">&times;</button>`
             : '')
@@ -479,23 +535,37 @@ export function createFlow(ctx) {
                 : `Show ${n.ports.length} sockets`}</button>`
             : '');
 
+      const editMode = editing === n.key;
+      if (editMode) d.classList.add('editing');
       const list = d.querySelector('.fports');
       vis.forEach((p) => {
         const row = document.createElement('div');
         row.className = 'prow' + (on.has(p.id) ? ' used' : '')
-          + (isPicked(n.key, p.id) ? ' picked' : '');
+          + (isPicked(n.key, p.id) ? ' picked' : '')
+          + (editMode ? ' reorder' : '');
         row.dataset.node = n.key;
         row.dataset.port = p.id;
         row.title = portTitle(p);
         const g = GENDER[p.t];
-        row.innerHTML =
-          `<i class="pa l" data-side="l"></i>`
+        row.innerHTML = (editMode ? `<i class="pgrip" aria-hidden="true"></i>` : '')
+          + (editMode ? '' : `<i class="pa l" data-side="l"></i>`)
           + `<span class="pdot" style="background:${colorOf(p.t, p.sig)}"></span>`
           + `<span class="plab">${esc(labelFor(n, p))}</span>`
           + (g ? `<span class="pdir ${g}">${g}</span>` : '')
-          + `<i class="pa r" data-side="r"></i>`;
+          + (editMode ? '' : `<i class="pa r" data-side="r"></i>`);
         list.appendChild(row);
       });
+
+      const edit = d.querySelector('.fedit');
+      if (edit) edit.onclick = (e) => {
+        e.stopPropagation();
+        editing = editing === n.key ? null : n.key;
+        clearPick(false);
+        render();
+        if (editing) {
+          toast('Drag sockets to reorder. The order is saved with the project.');
+        }
+      };
 
       // The header is the drag handle; a click on the "n more" button toggles.
       const more = d.querySelector('.fmore');
@@ -614,6 +684,50 @@ export function createFlow(ctx) {
     }
   }
 
+  // --- reordering sockets --------------------------------------------------
+  // Dragging a row swaps it past its neighbours, so the list reorders under the
+  // cursor and you can see the result as you go. The order is stored per node
+  // instance, not per device: two copies of the same stagebox can be arranged
+  // differently, because they are wired differently.
+  function startReorder(row, ev) {
+    const key = row.dataset.node;
+    const n = byKey.get(key);
+    if (!n) return;
+    const f = flow();
+    let ids = visiblePorts(n).map((p) => p.id);
+    const world = $('#flowWorld');
+    row.classList.add('lifting');
+
+    const move = (e) => {
+      const rows = [...world.querySelectorAll(`.fnode[data-node="${key}"] .prow`)];
+      const from = ids.indexOf(row.dataset.port);
+      // Which row is under the pointer now?
+      let to = from;
+      rows.forEach((r, i) => {
+        const b = r.getBoundingClientRect();
+        if (e.clientY >= b.top && e.clientY <= b.bottom) to = i;
+      });
+      if (to === from) return;
+      ids.splice(to, 0, ids.splice(from, 1)[0]);
+      f.order[key] = ids.slice();
+      render();
+      // render() rebuilt the DOM, so re-find the row we are carrying.
+      const again = world.querySelector(
+        `.fnode[data-node="${key}"] .prow[data-port="${row.dataset.port}"]`);
+      if (again) { again.classList.add('lifting'); row = again; }
+    };
+    const up = () => {
+      removeEventListener('pointermove', move);
+      removeEventListener('pointerup', up);
+      removeEventListener('pointercancel', up);
+      f.order[key] = ids.slice();
+      save(); render();
+    };
+    addEventListener('pointermove', move);
+    addEventListener('pointerup', up);
+    addEventListener('pointercancel', up);
+  }
+
   // --- patching ------------------------------------------------------------
   let link = null;   // { node, port, side, ghost }
 
@@ -634,13 +748,55 @@ export function createFlow(ctx) {
 
   function moveLink(ev) {
     if (!link) return;
+    link.last = { clientX: ev.clientX, clientY: ev.clientY };
     const a = anchor(link.node, link.port, link.side);
     const p = worldPt(ev);
     link.ghost.setAttribute('d', link.side === 'r' ? wirePath(a, p) : wirePath(p, a));
+    edgePan(ev);
+  }
+
+  // Drag a cable to the edge and the canvas follows, so a patch to something
+  // off-screen does not mean letting go, panning, and starting again. The band
+  // is generous and the speed ramps with how far into it you are — a hard step
+  // at the boundary feels like the canvas is fighting you.
+  const EDGE = 56, EDGE_MAX = 15;
+  let panTimer = null;
+
+  function edgePan(ev) {
+    const host = $('#flowView');
+    if (!host) return;
+    const r = host.getBoundingClientRect();
+    const ramp = (d) => Math.min(1, Math.max(0, (EDGE - d) / EDGE)) ** 1.6;
+    let dx = 0, dy = 0;
+    if (ev.clientX - r.left < EDGE) dx = ramp(ev.clientX - r.left) * EDGE_MAX;
+    else if (r.right - ev.clientX < EDGE) dx = -ramp(r.right - ev.clientX) * EDGE_MAX;
+    if (ev.clientY - r.top < EDGE) dy = ramp(ev.clientY - r.top) * EDGE_MAX;
+    else if (r.bottom - ev.clientY < EDGE) dy = -ramp(r.bottom - ev.clientY) * EDGE_MAX;
+
+    stopEdgePan();
+    if (!dx && !dy) return;
+    panTimer = setInterval(() => {
+      if (!link) { stopEdgePan(); return; }
+      const f = flow();
+      f.view.x += dx; f.view.y += dy;
+      applyView();
+      // Redraw the ghost against the moved canvas, or it lags behind the cursor.
+      if (link.last) {
+        const a2 = anchor(link.node, link.port, link.side);
+        const p2 = worldPt(link.last);
+        link.ghost.setAttribute('d',
+          link.side === 'r' ? wirePath(a2, p2) : wirePath(p2, a2));
+      }
+    }, 16);
+  }
+
+  function stopEdgePan() {
+    if (panTimer) { clearInterval(panTimer); panTimer = null; }
   }
 
   function endLink(ev) {
     if (!link) return;
+    stopEdgePan();
     const ghost = link.ghost, from = link;
     link = null;
     ghost.remove();
@@ -909,6 +1065,15 @@ export function createFlow(ctx) {
   let drag = null;    // { key, dx, dy } while moving a node
   let pan = null;     // { x, y, vx, vy } while panning the canvas
 
+  // Capture keeps a drag alive when the pointer leaves the element, but it
+  // throws if the browser has no active pointer with that id — and an exception
+  // here would abort the handler before the drag ever starts, killing patching
+  // outright. It is an optimisation, not a requirement: window-level move and
+  // up listeners do the real work.
+  const grabPointer = (el, id) => {
+    try { el.setPointerCapture(id); } catch { /* not capturable; carry on */ }
+  };
+
   function mount() {
     const host = $('#flowView');
     const world = $('#flowWorld');
@@ -921,9 +1086,15 @@ export function createFlow(ctx) {
       if (ev.target.closest('.matrix')) return;
       const row = ev.target.closest('.prow');
       const pa = ev.target.closest('.pa');
+      // While a card is in edit mode its rows reorder instead of patching.
+      if (row && row.classList.contains('reorder')) {
+        ev.preventDefault(); ev.stopPropagation();
+        startReorder(row, ev);
+        return;
+      }
       if (row && pa) {                       // start a cable
         ev.preventDefault(); ev.stopPropagation();
-        host.setPointerCapture(ev.pointerId);
+        grabPointer(host, ev.pointerId);
         startLink(row, pa.dataset.side, ev);
         return;
       }
@@ -942,14 +1113,14 @@ export function createFlow(ctx) {
         const n = byKey.get(key);
         const p = worldPt(ev);
         ev.preventDefault();
-        host.setPointerCapture(ev.pointerId);
+        grabPointer(host, ev.pointerId);
         drag = { key, dx: p.x - n.pos.x, dy: p.y - n.pos.y, el: head.parentElement };
         head.parentElement.classList.add('moving');
         return;
       }
       if (ev.target.closest('.fnode') || ev.target.closest('.wire')) return;
       const f = flow();                      // otherwise pan
-      host.setPointerCapture(ev.pointerId);
+      grabPointer(host, ev.pointerId);
       pan = { x: ev.clientX, y: ev.clientY, vx: f.view.x, vy: f.view.y };
       selCable = null;
       if (pick.ids.length) clearPick(); else drawWires();

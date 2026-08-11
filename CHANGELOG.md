@@ -15,7 +15,46 @@ Conventions:
 
 ---
 
-## 2026-08-11 — rack duplication, right-click, side-view dragging
+## v1.1.0 — 2026-08-11
+
+**Added**
+
+- **Versioned builds.** `version.js` is the single source of truth; the bundle is
+  named `rackbuilder-v1.1.0.html`, the app shows its version beside the logo, and
+  the page title carries it. `rackbuilder-latest.html` is a copy of the newest.
+  Handing somebody `rackbuilder.html` twice a week apart gave them two different
+  programs with the same name.
+- **Reorder sockets on a flow card** — **edit** on the header turns the rows into
+  drag handles. Stored per node, not per device, so two copies of a stagebox can
+  be arranged differently. Applied as a sort, so a device whose sockets change
+  later keeps the new ones.
+- **Edge auto-pan while dragging a cable**, ramped rather than stepped.
+- **Shift-drag a rack item to copy it.**
+- **Side view zoom**, on the same three controls the bays use.
+- **Drag tolerance**: a press must travel 5 px before it counts as a drag, and
+  port anchors are a 17×15 target rather than a 9 px dot. *(Taken from "make
+  tolerences good for dr" — if that meant something else, say so.)*
+
+**Fixed**
+
+- **The side view was upside down** — U1 was at the bottom while every other
+  view and ruler in the app puts it at the top.
+- **A cable between two sockets on the same card** was drawn from the right edge
+  to the left, straight through the card and across every port row, reading as a
+  cable to some other device. Self-patches now loop out to the right.
+- **Cable numbers could sit on top of a device card**, hiding a port row. Cards
+  are now obstacles for chip placement, alongside the other chips.
+- **Right-click removal now asks.** Two presses within 4 s, the same shape as the
+  destructive buttons. It is far easier to land by accident than the Delete key
+  or a drag to the library, and there is still no undo.
+- **`setPointerCapture` failure no longer aborts a drag.** It throws when the
+  browser has no active pointer with that id, and the exception killed the
+  handler before the drag started. It is an optimisation, not a requirement —
+  window-level listeners do the real work.
+
+---
+
+## v1.0.0 — 2026-08-11 — rack duplication, right-click, side-view dragging
 
 *Version control began during this session, so all of it sits in the baseline
 commit rather than in commits of its own. Splitting it out afterwards would have

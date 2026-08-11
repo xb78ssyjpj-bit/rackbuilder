@@ -658,20 +658,30 @@ dialog menu {
 .pdir.in { border-color: #3c5a52; }
 .pdir.out { border-color: #5a4a3c; }
 
-/* The anchors sit half outside the card so a cable visibly leaves the edge. */
+/* The anchors sit half outside the card so a cable visibly leaves the edge.
+   The element is a 17x15 target — grabbing a 9 px dot on a 17 px row is a game
+   of darts — while the visible dot stays 9 px via ::after. Kept no taller than
+   a row so it never steals a press meant for the row above or below. */
 .pa {
   position: absolute;
-  top: 4px;
-  width: 9px; height: 9px;
-  border-radius: 50%;
-  background: var(--bg-2);
-  border: 1px solid var(--line-2);
+  top: 1px;
+  width: 17px; height: 15px;
+  background: transparent;
+  border: 0;
   cursor: crosshair;
 }
-.pa.l { left: -5px; }
-.pa.r { right: -5px; }
-.pa:hover { background: var(--accent); border-color: var(--accent); transform: scale(1.35); }
-.prow.used .pa { background: var(--line-2); }
+.pa.l { left: -9px; }
+.pa.r { right: -9px; }
+.pa::after {
+  content: ''; position: absolute; top: 3px; left: 4px;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--bg-2); border: 1px solid var(--line-2);
+  transition: transform .1s;
+}
+.pa:hover::after {
+  background: var(--accent); border-color: var(--accent); transform: scale(1.4);
+}
+.prow.used .pa::after { background: var(--line-2); }
 
 .pedit {
   flex: 1; min-width: 0;
@@ -811,7 +821,9 @@ dialog menu {
 /* --------------------------------------------------------- side elevation -- */
 /* True millimetres on both axes — 44.45 mm per U and real depth — so a device
    that will not fit is visibly too long rather than a note in the summary. */
-.sidewrap { margin: auto; width: 100%; max-width: 1100px; padding: 8px; }
+/* The wrap scrolls so a zoomed drawing can be panned; max-width keeps it
+   sane at 100% on a wide screen. */
+.sidewrap { margin: auto; width: 100%; max-width: 1100px; padding: 8px; overflow: auto; }
 .sidesvg { width: 100%; height: auto; display: block; }
 
 .sidesvg .scase { fill: none; stroke: var(--line-2); stroke-width: 1.2; }
@@ -842,3 +854,38 @@ dialog menu {
 .sidesvg .sitem.moving rect { stroke-width: 1.8; }
 .sidesvg .sitem.sel rect { stroke-width: 1.8; filter: drop-shadow(0 0 3px currentColor); }
 .sidesvg .sitem:hover rect { fill: #1d2223; }
+
+/* Version, small and out of the way, but present — so a screenshot or an
+   exported sheet can always be tied back to a build. */
+.brand i {
+  font: 400 9.5px var(--mono); font-style: normal;
+  color: var(--dim); margin-left: 7px; letter-spacing: 0;
+}
+
+/* A rack item waiting for its second right-click. */
+.item.armdel .panel, .item.armdel { outline: 2px solid var(--danger); outline-offset: -1px; }
+.sidesvg .sitem.armdel rect { stroke: var(--danger); stroke-width: 2; }
+
+/* --- reordering sockets on a flow card ------------------------------------ */
+.fedit {
+  position: absolute; top: 4px; right: 4px;
+  padding: 1px 5px; border-radius: 4px;
+  background: transparent; border: 1px solid var(--line-2);
+  color: var(--dim); font: 500 8px var(--mono); letter-spacing: .06em;
+  cursor: pointer; text-transform: uppercase;
+}
+.fnode.ext .fedit { right: 24px; }
+.fedit:hover { color: var(--fg); border-color: var(--accent); }
+.fnode.editing { border-color: var(--accent); }
+.fnode.editing .fedit { color: var(--accent); border-color: var(--accent); }
+
+.prow.reorder { cursor: grab; }
+.prow.reorder:hover { background: var(--bg-2); }
+.prow.lifting { background: rgba(53,179,154,.22); cursor: grabbing; }
+.pgrip {
+  flex: none; width: 7px; height: 9px; margin-left: -2px;
+  border-top: 1px solid var(--line-2); border-bottom: 1px solid var(--line-2);
+  border-left: 0; border-right: 0;
+  box-shadow: inset 0 3px 0 -2px var(--line-2);
+  opacity: .8;
+}

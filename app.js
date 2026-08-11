@@ -7,6 +7,7 @@ import {
 } from './panel.js';
 import { SEED_DEVICES, CATEGORIES } from './devices.js';
 import { createFlow, FAMILIES } from './flow.js';
+import { VERSION } from './version.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -40,7 +41,7 @@ function save() {
 }
 
 state = { project: load(), rack: 0, view: 'front', sel: null,
-          libCat: 'all', libQ: '', zoom: 1 };
+          libCat: 'all', libQ: '', zoom: 1, sideZoom: 1 };
 if (!state.project.custom) state.project.custom = [];
 
 const library = () => [...SEED_DEVICES, ...state.project.custom];
@@ -440,6 +441,21 @@ addEventListener('resize', sizeU);
 
 const setZoom = (z) => { state.zoom = Math.min(4, Math.max(0.25, z)); sizeU(); };
 
+// The side view scales through its own viewBox, so it needs a zoom of its own
+// rather than the --u machinery the bays use. Same three buttons, different
+// target depending on which view is up.
+const setSideZoom = (z) => {
+  state.sideZoom = Math.min(5, Math.max(0.4, z));
+  applySideZoom();
+};
+function applySideZoom() {
+  const svg = $('.sidesvg');
+  if (svg) svg.style.width = (state.sideZoom * 100) + '%';
+  $('#zFit').textContent = Math.abs(state.sideZoom - 1) < 0.01
+    ? 'Fit' : Math.round(state.sideZoom * 100) + '%';
+}
+const inSide = () => state.view === 'side';
+
 // Trackpad pinch arrives as a wheel event with ctrlKey set; ctrl/cmd+scroll is
 // the mouse equivalent. Plain scrolling is left alone so the canvas still pans.
 $('#canvas').addEventListener('wheel', (e) => {
@@ -450,9 +466,11 @@ $('#canvas').addEventListener('wheel', (e) => {
   const d = Math.max(-40, Math.min(40, e.deltaY));
   setZoom(state.zoom * Math.exp(-d * 0.006));
 }, { passive: false });
-$('#zIn').onclick = () => setZoom(state.zoom * 1.25);
-$('#zOut').onclick = () => setZoom(state.zoom / 1.25);
-$('#zFit').onclick = () => setZoom(1);
+$('#zIn').onclick = () =>
+  (inSide() ? setSideZoom(state.sideZoom * 1.25) : setZoom(state.zoom * 1.25));
+$('#zOut').onclick = () =>
+  (inSide() ? setSideZoom(state.sideZoom / 1.25) : setZoom(state.zoom / 1.25));
+$('#zFit').onclick = () => (inSide() ? setSideZoom(1) : setZoom(1));
 
 // A new rack item. Patch panels get their own hole grid so each instance can
 // be punched differently.
@@ -558,7 +576,7 @@ function renderSide() {
 
   // U ruler and the horizontal rules between rack units
   for (let u = 1; u <= r.ru; u++) {
-    const y = y0 + (r.ru - u) * U_MM_H;
+    const y = y0 + (u - 1) * U_MM_H;
     p.push(`<text x="${x0 - 10}" y="${(y + U_MM_H / 2 + 3).toFixed(1)}" `
       + `class="sru" text-anchor="end">${u}</text>`);
     p.push(`<line x1="${x0}" y1="${y.toFixed(1)}" x2="${x0 + W}" y2="${y.toFixed(1)}" `
@@ -595,7 +613,7 @@ function renderSide() {
     const ru = itemRU(it);
     const d = itemDepth(it);
     const rear = itemPlane(it) === 'rear';
-    const y = y0 + (r.ru - it.u - ru + 1) * U_MM_H;
+    const y = y0 + (it.u - 1) * U_MM_H;
     const x = rear ? x0 + W - d : x0;
     const bad = clashing.has(it.uid);
     const half = dev.half ? ' half' : '';
@@ -627,6 +645,7 @@ function renderSide() {
     wrap.insertAdjacentHTML('beforeend',
       '<p class="sempty">Nothing in this rack yet.</p>');
   }
+  applySideZoom();
 }
 
 // Screen point -> the U and the face under it. Returns null outside the case.
@@ -665,7 +684,7 @@ $('#sideWrap').addEventListener('pointerdown', (ev) => {
     const hit = sideHit(e);
     if (!hit || !hit.inside) return;
     const ru = itemRU(it);
-    const u = Math.max(1, Math.min(sideGeom.ru - ru + 1, sideGeom.ru - hit.row - ru + 1));
+    const u = Math.max(1, Math.min(sideGeom.ru - ru + 1, hit.row + 1));
     if (u === it.u && hit.plane === itemPlane(it)) return;
     const dev = devById(it.devId);
     // Same rule the front and rear bays use, so the side view cannot put a
@@ -688,19 +707,12 @@ $('#sideWrap').addEventListener('pointerdown', (ev) => {
   addEventListener('pointercancel', up);
 });
 
-// Right-click removes here too, matching the bays.
+// Right-click removes here too, with the same two-step confirmation.
 $('#sideWrap').addEventListener('contextmenu', (ev) => {
   const g = ev.target.closest('.sitem');
-  if (!g) return;
-  const it = rack().items.find((i) => i.uid === g.dataset.uid);
-  if (!it) return;
+  if (!g) { disarmRemove(); return; }
   ev.preventDefault();
-  const dev = devById(it.devId);
-  const name = it.label || (dev ? dev.model : 'device');
-  rack().items = rack().items.filter((i) => i.uid !== it.uid);
-  if (state.sel === it.uid) state.sel = null;
-  save(); renderAll();
-  toast(`Removed ${name} from U${it.u}.`);
+  requestRemove(g.dataset.uid);
 });
 
 // Panels are filled with the bay colour so a device genuinely occludes whatever
@@ -826,19 +838,35 @@ function needsShelf(it) {
 // ----------------------------------------------------------------- drag ----
 let drag = null;
 
+// A press has to travel before it counts as a drag. Without it, the smallest
+// twitch while clicking a device threw a ghost up and armed a move — and on a
+// trackpad, a click that does not move at all is the exception.
+const DRAG_SLOP = 5;
+
 function startDrag(ev, payload) {
   ev.preventDefault();
   const ghost = document.createElement('div');
   ghost.className = 'ghost';
   ghost.appendChild(renderDevice(payload.dev, state.view, payload.item));
+  ghost.hidden = true;                       // shown once the press has travelled
   document.body.appendChild(ghost);
 
-  drag = { ...payload, ghost };
-  if (payload.uid) $(`.item[data-uid="${payload.uid}"]`)?.classList.add('drag');
+  drag = { ...payload, ghost, x0: ev.clientX, y0: ev.clientY, live: false };
 
   moveGhost(ev);
   addEventListener('pointermove', onDragMove);
   addEventListener('pointerup', onDragEnd, { once: true });
+}
+
+// True once this press has moved far enough to mean it. Marks the source item
+// at the moment it becomes a real drag, not before.
+function dragLive(ev) {
+  if (drag.live) return true;
+  if (Math.hypot(ev.clientX - drag.x0, ev.clientY - drag.y0) < DRAG_SLOP) return false;
+  drag.live = true;
+  drag.ghost.hidden = false;
+  if (drag.uid) $(`.item[data-uid="${drag.uid}"]`)?.classList.add('drag');
+  return true;
 }
 
 function moveGhost(ev) {
@@ -875,6 +903,7 @@ function targetSide(ev) {
 }
 
 function onDragMove(ev) {
+  if (!dragLive(ev)) return;
   moveGhost(ev);
   $$('.uslot').forEach((s) =>
     s.classList.remove('hot', 'bad', 'halfleft', 'halfright'));
@@ -906,6 +935,10 @@ function onDragEnd(ev) {
   $('.lib').classList.remove('dropremove');
   drag.ghost.remove();
 
+  // Never travelled far enough to be a drag — that was a click. Selecting the
+  // device already happened on pointerdown, so there is nothing left to do.
+  if (!drag.live) { drag = null; renderRack(); return; }
+
   if (drag.uid && overLibrary(ev)) {          // dragged out of the rack — remove
     rack().items = rack().items.filter((i) => i.uid !== drag.uid);
     if (state.sel === drag.uid) state.sel = null;
@@ -922,6 +955,17 @@ function onDragEnd(ev) {
     if (drag.uid) {
       const it = rack().items.find((i) => i.uid === drag.uid);
       if (it) { it.u = u; if (side) it.side = side; }
+    } else if (drag.copyOf) {
+      // A fresh uid, and the punched slots copied rather than shared — the same
+      // rule rack duplication follows, and for the same reason.
+      const src = drag.copyOf;
+      const copy = { ...src, uid: uid(), u,
+                     ...(side ? { side } : {}),
+                     ...(src.slots ? { slots: src.slots.slice() } : {}) };
+      if (drag.plane === 'rear') copy.plane = 'rear'; else delete copy.plane;
+      rack().items.push(copy);
+      state.sel = copy.uid;
+      toast(`Copied ${src.label || drag.dev.model} to U${u}.`);
     } else {
       rack().items.push(newItem(drag.dev, u, side));
       state.sel = rack().items.at(-1).uid;
@@ -952,9 +996,14 @@ document.addEventListener('pointerdown', (ev) => {
     state.sel = it.uid;
     renderInspector();
     $$('.item').forEach((n) => n.classList.toggle('sel', n.dataset.uid === it.uid));
-    startDrag(ev, { dev, uid: it.uid, item: it, ru: itemRU(it),
-                    shelf: isShelfDev(dev), plane: itemPlane(it),
-                    depth: dev.depth || 0 });
+    // Shift-drag copies rather than moves. Dropping a copy is a placement, not a
+    // move, so `uid` is left off the payload — that is what tells onDragEnd to
+    // create rather than relocate — and `copyOf` carries the settings across.
+    startDrag(ev, ev.shiftKey
+      ? { dev, copyOf: it, ru: itemRU(it), shelf: isShelfDev(dev),
+          plane: itemPlane(it), depth: dev.depth || 0 }
+      : { dev, uid: it.uid, item: it, ru: itemRU(it),
+          shelf: isShelfDev(dev), plane: itemPlane(it), depth: dev.depth || 0 });
     return;
   }
   if (ev.target.closest('.uslot') || ev.target.closest('.canvas')) {
@@ -962,25 +1011,56 @@ document.addEventListener('pointerdown', (ev) => {
   }
 });
 
-// Right-click a rack item to remove it. Consistent with drag-to-library and the
-// Delete key, both of which are also instant — but the toast names what went,
-// because a right-click is easy to land by accident and there is no undo.
+// Right-click a rack item to remove it — but ask first. Right-click is far
+// easier to land by accident than the Delete key or a drag to the library, and
+// there is still no undo, so this one gets a confirmation the others do not.
+// Same two-step shape as the destructive buttons: right-click again within 4 s.
+let armedRemove = null;   // { uid, timer }
+
+function disarmRemove(redraw = true) {
+  if (!armedRemove) return;
+  clearTimeout(armedRemove.timer);
+  const uid = armedRemove.uid;
+  armedRemove = null;
+  if (redraw) {
+    document.querySelectorAll(`.item[data-uid="${uid}"], .sitem[data-uid="${uid}"]`)
+      .forEach((n) => n.classList.remove('armdel'));
+  }
+}
+
+// Shared by the bays and the side view, which is why it takes a uid rather than
+// reading the event.
+function requestRemove(uid) {
+  const it = rack().items.find((i) => i.uid === uid);
+  if (!it) return;
+  const dev = devById(it.devId);
+  const name = it.label || (dev ? dev.model : 'device');
+
+  if (!armedRemove || armedRemove.uid !== uid) {
+    disarmRemove();
+    armedRemove = { uid, timer: setTimeout(() => disarmRemove(), 4000) };
+    document.querySelectorAll(`.item[data-uid="${uid}"], .sitem[data-uid="${uid}"]`)
+      .forEach((n) => n.classList.add('armdel'));
+    toast(`Right-click again to remove ${name} from U${it.u}.`);
+    return;
+  }
+
+  disarmRemove(false);
+  rack().items = rack().items.filter((i) => i.uid !== uid);
+  if (state.sel === uid) state.sel = null;
+  save(); renderAll();
+  toast(`Removed ${name} from U${it.u}.`);
+}
+
 document.addEventListener('contextmenu', (ev) => {
   // Belt and braces: if a ghost ever survives an interrupted drag, clear it
   // rather than leaving it stranded over the canvas.
   if (drag) { drag.ghost.remove(); drag = null; renderRack(); }
 
   const item = ev.target.closest('.item');
-  if (!item || state.view === 'flow') return;
-  const it = rack().items.find((i) => i.uid === item.dataset.uid);
-  if (!it) return;
+  if (!item || state.view === 'flow') { disarmRemove(); return; }
   ev.preventDefault();
-  const dev = devById(it.devId);
-  const name = it.label || (dev ? dev.model : 'device');
-  rack().items = rack().items.filter((i) => i.uid !== it.uid);
-  if (state.sel === it.uid) state.sel = null;
-  save(); renderAll();
-  toast(`Removed ${name} from U${it.u}.`);
+  requestRemove(item.dataset.uid);
 });
 
 // double-click a library row to drop it in the first free slot
@@ -1825,11 +1905,8 @@ function applyView() {
   $('#flowBar').hidden = !isFlow;
   $('#rackWrap').hidden = isSide;
   $('#sideWrap').hidden = !isSide;
-  // The side view scales itself through its viewBox, so the U-height machinery
-  // that drives the front and rear bays does not apply to it.
-  $('.zoom', $('#rackBar')).hidden = isSide;
   if (isFlow) flow.open();
-  else if (isSide) renderSide();
+  else if (isSide) { renderSide(); applySideZoom(); }
   else sizeU();
 }
 
@@ -2100,6 +2177,7 @@ function renderAll() {
   $('#rackD').value = rack().depth ?? '';
 }
 
+$('#ver').textContent = 'v' + VERSION;
 $('#projName').value = state.project.name;
 renderCats();
 renderLib();

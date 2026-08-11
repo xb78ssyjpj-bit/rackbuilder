@@ -44,23 +44,35 @@ is a build artefact and is not tracked — rebuild it rather than committing it.
 python3 rackbuilder/tools/bundle.py
 ```
 
-Inlines the CSS and concatenates the four modules into one self-contained file:
+Inlines the CSS and concatenates the modules into one self-contained file.
+**Output is named for the version**, from `version.js`:
 
-- `dist/rackbuilder.html` — a complete document. **Double-click it.** No server,
-  no Python, no install. Works from a USB stick, an email attachment or any
-  static host.
-- `dist/rackbuilder.body.html` — body content only, for hosts that supply their
-  own `<!doctype>` and `<head>`.
+- `dist/rackbuilder-v1.1.0.html` — a complete document. **Double-click it.** No
+  server, no Python, no install. Works from a USB stick, an email attachment or
+  any static host.
+- `dist/rackbuilder-v1.1.0.body.html` — body content only, for hosts that supply
+  their own `<!doctype>` and `<head>`.
+- `dist/rackbuilder-latest.html` — a copy of the newest complete document, for
+  anyone who just wants the current one.
+
+The number is in the filename on purpose: handing somebody `rackbuilder.html`
+twice, a week apart, gives them two different programs with the same name and no
+way to tell which is which. The running app shows its version beside the logo,
+and it is in the page title, so a screenshot can be tied back to a build too.
 
 Why this works when `index.html` does not: `file://` blocks module *imports*, but
 an inline `<script type="module">` fetches nothing, so it runs fine. Every export
 in the source is `export const` or `export function`, so bundling is just
-dropping the import blocks and the `export` keyword and letting the four files
-share one module scope. Duplicate top-level names would be a syntax error, so:
+dropping the import blocks and the `export` keyword and letting the files share
+one module scope. Duplicate top-level names would be a syntax error, so:
 
 ```bash
-node --check dist/rackbuilder.html   # after extracting the script block
+node tools/check.mjs
 ```
+
+Note `node --check` **cannot** verify a module — it parses as CommonJS and will
+pass a file that fails to import. Use `--input-type=module`; `tools/bundle.py`
+prints the exact command.
 
 The bundle is a build artefact. **Edit the source modules and re-run the script**
 — never edit `dist/`. Storage is per-origin, so a copy opened from `file://` has
@@ -79,7 +91,8 @@ runtime; the manufacturer `src:` URLs in the library are data, never requested.
 | Delete | Select and press <kbd>Delete</kbd>, or use Remove |
 | Multiple racks | Add rack, then use the tabs |
 | Copy a rack | **Duplicate** — contents and all, dropped in beside the original |
-| Remove a device | Right-click it, in the bays or the side view. Or select and press <kbd>Delete</kbd>, or drag it back to the library |
+| Copy one device | **Shift-drag** it to a free slot |
+| Remove a device | Right-click it **twice** within 4 s, in the bays or the side view. Or select and press <kbd>Delete</kbd>, or drag it back to the library |
 | Empty a rack | Click **Clear front & rear**, then click again to confirm (4 s) |
 | Delete a rack | Click **Delete rack**, then click again to confirm (4 s) |
 | Export | File → SVG / PNG / Print (Print gives you PDF) — one sheet covering the whole project |
@@ -559,7 +572,9 @@ With no rack depth recorded it shows enough to hold the deepest device and says
 `(assumed — no rack depth set)` under the drawing, rather than inventing a case
 size. Labels are trimmed to what their box can hold, with the full name on hover.
 
-Zoom controls are hidden here: the drawing scales through its own viewBox.
+U1 is at the top, matching the bays and their rulers. Zoom with the same
+controls the bays use — the drawing scales through its own viewBox, and the
+frame scrolls when it outgrows the window.
 
 **Devices drag here too** — up and down the rack, and across the midline to flip
 between the front and rear faces. Crossing the midline *is* the gesture, because
@@ -674,14 +689,39 @@ a click on empty canvas drops the run.
 Shift extends over the sockets **as shown**, not as declared — what you see
 between the two you clicked is what you get, which matters on a collapsed card.
 
+### Patching a device to itself
+
+A jumper between two sockets on the same card **loops out to the right** rather
+than being drawn from the right edge to the left. Straight across would cross
+every port row on the way and read as a cable to some other device; the loop is
+what it physically is — a short jumper on one box.
+
+### Rearranging sockets
+
+**edit** on a card header turns its rows into drag handles; drag them into the
+order the panel actually runs, then **done**. Every socket is shown while
+editing, because you cannot drag a row somewhere that is not on screen.
+
+The order is stored per *node*, not per device, so two copies of the same
+stagebox can be arranged differently — they are wired differently. It is applied
+as a sort rather than a replacement, so a device whose sockets change later (a
+repunched patch panel, an edited library entry) keeps the new ones instead of
+losing them.
+
 ### Cables that would otherwise sit on top of each other
 
 Two things stop a busy graph turning to mush. Cables sharing both endpoints —
 which happens whenever a card is collapsed and several wires land on its header —
 are **bowed apart** symmetrically, so a bundle of four reads as four. And the
-number chips **slide along their own curve** when one would land on another,
-walking outward from the midpoint so the chip stays attached to the cable it
-belongs to.
+number chips **slide along their own curve** when one would land on another —
+or on a device card, which would hide a port row — walking outward from the
+midpoint so the chip stays attached to the cable it belongs to. If there is
+nowhere clean it takes the midpoint anyway: a crowded number beats no number.
+
+Dragging a cable to the edge of the canvas **pans it**, so patching to something
+off-screen does not mean letting go, panning, and starting again. The speed
+ramps with how far into the edge band you are, because a hard step at the
+boundary feels like the canvas is fighting you.
 
 ### Direction is not in the library
 
