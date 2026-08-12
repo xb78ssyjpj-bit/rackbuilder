@@ -19,6 +19,28 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.2.3 — 2026-08-12
+
+**Fixed**
+
+- **Moving a rack in the flow view was a feature nobody could find.** Dragging a
+  rack's name moved the whole rack — but the name was a 46 × 15 px label in the
+  corner of the zone, and nothing about it said "handle". So the whole top strip
+  of a zone is now a **title bar**: full width, its own tint, a grip, and a grab
+  cursor. A title bar is where everyone already tries to drag a thing from.
+
+  The strip also sits above the cables now rather than under them, so a cable
+  crossing a zone can no longer swallow the press — and the cards sit above the
+  strip, so a bar passing beneath another rack's cards never steals their
+  clicks.
+- **Dragging a zone selected text across every zone name it passed.** The cards
+  had opted out of selection long ago; the zones never had, and it only became
+  obvious once the handle was big enough to actually drag by.
+- **A rack being dragged now firms up** — solid border, stronger fill — so it
+  stays readable as one rack while it is passing over another.
+
+---
+
 ## v1.2.2 — 2026-08-11
 
 **Fixed**

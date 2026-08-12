@@ -367,16 +367,18 @@ export function createFlow(ctx) {
         x1 = Math.max(x1, n.pos.x + NODE_W);
         y1 = Math.max(y1, n.pos.y + nodeHeight(visiblePorts(n).length));
       });
-      const PAD = 18, CAP = 24;        // CAP leaves room for the name strip
+      const PAD = 18, CAP = 24;        // CAP leaves room for the title bar
       const d = document.createElement('div');
-      d.className = 'fzone' + (g.ext ? ' ext' : '');
+      d.className = 'fzone' + (g.ext ? ' ext' : '')
+        + (zoneDrag && zoneDrag.zone === g.key ? ' moving' : '');
       d.style.cssText = `left:${x0 - PAD}px;top:${y0 - PAD - CAP}px;`
         + `width:${x1 - x0 + PAD * 2}px;height:${y1 - y0 + PAD * 2 + CAP}px;--z:${g.tint}`;
-      // The name strip is a handle: drag it and the whole rack moves together.
+      // The title bar is a handle: drag it and the whole rack moves together.
       // Rearranging a graph a card at a time when what you mean is "this rack
       // goes over there" is the tedious part of tidying up.
       d.innerHTML = `<span class="zgrab" data-zone="${esc(g.key)}"`
-        + ` title="Drag to move the whole rack">${esc(g.name)}</span>`;
+        + ` title="Drag to move ${esc(g.name)} — every card in it moves together"`
+        + `>${esc(g.name)}</span>`;
       host.appendChild(d);
     });
   }
@@ -1254,10 +1256,12 @@ export function createFlow(ctx) {
           grabPointer(host, ev.pointerId);
           const p0 = worldPt(ev);
           zoneDrag = {
+            zone: zg.dataset.zone,
             keys,
             from: keys.map((k) => ({ k, x: byKey.get(k).pos.x, y: byKey.get(k).pos.y })),
             x0: p0.x, y0: p0.y,
           };
+          drawZones();
           return;
         }
       }
@@ -1327,7 +1331,7 @@ export function createFlow(ctx) {
     });
 
     const finish = (ev) => {
-      if (zoneDrag) { zoneDrag = null; save(); }
+      if (zoneDrag) { zoneDrag = null; drawZones(); save(); }
       if (link) endLink(ev);
       if (drag) { drag.el.classList.remove('moving'); drag = null; save(); }
       if (pan) { pan = null; host.classList.remove('panning'); save(); }

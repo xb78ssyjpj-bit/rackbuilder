@@ -555,12 +555,31 @@ dialog menu {
   border: 1px dashed color-mix(in srgb, var(--z) 45%, transparent);
   border-radius: 10px;
   background: color-mix(in srgb, var(--z) 7%, transparent);
+  /* Dragging the title bar would otherwise sweep a text selection across every
+     zone name on the way past — the cards already opt out for the same reason. */
+  user-select: none;
 }
 .fzone.ext { border-style: dotted; }
-.fzone span {
+/* While it is being dragged the zone firms up, so it stays readable as one
+   rack when it is passing over another. */
+.fzone.moving {
+  border-style: solid;
+  background: color-mix(in srgb, var(--z) 12%, transparent);
+}
+
+/* The whole top strip is the handle, not just the words. A zone is a window
+   onto one rack, and a title bar is where everybody already tries to drag a
+   window from — the 46 px text label this replaces worked perfectly well, but
+   you had to be told it was there before you would ever aim at it. */
+.zgrab {
   position: absolute;
-  top: 3px; left: 8px;
-  padding: 2px 6px; border-radius: 4px;
+  left: -1px; right: -1px; top: -1px;
+  height: 22px;
+  z-index: 1;                    /* over the wires, under the cards */
+  display: flex; align-items: center; gap: 7px;
+  padding: 0 9px;
+  border-radius: 10px 10px 0 0;
+  background: color-mix(in srgb, var(--z) 13%, transparent);
   pointer-events: auto;          /* the one part of a zone you can grab */
   cursor: grab;
   font: 600 10px var(--mono);
@@ -568,11 +587,22 @@ dialog menu {
   text-transform: uppercase;
   color: color-mix(in srgb, var(--z) 78%, var(--fg));
 }
-.fzone span:hover {
-  background: color-mix(in srgb, var(--z) 22%, transparent);
+/* Six dots — the grip a draggable strip carries everywhere else. Drawn rather
+   than typed, so it cannot arrive as tofu in a font with no braille block. */
+.zgrab::before {
+  content: '';
+  flex: none;
+  width: 7px; height: 11px;
+  background-image: radial-gradient(currentColor .9px, transparent 1.1px);
+  background-size: 3.5px 3.5px;
+  opacity: .55;
+}
+.zgrab:hover {
+  background: color-mix(in srgb, var(--z) 26%, transparent);
   color: var(--fg);
 }
-.fzone span:active { cursor: grabbing; }
+.zgrab:hover::before { opacity: .9; }
+.zgrab:active { cursor: grabbing; }
 
 .flowwires { position: absolute; left: 0; top: 0; overflow: visible; }
 .flowwires .hit { stroke: transparent; stroke-width: 14; fill: none; cursor: pointer; }
@@ -590,6 +620,7 @@ dialog menu {
 /* --- node ---------------------------------------------------------------- */
 .fnode {
   position: absolute;
+  z-index: 2;                    /* over the zone title bars, which are 1 */
   background: var(--bg-1);
   border: 1px solid var(--line-2);
   border-radius: 7px;
