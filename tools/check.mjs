@@ -8,9 +8,10 @@
 // then failed at import with "Unexpected token 'const'". Importing is the only
 // check that means anything.
 
-import { SEED_DEVICES as D, CATEGORIES } from '../devices.js';
+import { SEED_DEVICES as D, CATEGORIES, OPTION_CARDS as C } from '../devices.js';
 import {
-  autoLayout, sizeMM, heightMM, MM, FACE_L, FACE_R, PATCH_TYPES,
+  faceElements, sizeMM, heightMM, MM, FACE_L, FACE_R, PATCH_TYPES,
+  SLOT_FORMATS, slotType, cardsFor,
 } from '../panel.js';
 import { devicePorts, portLabel, familyOf, FAMILIES } from '../flow.js';
 import { readFileSync } from 'node:fs';
@@ -41,7 +42,7 @@ for (const d of D) {
     if (!L || !L.auto) continue;
     panels++;
     const ru = d.ru || 1;
-    const out = autoLayout(L.auto, ru, d.half ? 12 : FACE_L, d.half ? 426 : FACE_R);
+    const out = faceElements(L, d, null, d.half ? 12 : FACE_L, d.half ? 426 : FACE_R);
     const L0 = d.half ? 6 : 40, R0 = d.half ? 432 : 960, B = ru * 100;
     for (const e of out) {
       const w = (sizeMM(e.t) || 20) * MM, h = (heightMM(e.t) || 20) * MM;
@@ -73,6 +74,81 @@ for (const d of D) {
   }
   for (const [l, n] of seenLabel) {
     if (n > 1) bad(`${d.id}: ${n} sockets both labelled "${l}"`);
+  }
+}
+
+// --- option cards ------------------------------------------------------------
+// A card is a faceplate in a hole of a stated size, so the interesting check is
+// the physical one: does what the card carries actually fit the aperture it
+// claims to fit? That is the same reasoning that catches an impossible panel,
+// and it is what would have caught a card given one connector too many.
+const cardIds = new Set();
+for (const c of C) {
+  if (cardIds.has(c.id)) bad(`duplicate card id: ${c.id}`);
+  cardIds.add(c.id);
+  if (!c.brand || !c.model) bad(`${c.id}: missing brand/model`);
+  const f = SLOT_FORMATS[c.fmt];
+  if (!f) { bad(`${c.id}: unknown slot format ${c.fmt}`); continue; }
+
+  for (const e of c.auto || []) {
+    if (!CONN.has(e.t)) bad(`${c.id}: ${e.t} is not a connector type`);
+  }
+  // Widest honest arrangement: columns of `stack`, at true connector size.
+  let cols = 0, tall = 0;
+  for (const e of c.auto || []) {
+    const n = e.n || 1, st = Math.max(1, Math.min(e.stack || 1, n));
+    cols += Math.ceil(n / st);
+    tall = Math.max(tall, st * (heightMM(e.t) || 12));
+  }
+  const wide = (c.auto || []).reduce(
+    (a, e) => a + Math.ceil((e.n || 1) / Math.max(1, Math.min(e.stack || 1, e.n || 1)))
+                * (sizeMM(e.t) || 12), 0);
+  if (wide > f.mm) bad(`${c.id}: ${wide.toFixed(0)} mm of connectors in a ${f.mm} mm ${c.fmt} slot`);
+  if (tall > f.mmH) bad(`${c.id}: ${tall.toFixed(0)} mm tall in a ${f.mmH} mm ${c.fmt} slot`);
+  if (cols < 1) bad(`${c.id}: no connectors`);
+}
+
+// --- every declared slot has a format, and every format has a card ----------
+for (const d of D) {
+  for (const s of d.slots || []) {
+    if (!SLOT_FORMATS[s.fmt]) bad(`${d.id}: slot ${s.id} has unknown format ${s.fmt}`);
+    else if (!cardsFor(s.fmt).length) bad(`${d.id}: slot ${s.id} has no cards to fit it`);
+    const decl = JSON.stringify((d.rear && d.rear.auto) || []) + JSON.stringify((d.front && d.front.auto) || []);
+    if (!decl.includes(`"slot":"${s.id}"`)) {
+      bad(`${d.id}: declares slot ${s.id} but no face places it`);
+    }
+  }
+  // The aperture must not become something you can patch a cable to.
+  for (const fmt of Object.keys(SLOT_FORMATS)) {
+    if (CONN.has(slotType(fmt))) bad(`slot format ${fmt} is registered as a connector`);
+  }
+}
+
+// --- ports stay unique with every card fitted -------------------------------
+// Fitting a card can collide with a socket the chassis already has: an SQ-Rack
+// has an SLink port, and the SLink card adds a second one. Checked per card
+// rather than trusted, because the collision is silent — two rows in the flow
+// view reading the same name, patched to different things.
+for (const d of D) {
+  for (const s of d.slots || []) {
+    for (const card of cardsFor(s.fmt)) {
+      const ports = devicePorts(d, { uid: 'x', devId: d.id, cards: { [s.id]: card.id } });
+      const both = ports.some((p) => p.plane === 'front') && ports.some((p) => p.plane === 'rear');
+      const seen = new Map();
+      for (const p of ports) {
+        if (!CONN.has(p.t)) bad(`${d.id}+${card.id}: ${p.t} is not a connector type`);
+        const l = portLabel(p, both);
+        seen.set(l, (seen.get(l) || 0) + 1);
+      }
+      for (const [l, n] of seen) {
+        if (n > 1) bad(`${d.id} with ${card.id}: ${n} sockets both labelled "${l}"`);
+      }
+      const base = devicePorts(d, null).length;
+      const want = (card.auto || []).reduce((a, e) => a + (e.n || 1), 0);
+      if (ports.length !== base + want) {
+        bad(`${d.id} with ${card.id}: ${ports.length - base} sockets added, expected ${want}`);
+      }
+    }
   }
 }
 

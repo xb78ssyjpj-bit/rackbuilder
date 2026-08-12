@@ -946,6 +946,34 @@ they were declared in. Where a real rear photograph or drawing was available the
 order follows it; elsewhere it is schematic. Treat an auto rear as "what is on
 the back and how much of it", not as a photograph of the back.
 
+### Option-card slots
+
+Gear with a card slot declares the aperture, and the aperture has a real size:
+
+```js
+slots: [{ id: 'io', name: 'I/O Port', short: 'I/O', fmt: 'ah-sq-io' }],
+rear: { auto: [ …, { t: 'slot', slot: 'io' }, … ] },
+```
+
+`fmt` names an entry in `SLOT_FORMATS` (panel.js), which carries the aperture's
+millimetre size. Cards live in `OPTION_CARDS` (devices.js) and declare the same
+`fmt` plus their own `auto` connector list. **Any card fits any slot of its
+format** — that is the whole compatibility model, and it matches how the real
+ranges work: the five Allen & Heath cards fit the SQ-Rack, the SQ-5/6/7, the
+SQ+ consoles and the AHM processors alike.
+
+Which card is fitted is stored **per rack item** (`it.cards[slotId]`), not on
+the library entry, because two SQ-Racks on the same tour are routinely built
+differently. From then on the card's sockets *are* that unit's sockets: they
+draw on the panel and they patch in the flow view like any other. They are
+named for the slot they sit in — `I/O SLINK`, not `SLINK` — which is both what
+keeps a card socket from colliding with an identical one on the chassis and
+what A&H's own patch screen does.
+
+`tools/check.mjs` checks that a card's connectors physically fit its aperture,
+and that fitting any card to any compatible device leaves every socket name
+unambiguous. Adding a manufacturer means adding a format.
+
 ### Stacked connector banks
 
 A run of connectors can be drawn two or three rows deep with `stack`:

@@ -2,7 +2,7 @@ import {
   renderDevice, renderPanel, autoLayout, el,
   CONNECTOR_TYPES, CONNECTOR_GROUPS, PATCH_GROUPS, typeLabel,
   patchRU, patchCols, patchRows, patchFit, shortCode, renderEarsOnly,
-  hasRear, renderNoRear,
+  hasRear, renderNoRear, cardsFor, cardById,
   HALF_W, HALF_L, HALF_R, HALF_EAR_W,
 } from './panel.js';
 import { SEED_DEVICES, CATEGORIES } from './devices.js';
@@ -961,7 +961,8 @@ function onDragEnd(ev) {
       const src = drag.copyOf;
       const copy = { ...src, uid: uid(), u,
                      ...(side ? { side } : {}),
-                     ...(src.slots ? { slots: src.slots.slice() } : {}) };
+                     ...(src.slots ? { slots: src.slots.slice() } : {}),
+                     ...(src.cards ? { cards: { ...src.cards } } : {}) };
       if (drag.plane === 'rear') copy.plane = 'rear'; else delete copy.plane;
       rack().items.push(copy);
       state.sel = copy.uid;
@@ -1128,6 +1129,38 @@ function renderInspector() {
       save(); renderRack();
     };
   }
+
+  // Option-card slots. Fitted per unit, not per library entry, because two
+  // SQ-Racks in the same tour are routinely built differently — and the card's
+  // sockets become this unit's sockets, so they draw on the rear and patch in
+  // the flow view exactly like the ones that were soldered in at the factory.
+  (dev.slots || []).forEach((s) => {
+    const opts = cardsFor(s.fmt);
+    const row = document.createElement('label');
+    row.className = 'row';
+    row.innerHTML = `<span>${esc(s.name || 'Slot')}</span>`
+      + `<select data-slot="${esc(s.id)}">`
+      + `<option value="">Empty (blanking plate)</option>`
+      + opts.map((c) => `<option value="${esc(c.id)}"`
+          + `${(it.cards || {})[s.id] === c.id ? ' selected' : ''}>`
+          + `${esc(c.model)}</option>`).join('')
+      + '</select>';
+    box.insertBefore(row, $('#iCols').closest('.row'));
+    row.querySelector('select').onchange = (e) => {
+      const v = e.target.value;
+      if (v) (it.cards = it.cards || {})[s.id] = v;
+      else if (it.cards) delete it.cards[s.id];
+      if (it.cards && !Object.keys(it.cards).length) delete it.cards;
+      save(); renderAll();
+    };
+    const fitted = cardById((it.cards || {})[s.id]);
+    if (fitted && fitted.note) {
+      const n = document.createElement('p');
+      n.className = 'hint';
+      n.textContent = fitted.note;
+      box.insertBefore(n, $('#iCols').closest('.row'));
+    }
+  });
 
   if (dev.half) {
     const row = document.createElement('div');
@@ -2001,6 +2034,7 @@ $('#btnDupRack').onclick = () => {
       ...it,
       uid: uid(),
       ...(it.slots ? { slots: it.slots.slice() } : {}),
+      ...(it.cards ? { cards: { ...it.cards } } : {}),
     })),
   };
   state.project.racks.splice(state.rack + 1, 0, copy);

@@ -19,6 +19,59 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.3.0 — 2026-08-12
+
+**Added**
+
+- **Option cards.** Gear with a card slot now has one, and what you fit into it
+  becomes part of that unit: it draws on the rear panel and its sockets patch in
+  the flow view like anything soldered in at the factory. Fitted from the
+  inspector, per unit rather than per library entry — two SQ-Racks on the same
+  tour are routinely built differently.
+
+  A slot is a **physical aperture of a stated size** and a card is a faceplate
+  that has to fit inside it, so the same fit reasoning that catches an
+  impossible panel also catches a card carrying one connector too many.
+  Compatibility is by aperture format, not by model list, which is how the real
+  ranges work — the five cards below fit the SQ-Rack, the SQ-5/6/7, the SQ+
+  consoles and the AHM processors alike.
+
+- **The five Allen & Heath SQ / AHM cards**, from A&H's own documentation and
+  product photography of each faceplate:
+
+  | Card | Sockets |
+  |---|---|
+  | SQ SLink | 1 × etherCON |
+  | SQ Dante 32×32 | 2 × etherCON |
+  | SQ Dante 64×64 | 2 × etherCON |
+  | SQ Waves | 2 × etherCON (SoundGrid 1 / 2) |
+  | SQ MADI | 5 × BNC (out over in, ×2, plus SYNC) |
+
+  No weight or power figures: A&H publish none per card, and a made-up one would
+  end up in a power total somebody signs off on.
+
+  Card sockets are named for the slot they sit in — `I/O SLINK`, not `SLINK`.
+  An SQ-Rack with the SLink card fitted has **two** SLink ports, and without the
+  prefix they were two rows in the flow view reading the same name and patched
+  to different things. `tools/check.mjs` now fails on that, and on a card whose
+  connectors do not fit its aperture; both were confirmed by breaking them.
+
+**Fixed**
+
+- **The SQ-Rack's rear panel was wrong**, and had been since it was added. It
+  claimed 16 XLR-F, 8 XLR-M, two etherCON, USB-B and an IEC *outlet*. Rebuilt
+  from A&H's rear-panel drawing: the talkback input was missing, four outputs
+  were missing, the AES3 output was missing, **all seven 1/4" jacks** were
+  missing (ST1/ST2 in, A/B out, footswitch), the Network port is an ordinary
+  RJ45 rather than a second etherCON, and mains is an inlet. 28 sockets → 41.
+- **The SQ-Rack draws 75 W, not 100.** The figure is printed on the panel
+  itself: `100-240V~ 50/60Hz 75W`.
+- Sockets on that rear are now numbered the way the panel is — **counting down**
+  left to right, because the numbering is chosen to read correctly from the
+  front. The headphone jack on the front is named `PHONES` rather than `TRS 1`.
+
+---
+
 ## v1.2.4 — 2026-08-12
 
 **Fixed**

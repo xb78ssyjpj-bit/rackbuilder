@@ -24,7 +24,7 @@
 // ---------------------------------------------------------------------------
 
 import {
-  PATCH_TYPES, shortCode, typeLabel, autoLayout, patchRows, patchCols,
+  PATCH_TYPES, shortCode, typeLabel, faceElements, patchRows, patchCols,
 } from './panel.js';
 
 const CONN = new Set(PATCH_TYPES.map(([v]) => v));
@@ -100,7 +100,7 @@ const declaredName = (e) => {
   return (e._n || 1) > 1 ? `${e.lbl} ${(e._i || 0) + 1}` : e.lbl;
 };
 
-function planePorts(spec, ru, plane, out, tally) {
+function planePorts(spec, dev, item, plane, out, tally) {
   if (!spec) return;
   let placed;
   if (spec.elements) {
@@ -114,7 +114,10 @@ function planePorts(spec, ru, plane, out, tally) {
       }
     });
   } else if (spec.auto) {
-    placed = autoLayout(spec.auto, ru).filter((e) => CONN.has(e.t));
+    // Through faceElements, not autoLayout, so a fitted option card's sockets
+    // are ports too. The slot aperture itself is not a connector type, so it
+    // falls out here on its own and never becomes something you can patch to.
+    placed = faceElements(spec, dev, item).filter((e) => CONN.has(e.t));
   } else return;
 
   // Band by row so a two-deep bank reads across, not down.
@@ -158,8 +161,8 @@ export function devicePorts(dev, it) {
   // the back, the first one on the back is "R CMB 1", not "CMB 3". The plane
   // prefix in the label is what keeps the two runs apart, and the port id
   // carries the plane too, so nothing collides.
-  planePorts(dev.front, dev.ru, 'front', out, {});
-  planePorts(dev.rear, dev.ru, 'rear', out, {});
+  planePorts(dev.front, dev, it, 'front', out, {});
+  planePorts(dev.rear, dev, it, 'rear', out, {});
   return out;
 }
 

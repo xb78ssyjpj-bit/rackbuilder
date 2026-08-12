@@ -11,7 +11,14 @@
 
 // Geometry constants, so generated panels can be laid out at true size.
 // One-way dependency: panel.js never imports this file.
-import { MM, FACE_L, FACE_R } from './panel.js';
+import { MM, FACE_L, FACE_R, registerCards } from './panel.js';
+
+// Socket names for a bank that counts DOWN as the panel runs left to right —
+// which is most rears, because the numbering is chosen to read correctly from
+// the front. Auto-layout places declarations left to right as seen from BEHIND
+// the rack, so a plain `lbl: 'IN'` would number these backwards.
+const countDown = (prefix, n, last = {}) =>
+  Array.from({ length: n }, (_, i) => `${prefix} ${last[n - i] || n - i}`);
 
 export const CATEGORIES = {
   audio: 'Audio',
@@ -221,8 +228,8 @@ const D = [
   // 4U, 430 x 214 x 173 mm (W x D x H), 5.8 kg. Faderless: 7" touchscreen,
   // 8 SoftKeys, 4 Soft Rotaries under an assignable LCD strip. I/O is on the rear.
   { id: 'ah-sq-rack', brand: 'Allen & Heath', model: 'SQ-Rack', category: 'audio',
-    ru: 4, depth: 214, weight: 5.8, power: 100, approx: true,
-    src: 'https://www.allen-heath.com/hardware/sq/sq-rack/',
+    ru: 4, depth: 214, weight: 5.8, power: 75, approx: true,
+    src: 'https://support.allen-heath.com/hc/en-gb/articles/41222924565777-SQ-Rack-Getting-Started-Guide',
     front: { elements: [
       // 8 SoftKeys, 2 columns x 4 rows, far left
       { t: 'button', x: 108, y: 96, w: 30, h: 22 },
@@ -235,7 +242,7 @@ const D = [
       { t: 'button', x: 152, y: 252, w: 30, h: 22 },
       // main encoder + phones
       { t: 'encoder', x: 232, y: 200, r: 22 },
-      { t: 'trs', x: 150, y: 330 },
+      { t: 'trs', x: 150, y: 330, lbl: 'PHONES' },
       // 7" touchscreen
       { t: 'display', x: 480, y: 170, w: 310, h: 220 },
       // function row beneath the screen
@@ -251,9 +258,30 @@ const D = [
       { text: 'SQ-Rack', x: 392, y: 328, size: 17, ls: 1, anchor: 'end' },
       { text: 'ALLEN&HEATH', x: 898, y: 72, size: 15, ls: 1, anchor: 'end' },
     ] },
+    // Rear rebuilt from A&H's own rear-panel drawing (Getting Started Guide,
+    // callouts 1-13). The previous entry had 16 XLR-F / 8 XLR-M / 2 etherCON
+    // and no jacks at all, which is not this panel: the talkback input was
+    // missing, four of the outputs were missing, the AES3 output was missing,
+    // all seven 1/4" jacks were missing, and the Network port is an ordinary
+    // RJ45 — only SLink is locking etherCON.
+    //
+    // Declared right to left in panel numbering because the panel itself counts
+    // down as it runs left to right when viewed from behind. Mains is 75 W, off
+    // the panel legend ("100-240V~ 50/60Hz 75W").
+    slots: [{ id: 'io', name: 'I/O Port', short: 'I/O', fmt: 'ah-sq-io' }],
     rear: { auto: [
-      { t: 'xlrf', n: 16 }, { t: 'xlrm', n: 8 }, { t: 'ethercon', n: 2 },
-      { t: 'usbb', n: 1 }, { t: 'iec_thru', n: 1 },
+      { t: 'xlrf', n: 1, lbl: 'TALKBACK' },
+      { t: 'xlrf', n: 16, lbl: countDown('IN', 16) },
+      { t: 'trs', n: 4, stack: 2, lbl: ['ST2 L', 'ST2 R', 'ST1 L', 'ST1 R'] },
+      { t: 'trs', n: 1, lbl: 'FOOTSWITCH' },
+      { t: 'xlrm', n: 1, sig: 'aes3', lbl: 'AES OUT' },
+      { t: 'trs', n: 2, stack: 2, lbl: ['A OUT', 'B OUT'] },
+      { t: 'xlrm', n: 12, lbl: countDown('OUT', 12, { 12: '12/R', 11: '11/L' }) },
+      { t: 'iec_in', n: 1 },
+      { t: 'slot', slot: 'io' },
+      { t: 'usbb', n: 1 },
+      { t: 'rj45', n: 1, lbl: 'NETWORK' },
+      { t: 'ethercon', n: 1, lbl: 'SLINK' },
     ] } },
 
   // 4U with the AB168-RK19 rack kit. 410 x 190 x 185 mm, 4.8 kg, 35 W.
@@ -3917,3 +3945,57 @@ const D = [
 ];
 
 export const SEED_DEVICES = D;
+
+// ---------------------------------------------------------------------------
+// Option cards
+// ---------------------------------------------------------------------------
+// A card is a faceplate that fits a slot aperture, carrying its own connectors.
+// It is NOT a rack item: it has no rack units and cannot be dragged into a bay.
+// It is fitted to one device instance from the inspector, and from then on its
+// sockets are that instance's sockets — they draw on the panel and they patch
+// in the flow view like any other.
+//
+// `fmt` is the aperture standard, matching a device's `slots[].fmt`. That is
+// the whole of the compatibility model: any card fits any slot of its format,
+// which is exactly how the real ranges work — the five A&H cards below fit the
+// SQ-Rack, the SQ-5/6/7, the SQ+ consoles and the AHM processors alike.
+//
+// No weight or power figures: A&H publish none per card, and the host's own
+// consumption already covers a fitted card in practice. Inventing one would put
+// a made-up number into a power total that gets used for real.
+const CARDS = [
+  // 1 x etherCON. A&H product photography of the card fitted to an SQ I/O Port.
+  { id: 'ah-sq-slink', brand: 'Allen & Heath', model: 'SQ SLink', fmt: 'ah-sq-io',
+    note: '128x128 @ 96kHz — gigaACE / GX / DX / dSnake',
+    src: 'https://www.allen-heath.com/hardware/audio-networking/sq-slink/',
+    auto: [{ t: 'ethercon', n: 1, lbl: 'SLINK' }] },
+
+  // "Two ports with redundant and switch modes ... Locking Ethercon connectors".
+  { id: 'ah-sq-dante32', brand: 'Allen & Heath', model: 'SQ Dante 32x32', fmt: 'ah-sq-io',
+    note: '32x32 @ 48/96kHz, AES67',
+    src: 'https://www.allen-heath.com/hardware/audio-networking/sq-dante-32/',
+    auto: [{ t: 'ethercon', n: 2, lbl: ['DANTE PRI', 'DANTE SEC'] }] },
+  { id: 'ah-sq-dante64', brand: 'Allen & Heath', model: 'SQ Dante 64x64', fmt: 'ah-sq-io',
+    note: '64x64 @ 48/96kHz, AES67',
+    src: 'https://www.allen-heath.com/hardware/audio-networking/sq-dante-64/',
+    auto: [{ t: 'ethercon', n: 2, lbl: ['DANTE PRI', 'DANTE SEC'] }] },
+
+  // 2 x etherCON, faceplate lettered 'SoundGrid 1' and 'SoundGrid 2'.
+  { id: 'ah-sq-waves', brand: 'Allen & Heath', model: 'SQ Waves', fmt: 'ah-sq-io',
+    note: '64x64 @ 48/96kHz Waves SoundGrid',
+    src: 'https://www.allen-heath.com/hardware/audio-networking/sq-waves/',
+    auto: [{ t: 'ethercon', n: 2, lbl: ['SOUNDGRID 1', 'SOUNDGRID 2'] }] },
+
+  // Five BNC: two out over two in, then the switchable in/out word clock.
+  // The stacked pairs are how the faceplate is actually arranged.
+  { id: 'ah-sq-madi', brand: 'Allen & Heath', model: 'SQ MADI', fmt: 'ah-sq-io',
+    note: '64x64 @ 48kHz / 32x32 @ 96kHz per pair',
+    src: 'https://www.allen-heath.com/hardware/audio-networking/sq-madi/',
+    auto: [
+      { t: 'bnc', n: 4, stack: 2, lbl: ['MADI 1 OUT', 'MADI 1 IN', 'MADI 2 OUT', 'MADI 2 IN'] },
+      { t: 'bnc', n: 1, lbl: 'SYNC' },
+    ] },
+];
+
+export const OPTION_CARDS = CARDS;
+registerCards(CARDS);

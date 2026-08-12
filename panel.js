@@ -392,6 +392,166 @@ const P = {
 
 export const PRIMS = P;
 
+// ---------------------------------------------------------------------------
+// Option-card slots
+// ---------------------------------------------------------------------------
+// A lot of gear has an aperture in the back with a blanking plate over it, and
+// what goes in that aperture changes the socket count. So a slot is a physical
+// hole of a stated size, and a card is a faceplate that has to fit inside it —
+// which means the same physical-fit reasoning that catches an impossible panel
+// also catches a card that could not exist.
+//
+// A *format* is one aperture standard. A device says which format its slot
+// takes and a card says which format it fits, so neither has to know anything
+// about the other's model names. Adding a manufacturer means adding a format.
+export const SLOT_FORMATS = {
+  // Allen & Heath 'I/O Port' — SQ-Rack, SQ-5/6/7, SQ+ and the AHM processors.
+  // Measured off A&H's own rear-panel drawing in the SQ-Rack Getting Started
+  // Guide, scaled on the 19" ear-to-ear span (674 px = 482.6 mm). The same
+  // scale puts the chassis body at 437.5 mm — the standard 19" body width —
+  // which is the check that the scale itself is right.
+  'ah-sq-io': { name: 'I/O Port', mm: 88, mmH: 41 },
+};
+
+export const slotType = (fmt) => `slot_${String(fmt).replace(/[^a-z0-9]/gi, '')}`;
+
+// One primitive per format. Auto-layout then sizes, wraps and stacks a slot
+// with no idea that it is a slot — it is simply another object of known size.
+Object.entries(SLOT_FORMATS).forEach(([fmt, f]) => {
+  const w = f.mm * MM, h = f.mmH * MM;
+  P[slotType(fmt)] = {
+    mm: f.mm, mmH: f.mmH, nat: w,
+    d(g, x, y) {
+      rect(g, x, y, w, h, 4);
+      [-1, 1].forEach((sx) => [-1, 1].forEach((sy) => {
+        ring(g, x + sx * (w / 2 - 9), y + sy * (h / 2 - 9), 3.2);
+      }));
+    },
+  };
+});
+
+// Cards are declared in the device library, which imports this module, so it
+// cannot be imported back. It registers them here instead, and renderDevice can
+// then resolve a fitted card without every caller having to pass one in.
+const CARD_REG = new Map();
+export function registerCards(list) {
+  (list || []).forEach((c) => CARD_REG.set(c.id, c));
+}
+export const cardById = (id) => CARD_REG.get(id) || null;
+export const cardsFor = (fmt) =>
+  [...CARD_REG.values()].filter((c) => c.fmt === fmt);
+
+// Flow a card's connectors inside the aperture. Deliberately not autoLayout:
+// that lays out a whole panel face in bands of a rack unit, and a card is a
+// handful of connectors in a hole 41 mm tall. Same spirit though — real widths,
+// wrap when the row is full, and never shrink a connector to make it fit.
+function layoutIn(items, cx, cy, w, h) {
+  const flat = [];
+  (items || []).forEach((it) => {
+    const n = it.n || it.count || 1;
+    for (let i = 0; i < n; i++) flat.push({ ...it, n: 1, _i: i, _n: n });
+  });
+  if (!flat.length) return [];
+
+  const wOf = (t) => (sizeMM(t) || 12) * MM + 5;
+  const hOf = (t) => (heightMM(t) || 12) * MM;
+
+  // Runs of the same connector at the same stack depth, as on a panel face.
+  // A card is small enough that one band is always the right answer, so the
+  // only vertical arrangement is the stacking a declaration asks for — which is
+  // what puts SQ MADI's four BNC out over in rather than in one row of four.
+  const runs = [];
+  flat.forEach((it) => {
+    const want = Math.max(1, it.stack || 1);
+    const last = runs[runs.length - 1];
+    if (last && last.t === it.t && last.want === want) last.items.push(it);
+    else runs.push({ t: it.t, want, items: [it] });
+  });
+  runs.forEach((r) => {
+    r.stack = Math.max(1, Math.min(r.want, Math.floor(h / hOf(r.t)) || 1, r.items.length));
+    r.cols = Math.ceil(r.items.length / r.stack);
+  });
+
+  const total = runs.reduce((a, r) => a + r.cols * wOf(r.t), 0);
+  // Overflow tightens the spacing rather than shrinking the connectors, so a
+  // card that cannot physically fit its aperture reads as one on the drawing
+  // instead of quietly scaling itself down until it does.
+  const sc = total > w ? w / total : 1;
+  let x = cx - (total * sc) / 2;
+
+  const out = [];
+  runs.forEach((r) => {
+    const cw = wOf(r.t) * sc;
+    const pitch = r.stack > 1 ? Math.min(hOf(r.t) + 5, h / r.stack) : 0;
+    r.items.forEach((it, i) => {
+      out.push({
+        ...it,
+        x: Math.round(x + cw * ((i % r.cols) + 0.5)),
+        y: Math.round(cy + (Math.floor(i / r.cols) - (r.stack - 1) / 2) * pitch),
+      });
+    });
+    x += cw * r.cols;
+  });
+  return out;
+}
+
+// One socket's declared name. Mirrors the rule the flow view reads labels by:
+// an array names each socket, a bare string numbers them when there is more
+// than one. Resolved here so a card's names can be prefixed with their slot.
+const resolveLbl = (e) => {
+  if (!e.lbl) return '';
+  if (Array.isArray(e.lbl)) return e.lbl[e._i || 0] || '';
+  return (e._n || 1) > 1 ? `${e.lbl} ${(e._i || 0) + 1}` : e.lbl;
+};
+
+// The slot's declared format, or null when `id` names no slot on this device.
+export const slotDef = (dev, id) =>
+  ((dev && dev.slots) || []).find((s) => s.id === id) || null;
+
+// The positioned elements of one face, with any option-card slots expanded:
+// the aperture itself, plus whatever card the item has fitted, laid out inside
+// it. Everything that needs to know what sockets a device actually has — the
+// drawing, the flow graph, the checks — goes through this one function, so a
+// fitted card cannot appear on the panel but be missing from the patch.
+export function faceElements(spec, dev, item, left = FACE_L, right = FACE_R) {
+  if (!spec) return [];
+  if (Array.isArray(spec.elements)) return spec.elements;
+  if (!spec.auto) return [];
+
+  const fitted = (item && item.cards) || {};
+  const declared = spec.auto.map((e) => {
+    if (e.t !== 'slot') return e;
+    const def = slotDef(dev, e.slot);
+    return def ? { ...e, t: slotType(def.fmt), slot: e.slot, fmt: def.fmt } : e;
+  });
+
+  const placed = autoLayout(declared, dev.ru || 1, left, right);
+  const out = [];
+  placed.forEach((e) => {
+    out.push(e);
+    if (!e.slot) return;
+    const card = cardById(fitted[e.slot]);
+    const f = SLOT_FORMATS[e.fmt];
+    if (!card || !f) return;
+    // Inset from the aperture edge: a card's faceplate overlaps the hole, and
+    // its connectors sit inboard of the fixing screws.
+    const pad = 7 * MM;
+    const def = slotDef(dev, e.slot);
+    const pre = (def && (def.short || def.name)) || '';
+    out.push(...layoutIn(card.auto, e.x, e.y, f.mm * MM - pad, f.mmH * MM - pad)
+      .map((k) => ({
+        ...k, _card: card.id, _slot: e.slot,
+        // Named for the slot they sit in, which is both what stops a card
+        // socket colliding with an identical one on the chassis — an SQ-Rack
+        // with the SLink card fitted has two SLink ports — and what A&H's own
+        // patch screen does, where the tabs read 'SLink' and 'I/O Port'.
+        lbl: [pre, resolveLbl(k)].filter(Boolean).join(' '),
+        _i: 0, _n: 1,
+      })));
+  });
+  return out;
+}
+
 // Intrinsic scale that renders a primitive at its real physical size.
 export const intrinsic = (t) => {
   const p = P[t];
@@ -912,7 +1072,7 @@ export function renderDevice(dev, view = 'front', item = null, opt = {}) {
     if (layout && layout.auto) {
       return renderHalfPanel({
         ru: dev.ru,
-        elements: autoLayout(layout.auto, dev.ru, HALF_INSET, HALF_W - HALF_INSET),
+        elements: faceElements(layout, dev, item, HALF_INSET, HALF_W - HALF_INSET),
         labels: layout.labels,
       }, o);
     }
@@ -925,7 +1085,7 @@ export function renderDevice(dev, view = 'front', item = null, opt = {}) {
     return renderPanel({ ru: dev.ru, ...layout }, o);
   }
   if (layout && layout.auto) {
-    return renderPanel({ ru: dev.ru, elements: autoLayout(layout.auto, dev.ru),
+    return renderPanel({ ru: dev.ru, elements: faceElements(layout, dev, item),
                          labels: layout.labels }, o);
   }
   return renderBlock(dev, o);

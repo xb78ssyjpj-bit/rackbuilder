@@ -93,6 +93,26 @@ front-panel layouts that ARE drawn were confirmed visually; these were not:
   grounds of identical chassis and I/O count. Worth a glance if you have one.
 - Depths and weights across the dLive range are the weakest figures — several
   come from retailers rather than A&H, and are marked `approx`.
+- **The SQ-Rack rear was rebuilt in v1.3.0** from A&H's own drawing, and it was
+  wrong in six separate ways. Every other A&H rear in this library was declared
+  the same way and from the same class of source. They are worth the same pass —
+  the SQ-Rack's errors were all of the "counted the obvious connectors, missed
+  the jacks" kind, which nothing in the check gate can catch.
+
+### Option-card slots — what is not covered yet
+
+The mechanism is general (see README, "Option-card slots"); only the aperture
+formats are per-manufacturer. Still to add:
+
+- **A&H dLive / Avantis cards** — AES3, Dante 64/128, DX Link, fibreACE,
+  gigaACE, superMADI, Waves V3, M-DL-ADAPT. A *different* aperture from the SQ
+  I/O Port, so it needs its own format and a measured size.
+- **Which other library devices actually have slots.** Only the SQ-Rack declares
+  one so far. The SQ-5/6/7, SQ+ and AHM processors take the same card and are
+  not in the library; the dLive MixRacks and Avantis have their own.
+- **Yamaha MY-cards, DiGiCo, Lake, Dante-in-anything** — each is a new format.
+- No weight or power per card, because nobody publishes it. If a manufacturer
+  does, the field is there to fill in.
 
 ## 6. Network
 
