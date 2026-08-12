@@ -19,6 +19,28 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.2.4 — 2026-08-12
+
+**Fixed**
+
+- **The flow canvas no longer stops at its top-left corner.** Racks and cards
+  were clamped to positive coordinates, so nothing could be placed above or to
+  the left of wherever the graph happened to start — you could not put a stage
+  rack up and to the left of the console it feeds without shoving everything
+  else out of the way first. The canvas is unbounded in all four directions now.
+
+  Nothing needed the corner: **Arrange** already places nodes at negative Y, and
+  **Fit** works off the graph's actual bounding box, so it still gathers
+  everything up however far out it has been scattered.
+- **The cable layer follows the graph rather than the origin.** Its viewport
+  started at 0,0 and only ever grew right and down, so cables on anything at a
+  negative coordinate were drawn outside it — visible only because the layer
+  does not clip, and clickable only by luck. It is now sized and positioned to
+  the real bounding box, with a matching `viewBox` so the paths stay in world
+  coordinates.
+
+---
+
 ## v1.2.3 — 2026-08-12
 
 **Fixed**

@@ -534,13 +534,25 @@ export function createFlow(ctx) {
     if (!svg) return;
     svg.innerHTML = '';
     const f = flow();
-    let maxX = 600, maxY = 400;
+    // The wire layer covers the graph's real bounding box rather than a box
+    // anchored at the origin. Nodes can sit at negative coordinates — `arrange`
+    // puts the external group above y=0, and dragging is unbounded — and a
+    // viewport starting at 0,0 would leave those cables outside it, relying on
+    // overflow:visible to paint them and hoping they stayed clickable.
+    // A viewBox at the same origin keeps path data in world coordinates.
+    const PADW = 80;
+    let x0 = 0, y0 = 0, x1 = 600, y1 = 400;
     nodes.forEach((n) => {
-      maxX = Math.max(maxX, n.pos.x + NODE_W + 80);
-      maxY = Math.max(maxY, n.pos.y + nodeHeight(visiblePorts(n).length) + 80);
+      x0 = Math.min(x0, n.pos.x - PADW);
+      y0 = Math.min(y0, n.pos.y - PADW);
+      x1 = Math.max(x1, n.pos.x + NODE_W + PADW);
+      y1 = Math.max(y1, n.pos.y + nodeHeight(visiblePorts(n).length) + PADW);
     });
-    svg.setAttribute('width', maxX);
-    svg.setAttribute('height', maxY);
+    svg.setAttribute('width', x1 - x0);
+    svg.setAttribute('height', y1 - y0);
+    svg.setAttribute('viewBox', `${x0} ${y0} ${x1 - x0} ${y1 - y0}`);
+    svg.style.left = x0 + 'px';
+    svg.style.top = y0 + 'px';
 
     const bows = bowOf(f.cables);
     const chips = [];
@@ -1301,8 +1313,8 @@ export function createFlow(ctx) {
         zoneDrag.from.forEach((o) => {
           const n = byKey.get(o.k);
           if (!n) return;
-          n.pos.x = Math.max(0, Math.round(o.x + dx));
-          n.pos.y = Math.max(0, Math.round(o.y + dy));
+          n.pos.x = Math.round(o.x + dx);
+          n.pos.y = Math.round(o.y + dy);
           f.pos[o.k] = n.pos;
           const el = world.querySelector(`.fnode[data-node="${o.k}"]`);
           if (el) { el.style.left = n.pos.x + 'px'; el.style.top = n.pos.y + 'px'; }
@@ -1313,8 +1325,13 @@ export function createFlow(ctx) {
       if (drag) {
         const p = worldPt(ev);
         const n = byKey.get(drag.key);
-        n.pos.x = Math.max(0, Math.round(p.x - drag.dx));
-        n.pos.y = Math.max(0, Math.round(p.y - drag.dy));
+        // No clamp to the origin. The canvas is unbounded in every direction —
+        // `arrange` already places the external group above y=0, and Fit works
+        // off the actual bounding box, so nothing downstream needs a corner to
+        // measure from. Pinning drags to positive space only ever meant you
+        // could not put a rack up and to the left of the one it feeds.
+        n.pos.x = Math.round(p.x - drag.dx);
+        n.pos.y = Math.round(p.y - drag.dy);
         flow().pos[drag.key] = n.pos;
         drag.el.style.left = n.pos.x + 'px';
         drag.el.style.top = n.pos.y + 'px';
