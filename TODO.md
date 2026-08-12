@@ -105,35 +105,20 @@ The mechanism is general (see README, "Option-card slots"); only the aperture
 formats are per-manufacturer. Done: the SQ-Rack and AHM-16/32/64, all four on
 the `ah-sq-io` format with the five SQ cards.
 
-**dLive / Avantis — blocked on one number.** The whole card range is documented
-from A&H's own fitting notes and needs no further research:
+**dLive / Avantis — done, with one soft figure.** The whole card range is in,
+from A&H's own fitting notes, on the `ah-dl-io` format: DM32/48/64 with three
+I/O Ports each and CDM32/48/64 with one.
 
-| Card | Sockets |
-|---|---|
-| M-DL-DANT64 / DANT128 | 2 × etherCON (Primary / Secondary) |
-| M-DL-DXLINK | 4 × etherCON (DX Link 1–4) |
-| M-DL-GACE (gigaACE) | 1 × etherCON (port A) |
-| M-DL-GOPT (fibreACE) | 1 × opticalCON Duo + 1 × etherCON |
-| M-DL-WAVES3 | 3 × etherCON (built-in gigabit switch) |
-| M-DL-SMADI (superMADI) | 4 × BNC (Link 1–4) + 4 × SFP (Link 5–8) |
-| M-DL-AES ×4 variants | AES3 on XLR — 10 channels split 10O / 2I8O / 4I6O / 6I4O |
+The **aperture size is derived, not measured** — 170 x 48 mm, from A&H's exact
+3.53:1 template aspect plus the pitch of five D-series connectors on the AES
+card's faceplate drawing. It is the only dimension in this library that is not
+from a drawing or a stated figure, `check.mjs` prints a note about it on every
+run, and one straight-on photograph of a dLive MixRack rear would settle it: the
+19" ear-to-ear span is the ruler, the same way the SQ-Rack's 88 x 41 mm was got.
 
-What is missing is the **aperture size in mm**. It is certainly not the SQ's:
-M-DL-DXLINK puts four etherCON in one row, 96 mm of connector before any
-spacing, against an 88 mm SQ I/O Port. A&H publish no mechanical drawing of it,
-their site 403s automated fetches, and neither MixRack Getting Started Guide has
-a rear-panel *drawing* — only photographs with callouts, which carry no ruler.
-
-The fix is one photograph of a dLive MixRack rear, straight on: the 19" ear-to-
-ear span is the scale reference, the same way the SQ-Rack's 88 × 41 mm was
-measured. That same photo would also fix the rears below.
-
-Slot counts, when the aperture is known — both from A&H's guides, and they
-differ, which is worth not assuming:
-
-- **DM0 / DM32 / DM48 / DM64**: *3* I/O Ports, 128×128 channels each.
-- **CDM32 / CDM48 / CDM64**: *1* I/O Port.
-
+- **DM0** has no slots declared. A&H's DM MixRack guide covers "3 sizes" — the
+  DM32, DM48 and DM64 — and says nothing about the DM0, so its I/O Port count
+  was not established rather than assumed from the family.
 - **M-DL-ADAPT** is a slot inside a slot — a 'letter-box' adapter that puts an
   iLive/GLD aperture inside a dLive one, hosting M-Dante, M-Waves, M-ES-V2,
   M-ACE or M-MADI. Supporting it means letting a *card* declare `slots` too,

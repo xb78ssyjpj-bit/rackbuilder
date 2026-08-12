@@ -3347,50 +3347,83 @@ const D = [
     ru: 7, depth: 350, weight: 15, approx: true,
     src: 'https://www.allen-heath.com/hardware/dlive-series/dlive-mixracks/',
     front: mixrackFront(7, 'dLive DM32'),
+    // 3 I/O Ports, 128x128 channels each, per A&H's DM MixRack guide. The CDM
+    // MixRacks below have ONE, which is worth not assuming from the family name.
+    slots: [
+      { id: 'io1', name: 'I/O Port 1', short: 'IO1', fmt: 'ah-dl-io' },
+      { id: 'io2', name: 'I/O Port 2', short: 'IO2', fmt: 'ah-dl-io' },
+      { id: 'io3', name: 'I/O Port 3', short: 'IO3', fmt: 'ah-dl-io' },
+    ],
     rear: { auto: [
       { t: 'xlrf', n: 32 }, { t: 'xlrm', n: 16 }, { t: 'ethercon', n: 2 },
       { t: 'iec_in', n: 2 },
+      { t: 'slot', slot: 'io1' }, { t: 'slot', slot: 'io2' },
+      { t: 'slot', slot: 'io3' },
     ] } },
   { id: 'ah-dm48', brand: 'Allen & Heath', model: 'dLive DM48', category: 'audio',
     ru: 8, depth: 350, weight: 18, approx: true,
     src: 'https://www.allen-heath.com/hardware/dlive-series/dlive-mixracks/',
     front: mixrackFront(8, 'dLive DM48'),
+    // 3 I/O Ports, 128x128 channels each, per A&H's DM MixRack guide. The CDM
+    // MixRacks below have ONE, which is worth not assuming from the family name.
+    slots: [
+      { id: 'io1', name: 'I/O Port 1', short: 'IO1', fmt: 'ah-dl-io' },
+      { id: 'io2', name: 'I/O Port 2', short: 'IO2', fmt: 'ah-dl-io' },
+      { id: 'io3', name: 'I/O Port 3', short: 'IO3', fmt: 'ah-dl-io' },
+    ],
     rear: { auto: [
       { t: 'xlrf', n: 48 }, { t: 'xlrm', n: 24 }, { t: 'ethercon', n: 2 },
       { t: 'iec_in', n: 2 },
+      { t: 'slot', slot: 'io1' }, { t: 'slot', slot: 'io2' },
+      { t: 'slot', slot: 'io3' },
     ] } },
   { id: 'ah-dm64', brand: 'Allen & Heath', model: 'dLive DM64', category: 'audio',
     ru: 10, depth: 350, weight: 22, approx: true,
     src: 'https://www.allen-heath.com/hardware/dlive-series/dlive-mixracks/',
     front: mixrackFront(10, 'dLive DM64'),
+    // 3 I/O Ports, 128x128 channels each, per A&H's DM MixRack guide. The CDM
+    // MixRacks below have ONE, which is worth not assuming from the family name.
+    slots: [
+      { id: 'io1', name: 'I/O Port 1', short: 'IO1', fmt: 'ah-dl-io' },
+      { id: 'io2', name: 'I/O Port 2', short: 'IO2', fmt: 'ah-dl-io' },
+      { id: 'io3', name: 'I/O Port 3', short: 'IO3', fmt: 'ah-dl-io' },
+    ],
     rear: { auto: [
       { t: 'xlrf', n: 64 }, { t: 'xlrm', n: 32 }, { t: 'ethercon', n: 2 },
       { t: 'iec_in', n: 2 },
+      { t: 'slot', slot: 'io1' }, { t: 'slot', slot: 'io2' },
+      { t: 'slot', slot: 'io3' },
     ] } },
   // C Class: single PSU, one option slot, lighter.
   { id: 'ah-cdm32', brand: 'Allen & Heath', model: 'dLive CDM32', category: 'audio',
     ru: 5, depth: 310, weight: 10, approx: true,
     src: 'https://www.allen-heath.com/hardware/dlive-series/dlive-mixracks/',
     front: mixrackFront(5, 'dLive CDM32'),
+    slots: [{ id: 'io', name: 'I/O Port', short: 'I/O', fmt: 'ah-dl-io' }],
     rear: { auto: [
       { t: 'xlrf', n: 32 }, { t: 'xlrm', n: 16 }, { t: 'ethercon', n: 2 },
       { t: 'iec_in', n: 1 },
+      { t: 'slot', slot: 'io' },
     ] } },
   { id: 'ah-cdm48', brand: 'Allen & Heath', model: 'dLive CDM48', category: 'audio',
     ru: 7, depth: 310, weight: 12, approx: true,
     src: 'https://www.allen-heath.com/hardware/dlive-series/dlive-mixracks/',
     front: mixrackFront(7, 'dLive CDM48'),
+    slots: [{ id: 'io', name: 'I/O Port', short: 'I/O', fmt: 'ah-dl-io' }],
     rear: { auto: [
       { t: 'xlrf', n: 48 }, { t: 'xlrm', n: 24 }, { t: 'ethercon', n: 2 },
       { t: 'iec_in', n: 1 },
+      { t: 'slot', slot: 'io' },
     ] } },
   { id: 'ah-cdm64', brand: 'Allen & Heath', model: 'dLive CDM64', category: 'audio',
     ru: 8, depth: 309, weight: 20.9, approx: true,
     src: 'https://www.allen-heath.com/hardware/dlive-series/dlive-mixracks/',
     front: mixrackFront(8, 'dLive CDM64'),
+    slots: [{ id: 'io', name: 'I/O Port', short: 'I/O', fmt: 'ah-dl-io' }],
     rear: { auto: [
       { t: 'xlrf', n: 64 }, { t: 'xlrm', n: 32 }, { t: 'ethercon', n: 2 },
       { t: 'iec_in', n: 1 },
+      { t: 'slot', slot: 'io' },
     ] } },
 
   // 5U, 48 in / 16 out, laid out on the AudioRack grammar: inputs in rows of 8,
@@ -4006,6 +4039,90 @@ const CARDS = [
     auto: [
       { t: 'bnc', n: 4, stack: 2, lbl: ['MADI 1 OUT', 'MADI 1 IN', 'MADI 2 OUT', 'MADI 2 IN'] },
       { t: 'bnc', n: 1, lbl: 'SYNC' },
+    ] },
+
+  // --- Allen & Heath dLive / Avantis ---------------------------------------
+  // Every one from A&H's own fitting note for that card. They all fit the same
+  // I/O Port, which the dLive MixRacks, the dLive Surfaces and Avantis share —
+  // the fitting notes say "an Allen & Heath Avantis or dLive I/O Port" verbatim.
+  //
+  // Not included: M-DL-ADAPT, the 'letter-box' adapter. It is a slot inside a
+  // slot — it puts an iLive/GLD aperture inside a dLive one to host M-Dante,
+  // M-Waves, M-ES-V2, M-ACE or M-MADI — and modelling it as a card with no
+  // connectors would draw it as a blank plate, which is exactly what it is not.
+  { id: 'ah-dl-dant64', brand: 'Allen & Heath', model: 'Dante 64x64 (M-DL-DANT64)',
+    fmt: 'ah-dl-io', note: '64x64 Dante, Primary / Secondary, redundant or switched',
+    src: 'https://support.allen-heath.com/hc/en-gb/articles/40487771409937',
+    auto: [{ t: 'ethercon', n: 2, lbl: ['DANTE PRI', 'DANTE SEC'] }] },
+  { id: 'ah-dl-dant128', brand: 'Allen & Heath', model: 'Dante 128x128 (M-DL-DANT128)',
+    fmt: 'ah-dl-io', note: '128x128 Dante, Primary / Secondary, redundant or switched',
+    src: 'https://support.allen-heath.com/hc/en-gb/articles/40487771409937',
+    auto: [{ t: 'ethercon', n: 2, lbl: ['DANTE PRI', 'DANTE SEC'] }] },
+
+  // 4 ports, each 32x32 @ 96kHz, parallel or redundant in pairs.
+  { id: 'ah-dl-dxlink', brand: 'Allen & Heath', model: 'DX Link (M-DL-DXLINK)',
+    fmt: 'ah-dl-io', note: '4 x DX Link, 32x32 @ 96kHz each',
+    src: 'https://support.allen-heath.com/hc/en-gb/articles/40490513360785',
+    auto: [{ t: 'ethercon', n: 4, lbl: 'DX LINK' }] },
+
+  { id: 'ah-dl-gace', brand: 'Allen & Heath', model: 'gigaACE (M-DL-GACE)',
+    fmt: 'ah-dl-io', note: '128x128 @ 96kHz point-to-point to another dLive / Avantis',
+    src: 'https://support.allen-heath.com/hc/en-gb/articles/40496737174801',
+    auto: [{ t: 'ethercon', n: 1, lbl: 'GIGAACE A' }] },
+
+  // One logical port A on two physical connectors — fibre or copper, by mode.
+  { id: 'ah-dl-gopt', brand: 'Allen & Heath', model: 'fibreACE (M-DL-GOPT)',
+    fmt: 'ah-dl-io', note: '128x128 @ 96kHz over fibre or copper, opticalCON Duo',
+    src: 'https://support.allen-heath.com/hc/en-gb/articles/40495217801233',
+    auto: [
+      { t: 'opticalcon', n: 1, lbl: 'PORT A OPTICAL' },
+      { t: 'ethercon', n: 1, lbl: 'PORT A COPPER' },
+    ] },
+
+  // "A built-in Gigabit switch with 3 locking EtherCon ports" — three, not two.
+  { id: 'ah-dl-waves3', brand: 'Allen & Heath', model: 'Waves V3 (M-DL-WAVES3)',
+    fmt: 'ah-dl-io', note: '128x128 @ 48/96kHz Waves SoundGrid, 3-port switch',
+    src: 'https://support.allen-heath.com/hc/en-gb/articles/40488232359569',
+    auto: [{ t: 'ethercon', n: 3, lbl: 'SOUNDGRID' }] },
+
+  // Links 1-4 on BNC, links 5-8 on SFP cages for fibre.
+  { id: 'ah-dl-smadi', brand: 'Allen & Heath', model: 'superMADI (M-DL-SMADI)',
+    fmt: 'ah-dl-io', note: '128x128 @ 48/96kHz AES10 MADI, coax and optional fibre',
+    src: 'https://support.allen-heath.com/hc/en-gb/articles/40502416581905',
+    auto: [
+      { t: 'bnc', n: 4, lbl: 'LINK' },
+      { t: 'sfp', n: 4, lbl: ['LINK 5', 'LINK 6', 'LINK 7', 'LINK 8'] },
+    ] },
+
+  // Four AES3 variants on one faceplate: five XLR every time, split by model
+  // name. The numbers in the name are CHANNELS and each XLR carries a stereo
+  // pair, so 6I4O is three in and two out — confirmed against A&H's faceplate
+  // drawing, which brackets the first three sockets separately from the last
+  // two. All four are 10 channels in total.
+  { id: 'ah-dl-aes10o', brand: 'Allen & Heath', model: 'AES3 10 out (M-DL-AES10O)',
+    fmt: 'ah-dl-io', note: '5 stereo AES3 outputs',
+    src: 'https://support.allen-heath.com/hc/en-gb/articles/40489352616977',
+    auto: [{ t: 'xlrm', n: 5, sig: 'aes3', lbl: 'AES OUT' }] },
+  { id: 'ah-dl-aes2i8o', brand: 'Allen & Heath', model: 'AES3 2 in / 8 out (M-DL-AES2I8O)',
+    fmt: 'ah-dl-io', note: '1 stereo AES3 input, 4 stereo outputs',
+    src: 'https://support.allen-heath.com/hc/en-gb/articles/40489352616977',
+    auto: [
+      { t: 'xlrf', n: 1, sig: 'aes3', lbl: 'AES IN' },
+      { t: 'xlrm', n: 4, sig: 'aes3', lbl: 'AES OUT' },
+    ] },
+  { id: 'ah-dl-aes4i6o', brand: 'Allen & Heath', model: 'AES3 4 in / 6 out (M-DL-AES4I6O)',
+    fmt: 'ah-dl-io', note: '2 stereo AES3 inputs, 3 stereo outputs',
+    src: 'https://support.allen-heath.com/hc/en-gb/articles/40489352616977',
+    auto: [
+      { t: 'xlrf', n: 2, sig: 'aes3', lbl: 'AES IN' },
+      { t: 'xlrm', n: 3, sig: 'aes3', lbl: 'AES OUT' },
+    ] },
+  { id: 'ah-dl-aes6i4o', brand: 'Allen & Heath', model: 'AES3 6 in / 4 out (M-DL-AES6I4O)',
+    fmt: 'ah-dl-io', note: '3 stereo AES3 inputs, 2 stereo outputs',
+    src: 'https://support.allen-heath.com/hc/en-gb/articles/40489352616977',
+    auto: [
+      { t: 'xlrf', n: 3, sig: 'aes3', lbl: 'AES IN' },
+      { t: 'xlrm', n: 2, sig: 'aes3', lbl: 'AES OUT' },
     ] },
 ];
 

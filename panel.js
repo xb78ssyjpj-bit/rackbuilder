@@ -411,6 +411,27 @@ export const SLOT_FORMATS = {
   // scale puts the chassis body at 437.5 mm — the standard 19" body width —
   // which is the check that the scale itself is right.
   'ah-sq-io': { name: 'I/O Port', mm: 88, mmH: 41 },
+
+  // Allen & Heath dLive / Avantis 'I/O Port'. A larger, separate aperture from
+  // the SQ's, which the cards themselves prove: M-DL-DXLINK alone puts four
+  // etherCON in one row — 96 mm of flange before any spacing — against an 88 mm
+  // SQ port.
+  //
+  // SIZE NOT MEASURED, unlike every other dimension in this file. A&H publish
+  // no mechanical drawing of the aperture and neither MixRack guide has a
+  // rear-panel *drawing* to scale off — only photographs with callouts, which
+  // carry no ruler. What is exact is the ASPECT RATIO: every card's fitting note
+  // draws the aperture on the same 300 x 85 px template, so 3.53:1 is A&H's own
+  // figure. The absolute size is pinned by what the cards demonstrably carry in
+  // a single row — five Neutrik D-series on M-DL-AES, at a pitch of 6.6 plate
+  // widths measured off that faceplate drawing, which puts the plate at 26 mm
+  // pitch x 6.6 ~= 170 mm. Height follows from the ratio.
+  //
+  // `approx` marks it as the one slot size here that is derived rather than
+  // measured, so the fit check below it is a sanity bound and not a guarantee.
+  // One straight-on photograph of a dLive MixRack rear would replace this with
+  // a real figure, the 19" span being the ruler.
+  'ah-dl-io': { name: 'I/O Port', mm: 170, mmH: 48, approx: true },
 };
 
 export const slotType = (fmt) => `slot_${String(fmt).replace(/[^a-z0-9]/gi, '')}`;
@@ -699,9 +720,28 @@ export function autoLayout(items, ru = 1, left = FACE_L, right = FACE_R) {
   });
   if (row.length) rows.push(row);
 
-  const bandH = (ru * U) / rows.length;
+  // Bands are equal shares of the face by default. But a row can contain
+  // something that simply does not fit an equal share — an option-card aperture
+  // is over a rack unit tall, and on a panel with a row per unit that leaves it
+  // hanging off the bottom edge. When any row needs more than its share, the
+  // heights are allocated by what each row actually needs and the leftover is
+  // split evenly. A panel whose rows all fit their equal share is untouched,
+  // which is every panel that existed before slots did.
+  const equal = (ru * U) / rows.length;
+  const need = rows.map((r) => Math.max(...r.map((it) => (heightMM(it.t) || 20) * MM)));
+  const total = need.reduce((a, b) => a + b, 0);
+  // EDGE is the breathing room a row wants beyond the bare height of what is in
+  // it. Without it a 48 mm aperture in a 48.26 mm band technically "fits" while
+  // touching the panel edge top and bottom, which is not a panel anyone made.
+  const EDGE = 8;
+  const bands = (need.some((h) => h + EDGE > equal) && total <= ru * U)
+    ? need.map((h) => h + (ru * U - total) / rows.length)
+    : rows.map(() => equal);
+  const tops = [];
+  bands.reduce((y, h) => { tops.push(y); return y + h; }, 0);
 
   rows.forEach((r, ri) => {
+    const bandH = bands[ri];
     const runs = runsOf(r);
     const cols = (run) => Math.ceil(run.items.length / run.stack);
     const runW = (run) => cols(run) * width(run.t);
@@ -726,7 +766,7 @@ export function autoLayout(items, ru = 1, left = FACE_L, right = FACE_R) {
     const total = totalW();
     const scale = total > faceW ? faceW / total : 1;
     let x = left + (faceW - total * scale) / 2;
-    const cy = (ru * U) * ((ri + 0.5) / rows.length);
+    const cy = tops[ri] + bandH / 2;
 
     runs.forEach((run) => {
       const w = width(run.t) * scale;

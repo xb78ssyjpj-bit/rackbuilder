@@ -173,5 +173,13 @@ for (const [name, marker] of [['.matrix', 'data-ui'], ['.splitnote', 'dataset.ui
 }
 
 console.log(`${panels} auto panels, ${sockets} sockets, ${named} manufacturer-named`);
+// Not a failure — a standing reminder. A slot whose aperture was derived rather
+// than measured makes the fit checks above a sanity bound, not a guarantee.
+for (const [fmt, f] of Object.entries(SLOT_FORMATS)) {
+  if (f.approx) {
+    console.log(`  note: ${fmt} is ${f.mm}x${f.mmH} mm DERIVED, not measured `
+      + `— ${cardsFor(fmt).length} cards checked against a figure that could move`);
+  }
+}
 console.log(fail ? `\n${fail} PROBLEM${fail === 1 ? '' : 'S'}` : 'all checks pass');
 process.exit(fail ? 1 : 0);

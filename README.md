@@ -974,6 +974,11 @@ what A&H's own patch screen does.
 and that fitting any card to any compatible device leaves every socket name
 unambiguous. Adding a manufacturer means adding a format.
 
+A format may carry `approx: true`, meaning its size was **derived rather than
+measured** — the fit checks against it are then a sanity bound, not a guarantee,
+and `check.mjs` prints a note saying so on every run. `ah-dl-io` (dLive /
+Avantis) is currently the only one; `ah-sq-io` was measured off A&H's drawing.
+
 ### Stacked connector banks
 
 A run of connectors can be drawn two or three rows deep with `stack`:

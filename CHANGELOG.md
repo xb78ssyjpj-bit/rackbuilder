@@ -19,6 +19,62 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.4.0 — 2026-08-12
+
+**Added**
+
+- **The dLive MixRacks take option cards** — DM32/48/64 with **three** I/O Ports
+  each, CDM32/48/64 with **one**. Both figures are from A&H's own guides and
+  they differ, which is worth not assuming from the family name.
+
+- **Eleven dLive / Avantis cards**, each from A&H's fitting note for that card:
+
+  | Card | Sockets |
+  |---|---|
+  | Dante 64×64 / 128×128 (M-DL-DANT64 / DANT128) | 2 × etherCON |
+  | DX Link (M-DL-DXLINK) | 4 × etherCON |
+  | gigaACE (M-DL-GACE) | 1 × etherCON |
+  | fibreACE (M-DL-GOPT) | opticalCON Duo + etherCON |
+  | Waves V3 (M-DL-WAVES3) | 3 × etherCON — a 3-port switch, not 2 |
+  | superMADI (M-DL-SMADI) | 4 × BNC + 4 × SFP |
+  | AES3 ×4 variants (M-DL-AES10O / 2I8O / 4I6O / 6I4O) | 5 × XLR each |
+
+  The AES numbers are *channels*, and each XLR carries a stereo pair, so 6I4O is
+  three in and two out — confirmed against A&H's faceplate drawing, which
+  brackets the first three sockets separately from the last two.
+
+  Not included: **M-DL-ADAPT**, which is a slot inside a slot — a 'letter-box'
+  that puts an iLive/GLD aperture inside a dLive one. Modelling it as a card
+  with no connectors would draw it as a blank plate, which is what it is not.
+
+**Changed**
+
+- **Auto-layout allocates band heights by what a row needs**, where before every
+  row got an equal share of the face. A row containing something taller than its
+  share — a dLive aperture is 48 mm, more than a rack unit — used to hang off
+  the panel edge. Rows now take their required height and split the leftover.
+
+  Panels whose rows all fit an equal share are untouched: **151 of the 151
+  slot-free auto panels render byte-identically**, checked by diffing every
+  element position against the previous release.
+
+**Known soft spot — the dLive aperture size is derived, not measured**
+
+Every other dimension in this library comes from a drawing or a stated figure.
+This one does not, and the `note:` line in `tools/check.mjs` says so on every
+run. A&H publish no mechanical drawing of the I/O Port and neither MixRack guide
+has a rear-panel *drawing* to scale off — only photographs with callouts.
+
+What is exact is the **aspect ratio**: every card's fitting note draws the
+aperture on the same 300 × 85 template, so 3.53:1 is A&H's own figure. The
+absolute size is pinned by what the cards demonstrably carry in one row — five
+Neutrik D-series on the AES card, measured at 6.6 plate-widths of pitch off that
+faceplate drawing — giving **170 × 48 mm**. Every card in the range fits it and
+so does every host, but the figure could move. One straight-on photograph of a
+dLive MixRack rear would replace it with a measurement.
+
+---
+
 ## v1.3.1 — 2026-08-12
 
 **Added**
