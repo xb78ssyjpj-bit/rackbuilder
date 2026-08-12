@@ -3438,8 +3438,10 @@ const D = [
       { text: 'ALLEN&HEATH', x: 146, y: 44, size: 10, ls: .8 },
       { text: 'AHM-16', x: 146, y: 66, size: 9, ls: .5 },
     ] },
+    slots: [{ id: 'io', name: 'I/O Port', short: 'I/O', fmt: 'ah-sq-io' }],
     rear: { auto: [
       { t: 'euroblock', n: 16 }, { t: 'rj45', n: 2 }, { t: 'iec_in', n: 1 },
+      { t: 'slot', slot: 'io' },
     ] } },
   { id: 'ah-ahm32', brand: 'Allen & Heath', model: 'AHM-32', category: 'audio',
     ru: 1, depth: 270, weight: 4.0, power: 70, approx: true,
@@ -3455,8 +3457,10 @@ const D = [
       { text: 'ALLEN&HEATH', x: 146, y: 44, size: 10, ls: .8 },
       { text: 'AHM-32', x: 146, y: 66, size: 9, ls: .5 },
     ] },
+    slots: [{ id: 'io', name: 'I/O Port', short: 'I/O', fmt: 'ah-sq-io' }],
     rear: { auto: [
       { t: 'euroblock', n: 24 }, { t: 'rj45', n: 2 }, { t: 'iec_in', n: 1 },
+      { t: 'slot', slot: 'io' },
     ] } },
   { id: 'ah-ahm64', brand: 'Allen & Heath', model: 'AHM-64', category: 'audio',
     ru: 2, depth: 363, weight: 7.0, power: 70, approx: true,
@@ -3472,8 +3476,10 @@ const D = [
       { text: 'ALLEN&HEATH', x: 146, y: 88, size: 13, ls: 1 },
       { text: 'AHM-64', x: 146, y: 116, size: 11, ls: .6 },
     ] },
+    slots: [{ id: 'io', name: 'I/O Port', short: 'I/O', fmt: 'ah-sq-io' }],
     rear: { auto: [
       { t: 'euroblock', n: 24 }, { t: 'rj45', n: 2 }, { t: 'iec_in', n: 1 },
+      { t: 'slot', slot: 'io' },
     ] } },
 
   // ------------------------------------------------------------- computing ---
@@ -3971,6 +3977,12 @@ const CARDS = [
     auto: [{ t: 'ethercon', n: 1, lbl: 'SLINK' }] },
 
   // "Two ports with redundant and switch modes ... Locking Ethercon connectors".
+  //
+  // These are the current products. A&H's AHM guides warn to use the M-SQ-DANT32
+  // or M-SQ-DANT64 (SQ Dante V2) card in an AHM rather than the original
+  // M-SQ-DANTE, and the 64x64 card's V1 revision is SQ-only. The library holds
+  // one entry per product, not per board revision, so that caveat is recorded
+  // here rather than modelled — a second-hand V1 card will not work in an AHM.
   { id: 'ah-sq-dante32', brand: 'Allen & Heath', model: 'SQ Dante 32x32', fmt: 'ah-sq-io',
     note: '32x32 @ 48/96kHz, AES67',
     src: 'https://www.allen-heath.com/hardware/audio-networking/sq-dante-32/',

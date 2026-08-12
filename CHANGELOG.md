@@ -19,6 +19,35 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.3.1 — 2026-08-12
+
+**Added**
+
+- **The AHM processors take option cards.** AHM-16, AHM-32 and AHM-64 each have
+  one I/O Port, and it is the *same* aperture as the SQ's — A&H's guides say so
+  and sell one card range for both — so all five SQ cards are now fittable to
+  all four hosts with no new format.
+
+  The 1U AHM-16 and AHM-32 are a useful check on the aperture measured for
+  v1.3.0: an 88 × 41 mm plate has to fit inside 44.45 mm of rack height, and
+  41 mm does, with about 1.7 mm each side. A wrong figure would have failed the
+  panel-bounds check rather than drawn quietly.
+
+- Noted on the Dante cards that A&H's AHM guides require the **V2 revision**
+  (M-SQ-DANT32 / M-SQ-DANT64) in an AHM, not the original M-SQ-DANTE, and that
+  the 64×64's V1 is SQ-only. The library holds one entry per product rather than
+  per board revision, so this is recorded rather than modelled.
+
+**Not done — dLive and Avantis**
+
+The card range is fully documented (see TODO §5) but the **aperture has not been
+measured**, and it is definitely not the SQ's: M-DL-DXLINK puts four etherCON in
+one row, which is 96 mm of connector before any spacing, and the SQ I/O Port is
+88 mm wide. Rather than draw a slot at an invented size, this is left out. One
+photograph of a dLive MixRack rear would settle it — the 19" span is the ruler.
+
+---
+
 ## v1.3.0 — 2026-08-12
 
 **Added**
