@@ -3945,25 +3945,49 @@ const D = [
     front: { elements: [{ t: 'trs', x: 96, y: 50, n: 24, gap: 35 }] } },
 
   // outlet strips — C13 27 x 20 mm, Schuko module 45 mm, BS1363 face 50 mm
+  //
+  // Every one of these carries a C14 INLET at the left-hand end. Without it a
+  // strip is a row of outlets with no way to get power into it — nothing to
+  // patch a feed to in the flow view, and a drawing of a thing that cannot
+  // work. C14 because that is what a rack strip is fed with; a 13 A strip on a
+  // captive lead is the other common build and has no inlet connector at all,
+  // so if that is what you have, delete the inlet rather than trust this.
+  //
+  // The inlet is on the same face as the outlets, so the spacing had to come in
+  // to make room. The 8-way 13 A strip is the tight one: eight BS1363 faces are
+  // 368 mm of a 407 mm usable face, and the C14 takes it to 395 mm.
   { id: 'iec-strip-1u', brand: 'Generic', model: 'IEC C13 strip 1U (8)', category: 'power',
     ru: 1, depth: 60, weight: 1.5, power: 0, approx: true,
-    front: { elements: [{ t: 'iec_thru', x: 131, y: 50, n: 8, gap: 105 }] } },
+    front: { elements: [
+      { t: 'iec_in', x: 125, y: 50, lbl: 'MAINS IN' },
+      { t: 'iec_thru', x: 219, y: 50, n: 8, gap: 94 },
+    ] } },
   { id: 'schuko-strip-1u', brand: 'Generic', model: 'Schuko strip 1U (6)', category: 'power',
     ru: 1, depth: 70, weight: 1.8, power: 0, approx: true,
-    front: { elements: [{ t: 'socket_thru', x: 148, y: 50, n: 6, gap: 140 }] } },
+    front: { elements: [
+      { t: 'iec_in', x: 120, y: 50, lbl: 'MAINS IN' },
+      { t: 'socket_thru', x: 210, y: 50, n: 6, gap: 130 },
+    ] } },
 
   // UK 13 A. A BS1363 face is ~50 mm square, so six fit across a 1U panel and
   // the socket fills the panel height — that is genuinely how these are built.
   { id: 'uk13a-strip-1u', brand: 'Generic', model: '13A strip 1U (6)', category: 'power',
     ru: 1, depth: 70, weight: 1.9, power: 0, approx: true,
-    front: { elements: [{ t: 'bs13a_thru', x: 148, y: 50, n: 6, gap: 140 }] } },
+    front: { elements: [
+      { t: 'iec_in', x: 118, y: 50, lbl: 'MAINS IN' },
+      { t: 'bs13a_thru', x: 214, y: 50, n: 6, gap: 130 },
+    ] } },
   { id: 'uk13a-strip-1u-8', brand: 'Generic', model: '13A strip 1U (8)', category: 'power',
     ru: 1, depth: 70, weight: 2.2, power: 0, approx: true,
-    front: { elements: [{ t: 'bs13a_thru', x: 131, y: 50, n: 8, gap: 105 }] } },
+    front: { elements: [
+      { t: 'iec_in', x: 108, y: 50, lbl: 'MAINS IN' },
+      { t: 'bs13a_thru', x: 187, y: 50, n: 8, gap: 97 },
+    ] } },
   { id: 'uk13a-strip-2u', brand: 'Generic', model: '13A strip 2U (12)', category: 'power',
     ru: 2, depth: 70, weight: 3.6, power: 0, approx: true,
     front: { elements: [
-      { t: 'bs13a_thru', x: 148, y: 50, n: 6, gap: 140 },
+      { t: 'iec_in', x: 108, y: 50, lbl: 'MAINS IN' },
+      { t: 'bs13a_thru', x: 200, y: 50, n: 6, gap: 130 },
       { t: 'bs13a_thru', x: 148, y: 150, n: 6, gap: 140 },
     ] } },
 

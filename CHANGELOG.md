@@ -19,6 +19,30 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.4.1 — 2026-08-12
+
+**Fixed**
+
+- **The generic outlet strips had no way to get power in.** All five were a row
+  of outlets and nothing else — no inlet to patch a feed to in the flow view,
+  and a drawing of a thing that cannot work. Each now carries a **C14 inlet** at
+  the left-hand end, named `MAINS IN`.
+
+  Reported against the IEC strip; the other four had the identical fault, so
+  they were fixed with it: Schuko 1U, 13A 1U ×6, 13A 1U ×8 and 13A 2U ×12.
+
+  C14 because that is what a rack strip is fed with. The other common build is a
+  13 A strip on a captive lead, which has no inlet connector at all — if that is
+  what you have, delete the inlet rather than trust the drawing.
+
+  The inlet sits on the same face as the outlets, so the spacing came in to make
+  room. The 8-way 13 A strip is the tight one: eight BS1363 faces are 368 mm of
+  a 407 mm usable face, and the C14 takes it to 395 mm. Checked for overlap and
+  for face overrun on every strip, since hand-placed `elements` do not go through
+  the auto-layout fit check.
+
+---
+
 ## v1.4.0 — 2026-08-12
 
 **Added**
