@@ -434,14 +434,21 @@ so far, and it is why several entries below are L despite being simple code.
 
 ### M — a session each
 
-- **Other audio networking standards: SLink, gigaACE, AES50, DigiACE, Optocore.**
+- **Other audio networking standards: SLink, gigaACE, AES50, Optocore** — and
+  **"DigiACE", which could not be confirmed to exist and needs clarifying before
+  it is entered.** No product or protocol of that name turns up; ACE is *Allen &
+  Heath's* ("Audio Control Ethernet", the ancestor of gigaACE and fibreACE, and
+  the M-ACE card for iLive/GLD), and DiGiCo's own transports are Optocore and
+  MADI, on DMI-OPTO and DMI-MADI-B/C cards. Most likely it is A&H's ACE
+  remembered with the wrong prefix, but that is a guess and this file does not
+  take guesses. **Ask before adding it.**
+
   The mechanism already exists — `sig` on a declaration overrides the signal
   family, which is how AES3 rides on XLR. This is adding families to `FAMILIES`
   in `flow.js` and then a pass through the library deciding which etherCON is
   which protocol. Worth getting right rather than fast: **SLink and gigaACE are
-  Allen & Heath, AES50 is Midas / Klark Teknik, DigiACE is DiGiCo, Optocore is
-  its own thing on fibre** — they are not interchangeable, and an SQ's port is
-  SLink. The socket is already *named* `SLINK` on the SQ-Rack; what is wrong is
+  Allen & Heath, AES50 is Midas / Klark Teknik, Optocore is its own thing on
+  fibre** — they are not interchangeable, and an SQ's port is SLink. The socket is already *named* `SLINK` on the SQ-Rack; what is wrong is
   that its family is the generic `network`, so it draws the same colour as a
   laptop's ethernet and the flow view will happily patch it to one.
 
