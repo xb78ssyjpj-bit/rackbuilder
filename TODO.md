@@ -287,8 +287,10 @@ tabs, per-socket naming, placed lettering, half-rack support and JSON export.
   `n: 8`, which is more verbose in the exported JSON than a hand-written entry
   would be. It renders identically.
 - **Text size is fixed** at 13 px. Real panels use a range.
-- **No editing an existing custom device** — you rebuild it. The record is in
-  the project file, so Copy JSON before you close is the workaround.
+- **A corrected library device is per-project.** The fix lives in the project
+  file, so it travels with a saved `.json` but not to anybody else's library.
+  Copy JSON into `devices.js` is the way to make a correction permanent, and
+  there is no prompt reminding you to — a fix can sit in one project forever.
 
 **Loose ends from what did ship:**
 

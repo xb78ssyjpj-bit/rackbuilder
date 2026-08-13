@@ -44,8 +44,20 @@ state = { project: load(), rack: 0, view: 'front', sel: null,
           libCat: 'all', libQ: '', zoom: 1, sideZoom: 1 };
 if (!state.project.custom) state.project.custom = [];
 
-const library = () => [...SEED_DEVICES, ...state.project.custom];
+// A library device can be corrected without touching devices.js. The fix is
+// stored against the device's id and applied on the way out, so it reaches
+// everything already using that device — a rack item keeps its uid and simply
+// starts drawing the corrected panel. It lives in the project file, so it
+// travels with a saved .json but does NOT reach the shared library; Copy JSON
+// into devices.js is what makes a correction everybody's.
+const edits = () => (state.project.edits ||= {});
+const library = () => [
+  ...SEED_DEVICES.map((d) => edits()[d.id] || d),
+  ...state.project.custom,
+];
 const devById = (id) => library().find((d) => d.id === id);
+const isSeed = (id) => SEED_DEVICES.some((d) => d.id === id);
+const isEdited = (id) => !!edits()[id];
 const rack = () => state.project.racks[state.rack];
 
 // A patch-panel item can override the device's U height, so every occupancy,
@@ -134,7 +146,15 @@ function renderLib() {
       const cat = state.libCat === 'all'
         ? `<span class="cat">${esc(CATEGORIES[d.category] || d.category)}</span>` : '';
       row.innerHTML = `<span class="b">${esc(d.model)}</span>${cat}`
+        + (isEdited(d.id) ? '<span class="edited" title="Corrected in this project">•</span>' : '')
         + `<span class="ru">${d.ru}U</span>`;
+
+      const ed = document.createElement('button');
+      ed.className = 'edit'; ed.textContent = '✎';
+      ed.title = isSeed(d.id) ? 'Correct this device' : 'Edit this device';
+      ed.onclick = (ev) => { ev.stopPropagation(); openDraft(d); };
+      row.appendChild(ed);
+
       if (state.project.custom.some((c) => c.id === d.id)) {
         const del = document.createElement('button');
         del.className = 'del'; del.textContent = '×';
@@ -1095,7 +1115,7 @@ function renderInspector() {
     `<label class="row"><span>Position</span><input id="iU" type="number" min="1"
        max="${rack().ru}" value="${it.u}"></label>` +
     '<div class="row"><span>Group</span><div class="swatches" id="iCols"></div></div>' +
-    '<div class="row btns"><span></span>' +
+    '<div class="row btns"><button class="btn sm" id="iEditDev">Edit device</button>' +
     '<button class="btn sm danger" id="iDel">Remove</button></div>';
 
   $('#iLabel').oninput = (e) => {
@@ -1242,6 +1262,7 @@ function renderInspector() {
     b.onclick = () => { it.color = c; save(); renderAll(); };
     cols.appendChild(b);
   });
+  $('#iEditDev').onclick = () => editDevice(it.devId);
   $('#iDel').onclick = () => {
     rack().items = rack().items.filter((i) => i.uid !== it.uid);
     state.sel = null; save(); renderAll();
@@ -2092,7 +2113,61 @@ const dlgAdd = $('#dlgAdd');
 //   null                    empty
 //   { t, lbl }              a connector, `lbl` being its real name on the panel
 //   { text }                a piece of panel lettering
-const BLANK_FACE = () => ({ rows: 1, cols: 8, cells: [] });
+const BLANK_FACE = () => ({ rows: 1, cols: 8, cells: [], keep: null });
+
+// Read an existing face back into the grid, so a device can be edited rather
+// than rebuilt. Returns null when the panel cannot honestly be put on a uniform
+// grid — a hand-placed drawing at irregular pitch, or an `auto` declaration,
+// which has no positions at all. That null is not a failure: the caller keeps
+// the original spec untouched, and only replaces it if you actually draw on it.
+function gridFromSpec(spec, ru, width) {
+  if (!spec || !Array.isArray(spec.elements)) return null;
+  const half = width !== 'full';
+  const L = half ? HALF_INSET : FACE_L;
+  const R = half ? HALF_W - HALF_INSET : FACE_R;
+  const TOL = 7;                       // ~3.4 mm, tighter than any real pitch
+
+  const items = [];
+  for (const e of spec.elements) {
+    const n = e.n || 1, gap = e.gap || 0;
+    for (let i = 0; i < n; i++) {
+      const lbl = Array.isArray(e.lbl) ? e.lbl[i]
+        : (e.lbl && n > 1 ? `${e.lbl} ${i + 1}` : e.lbl);
+      items.push({ t: e.t, x: e.x + i * gap, y: e.y, lbl });
+    }
+  }
+  for (const l of spec.labels || []) items.push({ text: l.text, x: l.x, y: l.y });
+  if (!items.length) return { rows: 1, cols: 8, cells: new Array(8).fill(null), keep: null };
+
+  const ys = [...new Set(items.map((i) => Math.round(i.y)))].sort((a, b) => a - b);
+  const rows = ys.length;
+  if (rows > ru * 2) return null;
+  for (let r = 0; r < rows; r++) {
+    if (Math.abs(ys[r] - (ru * U * (r + 0.5)) / rows) > TOL) return null;
+  }
+  const rowOf = (y) => ys.indexOf(Math.round(y));
+
+  for (const cols of [2, 3, 4, 6, 8, 10, 12, 16, 20, 24]) {
+    const cellX = (c) => L + ((R - L) * (c + 0.5)) / cols;
+    const cells = new Array(rows * cols).fill(null);
+    let ok = true;
+    for (const it of items) {
+      let best = -1, bestD = Infinity;
+      for (let c = 0; c < cols; c++) {
+        const d = Math.abs(it.x - cellX(c));
+        if (d < bestD) { bestD = d; best = c; }
+      }
+      const i = rowOf(it.y) * cols + best;
+      // Too far from any cell centre, or two things claiming one cell, and this
+      // column count is not the grid this panel was drawn on.
+      if (bestD > TOL || cells[i]) { ok = false; break; }
+      cells[i] = it.text ? { text: it.text }
+                         : { t: it.t, ...(it.lbl ? { lbl: it.lbl } : {}) };
+    }
+    if (ok) return { rows, cols, cells, keep: null };
+  }
+  return null;
+}
 let draft = null;            // the device being built
 let draftFace = 'front';     // which face the grid is showing
 let draftSel = null;         // index of the selected cell
@@ -2139,20 +2214,37 @@ const faceUsed = (name) => (draft[name].cells || []).some(Boolean);
 
 // The record exactly as devices.js holds one, so it can be pasted into the
 // library file or into another builder's Find specs box unchanged.
+//
+// When editing, the ORIGINAL record is the starting point rather than a blank
+// one. A library device carries fields this editor knows nothing about — `src`,
+// `slots`, `bands`, `patch`, `shelf` — and rebuilding from scratch would
+// quietly strip them, which is a far worse bug than whatever was being fixed.
 function draftRecord() {
-  const rec = {
-    id: 'u-' + uid(),
-    brand: draft.brand || 'Generic',
-    model: draft.model || 'Device',
-    category: draft.category,
-    ru: draft.ru,
-    ...(draft.width !== 'full' ? { half: true } : {}),
-    ...(draft.width === 'half-ears' ? { ears: true } : {}),
-    depth: draft.depth, weight: draft.weight, power: draft.power,
-    approx: true,
-  };
+  const rec = { ...(draft.base || {}) };
+  rec.id = draft.base ? draft.base.id : 'u-' + uid();
+  rec.brand = draft.brand || 'Generic';
+  rec.model = draft.model || 'Device';
+  rec.category = draft.category;
+  rec.ru = draft.ru;
+  rec.depth = draft.depth;
+  rec.weight = draft.weight;
+  rec.power = draft.power;
+  if (!draft.base) rec.approx = true;
+
+  if (draft.width === 'full') { delete rec.half; delete rec.ears; }
+  else {
+    rec.half = true;
+    if (draft.width === 'half-ears') rec.ears = true; else delete rec.ears;
+  }
+
   ['front', 'rear'].forEach((n) => {
-    if (!faceUsed(n)) return;
+    const f = draft[n];
+    if (!faceUsed(n)) {
+      // Nothing drawn: keep whatever the device already had on this face, which
+      // is how a panel too irregular to grid survives an edit to its weight.
+      if (f.keep) rec[n] = f.keep; else delete rec[n];
+      return;
+    }
     const s = faceSpec(n);
     rec[n] = { elements: s.elements, ...(s.labels.length ? { labels: s.labels } : {}) };
   });
@@ -2341,9 +2433,23 @@ function refreshFaceNote() {
   $('#addFaceNote').textContent = faceUsed(other)
     ? `${other} face has ${draft[other].cells.filter(Boolean).length} placed`
     : `${other} face empty`;
+
+  // A face this editor could not read back onto a grid — a hand-placed drawing
+  // at irregular pitch, or an `auto` declaration with no positions at all. It
+  // is left exactly as it was unless you draw over it, and this says so rather
+  // than presenting an empty grid that looks like the device has no panel.
+  const keep = faceOf().keep;
+  const warn = $('#addKeep');
+  warn.hidden = !keep || faceUsed(draftFace);
+  if (!warn.hidden) {
+    const kind = Array.isArray(keep.elements) ? 'hand-placed drawing' : 'generated auto layout';
+    warn.textContent = `This ${draftFace} is a ${kind} that does not sit on a `
+      + 'uniform grid, so it is kept exactly as it is. Place anything here and '
+      + 'you replace it.';
+  }
 }
 
-function openDraft() {
+function openDraft(existing = null) {
   const catSel = $('#addCat');
   catSel.innerHTML = '';
   Object.entries(CATEGORIES).forEach(([k, v]) => {
@@ -2373,15 +2479,42 @@ function openDraft() {
   // and with no option carrying a `selected` attribute that is the first one —
   // which would silently arm the text-label brush every time the dialog opened.
   tSel.value = draftBrush;
-  draft = {
+
+  const width = existing && existing.half
+    ? (existing.ears ? 'half-ears' : 'half') : 'full';
+  draft = existing ? {
+    base: existing,
+    brand: existing.brand, model: existing.model,
+    category: existing.category || 'audio',
+    ru: existing.ru || 1, width,
+    depth: existing.depth || 0, weight: existing.weight || 0, power: existing.power || 0,
+    front: gridFromSpec(existing.front, existing.ru || 1, width)
+      || { ...BLANK_FACE(), keep: existing.front || null },
+    rear: gridFromSpec(existing.rear, existing.ru || 1, width)
+      || { ...BLANK_FACE(), keep: existing.rear || null },
+  } : {
+    base: null,
     brand: '', model: '', category: 'audio', ru: 1, width: 'full',
     depth: 250, weight: 3, power: 30,
     front: BLANK_FACE(), rear: BLANK_FACE(),
   };
+
+  const form = $('#formAdd');
+  form.brand.value = draft.brand; form.model.value = draft.model;
+  form.ru.value = draft.ru; form.width.value = draft.width;
+  form.category.value = draft.category;
+  form.depth.value = draft.depth;
+  form.weight.value = draft.weight;
+  form.power.value = draft.power;
+
+  $('#addTitle').textContent = existing ? 'Edit device' : 'New device';
+  $('#addOk').textContent = existing ? 'Save changes' : 'Add to library';
+  $('#addOrigin').hidden = !(existing && isSeed(existing.id));
+  $('#addRevert').hidden = !(existing && isEdited(existing.id));
+
   draftFace = 'front'; draftSel = null; draftAnchor = null;
   $$('#addFace button').forEach((b) => b.classList.toggle('on', b.dataset.face === 'front'));
   $('#addTextWrap').hidden = draftBrush !== '__text';
-  syncDraftFromForm();
   rebuildGridOpts();
   renderDraftGrid();
   selectCell(null);
@@ -2390,7 +2523,14 @@ function openDraft() {
   dlgAdd.showModal();
 }
 
-$('#btnAdd').onclick = openDraft;
+$('#btnAdd').onclick = () => openDraft();
+
+// Correct a device from wherever you noticed the problem — usually while
+// looking at it in a rack rather than at the library list.
+function editDevice(id) {
+  const d = devById(id);
+  if (d) openDraft(d);
+}
 
 $$('#addFace button').forEach((b) => {
   b.onclick = () => {
@@ -2449,8 +2589,30 @@ $('#addCopy').onclick = async () => {
 $('#addOk').onclick = () => {
   const f = $('#formAdd');
   if (!f.reportValidity()) return;
-  state.project.custom.push(draftRecord());
-  save(); renderLib();
+  const rec = draftRecord();
+  if (!draft.base) {
+    state.project.custom.push(rec);
+  } else if (isSeed(rec.id)) {
+    // A library device is never mutated in place — devices.js is the shared
+    // truth and this project has no business rewriting it. The correction is
+    // stored against the id and applied on read.
+    edits()[rec.id] = rec;
+    toast(`${rec.brand} ${rec.model} corrected for this project. `
+      + 'Copy JSON into devices.js to make it everybody\'s.');
+  } else {
+    const i = state.project.custom.findIndex((c) => c.id === rec.id);
+    if (i >= 0) state.project.custom[i] = rec; else state.project.custom.push(rec);
+  }
+  save(); renderAll(); renderLib();
+  dlgAdd.close();
+};
+
+// Drop the correction and go back to whatever devices.js says.
+$('#addRevert').onclick = () => {
+  if (!draft.base) return;
+  delete edits()[draft.base.id];
+  save(); renderAll(); renderLib();
+  toast('Reverted to the library version.');
   dlgAdd.close();
 };
 

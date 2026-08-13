@@ -19,6 +19,44 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.7.0 — 2026-08-12
+
+**Added**
+
+- **Any device can be edited, including the ones that ship in the library.** The
+  pencil on a library row, or **Edit device** in the inspector when something is
+  selected — so you can fix a device from where you noticed it was wrong.
+
+- **A library device is never rewritten in place.** `devices.js` is the shared
+  truth and one project has no business editing it, so a correction is stored
+  against the device's id and applied on read. That means it reaches everything
+  already using that device — a rack item keeps its uid and simply starts
+  drawing the corrected panel — while `devices.js` stays untouched. Corrected
+  devices get a dot in the library list, and **Revert** puts them back.
+
+  The correction travels with a saved `.json` but does *not* reach the shared
+  library. **Copy JSON** into `devices.js` is what makes a fix everybody's, and
+  the dialog says so rather than leaving you to find out.
+
+**How a panel survives being edited**
+
+The editor draws on a uniform grid, and most of this library's panels are not on
+one — they are hand-placed at real pitch. So a face is read back onto the grid
+only when it genuinely fits: **12 of the 220 hand-placed faces do, and the other
+208 are kept exactly as they are**, along with every `auto` face. Those show an
+amber note saying the panel is preserved and that placing anything replaces it,
+with the real drawing still in the preview beneath so you can see what you have.
+
+This is the point: you can correct the SQ-Rack's wattage without the editor
+quietly re-gridding a rear that took a morning to get right.
+
+Editing also starts from the **original record** rather than a blank one, so
+fields the editor knows nothing about — `src`, `slots`, `bands`, `patch`,
+`shelf` — survive. Verified on the SQ-Rack: changing its power kept the
+18-element front, the `auto` rear, the `src` and the option-card `slots`.
+
+---
+
 ## v1.6.0 — 2026-08-12
 
 **Changed**

@@ -927,6 +927,26 @@ saved `.json`. Devices in `devices.js` are shared across all projects — which 
 why Copy JSON strips the `id`, so a pasted record gets a fresh one instead of
 colliding with the device it was copied from.
 
+### Correcting a device
+
+Every device can be edited, including the ones that ship in the library: the
+pencil on a library row, or **Edit device** in the inspector.
+
+A library device is **never rewritten in place**. `devices.js` is the shared
+truth, so a correction is stored against the device's id in the project and
+applied on read — it reaches everything already using that device, while the
+file stays untouched. Corrected devices carry a dot in the library list and can
+be reverted. To make a fix everybody's, **Copy JSON** and paste it into
+`devices.js`.
+
+Editing starts from the original record, so fields the editor does not model —
+`src`, `slots`, `bands`, `patch`, `shelf` — survive untouched.
+
+The editor draws on a uniform grid and most panels here are not on one, so a
+face is loaded back into the grid only when it truly fits. Everything else is
+**kept exactly as it is**, with an amber note saying so and the real drawing
+still shown in the preview. Place anything on that face and you replace it.
+
 ### Spec accuracy
 
 `ru` is reliable throughout. Entries flagged `approx: true` have ballpark

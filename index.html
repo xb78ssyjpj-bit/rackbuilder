@@ -134,7 +134,10 @@
 <!-- add-device dialog ------------------------------------------------------ -->
 <dialog id="dlgAdd">
   <form method="dialog" id="formAdd">
-    <h2>New device</h2>
+    <h2 id="addTitle">New device</h2>
+    <p class="hint" id="addOrigin" hidden>This is a library device. The
+       correction is saved with <em>this project</em> — use <b>Copy JSON</b> and
+       paste it into <code>devices.js</code> to fix it for everybody.</p>
     <div class="grid2">
       <label>Brand<input name="brand" required autocomplete="off"></label>
       <label>Model<input name="model" required autocomplete="off"></label>
@@ -169,6 +172,7 @@
     <label id="addTextWrap" hidden>Label text
       <input id="addText" placeholder="e.g. INPUTS 1-8" autocomplete="off"></label>
 
+    <p class="warn" id="addKeep" hidden></p>
     <div class="pgrid" id="addGrid"></div>
     <p class="hint">Click a cell to place. Drag across to fill a run, shift-click
        to extend from the last one, right-click to clear. Click a filled cell to
@@ -180,6 +184,7 @@
 
     <menu>
       <button type="button" class="btn" id="addCancel">Cancel</button>
+      <button type="button" class="btn danger" id="addRevert" hidden>Revert</button>
       <button type="button" class="btn" id="addCopy">Copy JSON</button>
       <button type="button" class="btn primary" id="addOk">Add to library</button>
     </menu>

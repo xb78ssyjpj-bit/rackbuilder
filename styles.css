@@ -226,6 +226,18 @@ body.rzing { cursor: col-resize; user-select: none; }
 .libitem:hover .del { opacity: 1; }
 .libitem .del:hover { color: var(--danger); }
 
+.libitem .edit {
+  background: none; border: 0; color: var(--dim); cursor: pointer;
+  font-size: 12px; line-height: 1; padding: 0 3px; opacity: 0;
+}
+.libitem:hover .edit { opacity: 1; }
+.libitem .edit:hover { color: var(--accent); }
+/* A library device this project has corrected. Small, because it is a note
+   about provenance, not a warning. */
+.libitem .edited {
+  color: var(--accent); font-size: 14px; line-height: 1; margin-left: 2px;
+}
+
 /* drag a rack item back over the library to remove it */
 .lib.dropremove { outline: 2px dashed var(--danger); outline-offset: -6px; }
 .lib.dropremove .liblist { opacity: .35; }
