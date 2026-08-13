@@ -19,6 +19,58 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.8.0 — 2026-08-12
+
+**Changed**
+
+- **The device library is a folder now — one module per brand.** `devices.js`
+  was a single 4,293-line file; it is now a 60-line index that imports
+  `devices/allen-heath.js`, `devices/qsc.js` and 29 others, plus
+  `devices/_lib.js` and `devices/cards.js`.
+
+  Adding a device is now *open that brand's file* — a filename rather than a
+  search. Adding a brand is a new file plus two lines in the index; the bundler
+  and the dev server both discover `devices/*.js` themselves, so neither needs
+  telling.
+
+  The real win is merges. The README used to instruct people to add devices
+  *inside the brand's existing section* purely to avoid conflicts, which is a
+  convention nobody can enforce. Files make it structural: two people adding
+  gear to different manufacturers cannot touch the same file.
+
+  **Nothing about the data changed.** Verified by dumping every export before
+  and after and comparing record by record, keyed on id: 217 devices and 16
+  cards, **0 differ**, categories identical. Only the order of `SEED_DEVICES`
+  moved, to alphabetical by brand file, which nothing depends on — the library
+  list sorts brands for display anyway.
+
+- **`tools/bundle.py` and `serve.py` discover the library instead of listing
+  it.** Both had a hardcoded module list, and both would have gone stale the
+  first time somebody added a brand — the bundler by omitting it, the server by
+  serving a cached copy of a file you had just edited, which is the exact
+  failure it exists to prevent.
+
+  `serve.py` also now resolves each reference against the file being served
+  rather than matching filenames, because a brand file reaches its neighbours
+  as `./_lib.js` and the geometry as `../panel.js`, and neither looks like the
+  path from the root that a name list holds. Absolute `src:` URLs in the
+  library are left alone.
+
+**Where things live**
+
+| | |
+|---|---|
+| `devices.js` | the index — imports every brand, spreads them into `SEED_DEVICES` |
+| `devices/_lib.js` | `CATEGORIES`, and `switchFront()` because more than one brand uses it |
+| `devices/<brand>.js` | that manufacturer's devices, and any face helper only it uses |
+| `devices/cards.js` | `OPTION_CARDS`, and the `registerCards()` call that publishes them |
+
+`CATEGORIES` and `OPTION_CARDS` are imported from their own modules rather than
+re-exported through the index: the single-file build shares one scope, so an
+alias would collide with the original declaration.
+
+---
+
 ## v1.7.1 — 2026-08-12
 
 **Added**

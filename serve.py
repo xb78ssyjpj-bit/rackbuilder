@@ -17,17 +17,49 @@ import os
 import re
 import sys
 
-ASSETS = ('styles.css', 'app.js', 'panel.js', 'devices.js')
-# "app.js"  ./panel.js'  "styles.css"  — quoted, optional ./ prefix, no existing query
-ASSET_RE = re.compile(
-    r'(["\'])(\./)?(' + '|'.join(a.replace('.', r'\.') for a in ASSETS) + r')\1'
-)
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
+def assets():
+    """Every local file whose staleness would break the app.
+
+    Discovered, not listed: the device library is a folder of one file per
+    brand, and a hardcoded list would go stale the first time somebody added a
+    manufacturer — silently, by serving them a cached copy of the file they had
+    just edited, which is the exact failure this server exists to prevent.
+    """
+    out = ['styles.css', 'app.js', 'panel.js', 'devices.js', 'flow.js',
+           'version.js']
+    devs = os.path.join(ROOT, 'devices')
+    if os.path.isdir(devs):
+        out += [f'devices/{n}' for n in sorted(os.listdir(devs))
+                if n.endswith('.js')]
+    return [a for a in out if os.path.isfile(os.path.join(ROOT, a))]
+
+
+# Any quoted relative .js/.css reference: "app.js", './panel.js',
+# '../panel.js', './devices/qsc.js'. Resolved against the file being served
+# rather than matched by name, because a brand file reaches its neighbours as
+# './_lib.js' and the geometry as '../panel.js' — neither of which looks like
+# the path from the root that a name list would hold.
+REF_RE = re.compile(r'''(["'])((?:\.{1,2}/)*[\w./-]+\.(?:js|css))\1''')
+
+
+def stamp(body, base_dir, tok):
+    def sub(m):
+        q, ref = m.group(1), m.group(2)
+        target = os.path.normpath(os.path.join(base_dir, ref))
+        # Only stamp things that actually exist under the root. A device's
+        # `src:` URL is absolute and never matches; anything else that does not
+        # resolve to a real file is left alone rather than guessed at.
+        if os.path.commonpath([ROOT, target]) != ROOT or not os.path.isfile(target):
+            return m.group(0)
+        return f'{q}{ref}?v={tok}{q}'
+    return REF_RE.sub(sub, body)
+
+
 def version_token():
-    times = [os.path.getmtime(os.path.join(ROOT, a))
-             for a in ASSETS if os.path.exists(os.path.join(ROOT, a))]
+    times = [os.path.getmtime(os.path.join(ROOT, a)) for a in assets()]
     return str(int(max(times))) if times else '0'
 
 
@@ -47,10 +79,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             tok = version_token()
             with open(local, 'rb') as fh:
                 body = fh.read().decode('utf-8')
-            body = ASSET_RE.sub(
-                lambda m: f'{m.group(1)}{m.group(2) or ""}{m.group(3)}?v={tok}{m.group(1)}',
-                body,
-            )
+            body = stamp(body, os.path.dirname(local), tok)
             data = body.encode('utf-8')
             ctype = 'text/html; charset=utf-8' if local.endswith('.html') \
                 else 'text/javascript; charset=utf-8'

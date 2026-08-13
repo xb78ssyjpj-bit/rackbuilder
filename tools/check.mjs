@@ -8,7 +8,9 @@
 // then failed at import with "Unexpected token 'const'". Importing is the only
 // check that means anything.
 
-import { SEED_DEVICES as D, CATEGORIES, OPTION_CARDS as C } from '../devices.js';
+import { SEED_DEVICES as D } from '../devices.js';
+import { CATEGORIES } from '../devices/_lib.js';
+import { OPTION_CARDS as C } from '../devices/cards.js';
 import {
   faceElements, sizeMM, heightMM, MM, FACE_L, FACE_R, PATCH_TYPES,
   SLOT_FORMATS, slotType, cardsFor,

@@ -476,18 +476,10 @@ so far, and it is why several entries below are L despite being simple code.
   flow half only, which is the smaller part — but if an internal device is
   invisible in the rack views, people will forget it is in there and under-order
   power. Worth a strip or a count somewhere in the bay.
-- **Split `devices.js` into a folder — yes, worth doing.** Opinion asked for, so:
-  do it as **one ES module per brand plus a hand-written index**, not a folder
-  scanned at runtime. Runtime loading would break the `file://` single-file
-  build, which cannot fetch anything, and would need a manifest — which is the
-  index, only worse. Per-brand modules keep every existing tool working:
-  `bundle.py` already concatenates modules, `check.mjs` already imports one
-  entry point. The benefit is real and specific: the README currently tells
-  people to add devices *inside the brand's section* purely to avoid merge
-  conflicts, and that is a convention nobody can enforce. Files make it
-  structural. The index becomes a new shared line, but it changes only when a
-  brand is added, which is far rarer than adding a device. Mechanical enough to
-  script the split; the work is in `bundle.py` and the import graph.
+- ~~**Split `devices.js` into a folder**~~ — **done in v1.8.0.** One module per
+  brand under `devices/`, with a hand-written index, as argued below. The
+  bundler and dev server discover the folder rather than listing it. Data
+  verified unchanged record by record.
 
 ### L — a day or more, or blocked on documentation
 

@@ -4,7 +4,7 @@
 The app is plain ES modules with no build step, which is lovely to work on and
 awkward to hand to somebody: opening index.html from the filesystem fails
 because module *imports* are blocked over file://. So this inlines the CSS and
-concatenates the four modules, in dependency order, into one inline
+concatenates the modules, in dependency order, into one inline
 <script type="module"> — an inline module fetches nothing, so it runs happily
 from a double-clicked file, a USB stick or a static host.
 
@@ -21,7 +21,7 @@ way to tell which is which. `-latest` exists for anyone who just wants the
 newest and does not care about the number.
 
 Every export is `export const` or `export function`, so stripping is honest:
-drop the import blocks, drop the `export ` keyword, and the four files share one
+drop the import blocks, drop the `export ` keyword, and every file shares one
 module scope. Duplicate top-level names would be a syntax error, which is
 exactly the check we want — run `node --check` on the output.
 
@@ -34,11 +34,26 @@ import shutil
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-# Dependency order: panel defines the geometry everything else imports.
-MODULES = ['version.js', 'panel.js', 'devices.js', 'flow.js', 'app.js']
+
+
+def modules():
+    """Every module, in dependency order.
+
+    The device library is a folder of one file per brand, discovered rather than
+    listed: adding a brand should mean adding a file and a line in devices.js,
+    not remembering to edit the bundler too. Order within the folder is
+    _lib first (the brand files import switchFront from it), then the brands,
+    then devices.js last, which is the index that spreads them all together.
+    """
+    brands = sorted(p.name for p in (ROOT / 'devices').glob('*.js')
+                    if p.name != '_lib.js')
+    dev = ['devices/_lib.js'] + [f'devices/{n}' for n in brands] + ['devices.js']
+    return ['version.js', 'panel.js'] + dev + ['flow.js', 'app.js']
+
 
 IMPORT_RE = re.compile(
-    r"^import\s+(?:\{[^}]*\}|[\w*\s,]+)\s+from\s+'[^']+';\s*$",
+    # `import { a, b } from '…';`  /  `import x from '…';`  /  `import '…';`
+    r"^import\s+(?:(?:\{[^}]*\}|[\w*\s,]+)\s+from\s+)?'[^']+';\s*$",
     re.MULTILINE | re.DOTALL,
 )
 EXPORT_RE = re.compile(r"^export\s+(const|let|var|function|class|async)\b",
@@ -70,7 +85,7 @@ def main() -> None:
     html = (ROOT / 'index.html').read_text()
 
     parts = []
-    for name in MODULES:
+    for name in modules():
         parts.append(f'// ===== {name} '
                      + '=' * max(0, 66 - len(name)))
         parts.append(strip_module((ROOT / name).read_text(), name))

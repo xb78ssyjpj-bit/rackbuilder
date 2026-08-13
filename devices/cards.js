@@ -1,0 +1,146 @@
+import { registerCards } from '../panel.js';
+
+// ---------------------------------------------------------------------------
+// Option cards
+// ---------------------------------------------------------------------------
+// A card is a faceplate that fits a slot aperture, carrying its own connectors.
+// It is NOT a rack item: it has no rack units and cannot be dragged into a bay.
+// It is fitted to one device instance from the inspector, and from then on its
+// sockets are that instance's sockets — they draw on the panel and they patch
+// in the flow view like any other.
+//
+// `fmt` is the aperture standard, matching a device's `slots[].fmt`. That is
+// the whole of the compatibility model: any card fits any slot of its format,
+// which is exactly how the real ranges work — the five A&H cards below fit the
+// SQ-Rack, the SQ-5/6/7, the SQ+ consoles and the AHM processors alike.
+//
+// No weight or power figures: A&H publish none per card, and the host's own
+// consumption already covers a fitted card in practice. Inventing one would put
+// a made-up number into a power total that gets used for real.
+export const OPTION_CARDS = [
+  // 1 x etherCON. A&H product photography of the card fitted to an SQ I/O Port.
+  { id: 'ah-sq-slink', brand: 'Allen & Heath', model: 'SQ SLink', fmt: 'ah-sq-io',
+    note: '128x128 @ 96kHz — gigaACE / GX / DX / dSnake',
+    src: 'https://www.allen-heath.com/hardware/audio-networking/sq-slink/',
+    auto: [{ t: 'ethercon', n: 1, lbl: 'SLINK' }] },
+
+  // "Two ports with redundant and switch modes ... Locking Ethercon connectors".
+  //
+  // These are the current products. A&H's AHM guides warn to use the M-SQ-DANT32
+  // or M-SQ-DANT64 (SQ Dante V2) card in an AHM rather than the original
+  // M-SQ-DANTE, and the 64x64 card's V1 revision is SQ-only. The library holds
+  // one entry per product, not per board revision, so that caveat is recorded
+  // here rather than modelled — a second-hand V1 card will not work in an AHM.
+  { id: 'ah-sq-dante32', brand: 'Allen & Heath', model: 'SQ Dante 32x32', fmt: 'ah-sq-io',
+    note: '32x32 @ 48/96kHz, AES67',
+    src: 'https://www.allen-heath.com/hardware/audio-networking/sq-dante-32/',
+    auto: [{ t: 'ethercon', n: 2, lbl: ['DANTE PRI', 'DANTE SEC'] }] },
+  { id: 'ah-sq-dante64', brand: 'Allen & Heath', model: 'SQ Dante 64x64', fmt: 'ah-sq-io',
+    note: '64x64 @ 48/96kHz, AES67',
+    src: 'https://www.allen-heath.com/hardware/audio-networking/sq-dante-64/',
+    auto: [{ t: 'ethercon', n: 2, lbl: ['DANTE PRI', 'DANTE SEC'] }] },
+
+  // 2 x etherCON, faceplate lettered 'SoundGrid 1' and 'SoundGrid 2'.
+  { id: 'ah-sq-waves', brand: 'Allen & Heath', model: 'SQ Waves', fmt: 'ah-sq-io',
+    note: '64x64 @ 48/96kHz Waves SoundGrid',
+    src: 'https://www.allen-heath.com/hardware/audio-networking/sq-waves/',
+    auto: [{ t: 'ethercon', n: 2, lbl: ['SOUNDGRID 1', 'SOUNDGRID 2'] }] },
+
+  // Five BNC: two out over two in, then the switchable in/out word clock.
+  // The stacked pairs are how the faceplate is actually arranged.
+  { id: 'ah-sq-madi', brand: 'Allen & Heath', model: 'SQ MADI', fmt: 'ah-sq-io',
+    note: '64x64 @ 48kHz / 32x32 @ 96kHz per pair',
+    src: 'https://www.allen-heath.com/hardware/audio-networking/sq-madi/',
+    auto: [
+      { t: 'bnc', n: 4, stack: 2, lbl: ['MADI 1 OUT', 'MADI 1 IN', 'MADI 2 OUT', 'MADI 2 IN'] },
+      { t: 'bnc', n: 1, lbl: 'SYNC' },
+    ] },
+
+  // --- Allen & Heath dLive / Avantis ---------------------------------------
+  // Every one from A&H's own fitting note for that card. They all fit the same
+  // I/O Port, which the dLive MixRacks, the dLive Surfaces and Avantis share —
+  // the fitting notes say "an Allen & Heath Avantis or dLive I/O Port" verbatim.
+  //
+  // Not included: M-DL-ADAPT, the 'letter-box' adapter. It is a slot inside a
+  // slot — it puts an iLive/GLD aperture inside a dLive one to host M-Dante,
+  // M-Waves, M-ES-V2, M-ACE or M-MADI — and modelling it as a card with no
+  // connectors would draw it as a blank plate, which is exactly what it is not.
+  { id: 'ah-dl-dant64', brand: 'Allen & Heath', model: 'Dante 64x64 (M-DL-DANT64)',
+    fmt: 'ah-dl-io', note: '64x64 Dante, Primary / Secondary, redundant or switched',
+    src: 'https://support.allen-heath.com/hc/en-gb/articles/40487771409937',
+    auto: [{ t: 'ethercon', n: 2, lbl: ['DANTE PRI', 'DANTE SEC'] }] },
+  { id: 'ah-dl-dant128', brand: 'Allen & Heath', model: 'Dante 128x128 (M-DL-DANT128)',
+    fmt: 'ah-dl-io', note: '128x128 Dante, Primary / Secondary, redundant or switched',
+    src: 'https://support.allen-heath.com/hc/en-gb/articles/40487771409937',
+    auto: [{ t: 'ethercon', n: 2, lbl: ['DANTE PRI', 'DANTE SEC'] }] },
+
+  // 4 ports, each 32x32 @ 96kHz, parallel or redundant in pairs.
+  { id: 'ah-dl-dxlink', brand: 'Allen & Heath', model: 'DX Link (M-DL-DXLINK)',
+    fmt: 'ah-dl-io', note: '4 x DX Link, 32x32 @ 96kHz each',
+    src: 'https://support.allen-heath.com/hc/en-gb/articles/40490513360785',
+    auto: [{ t: 'ethercon', n: 4, lbl: 'DX LINK' }] },
+
+  { id: 'ah-dl-gace', brand: 'Allen & Heath', model: 'gigaACE (M-DL-GACE)',
+    fmt: 'ah-dl-io', note: '128x128 @ 96kHz point-to-point to another dLive / Avantis',
+    src: 'https://support.allen-heath.com/hc/en-gb/articles/40496737174801',
+    auto: [{ t: 'ethercon', n: 1, lbl: 'GIGAACE A' }] },
+
+  // One logical port A on two physical connectors — fibre or copper, by mode.
+  { id: 'ah-dl-gopt', brand: 'Allen & Heath', model: 'fibreACE (M-DL-GOPT)',
+    fmt: 'ah-dl-io', note: '128x128 @ 96kHz over fibre or copper, opticalCON Duo',
+    src: 'https://support.allen-heath.com/hc/en-gb/articles/40495217801233',
+    auto: [
+      { t: 'opticalcon', n: 1, lbl: 'PORT A OPTICAL' },
+      { t: 'ethercon', n: 1, lbl: 'PORT A COPPER' },
+    ] },
+
+  // "A built-in Gigabit switch with 3 locking EtherCon ports" — three, not two.
+  { id: 'ah-dl-waves3', brand: 'Allen & Heath', model: 'Waves V3 (M-DL-WAVES3)',
+    fmt: 'ah-dl-io', note: '128x128 @ 48/96kHz Waves SoundGrid, 3-port switch',
+    src: 'https://support.allen-heath.com/hc/en-gb/articles/40488232359569',
+    auto: [{ t: 'ethercon', n: 3, lbl: 'SOUNDGRID' }] },
+
+  // Links 1-4 on BNC, links 5-8 on SFP cages for fibre.
+  { id: 'ah-dl-smadi', brand: 'Allen & Heath', model: 'superMADI (M-DL-SMADI)',
+    fmt: 'ah-dl-io', note: '128x128 @ 48/96kHz AES10 MADI, coax and optional fibre',
+    src: 'https://support.allen-heath.com/hc/en-gb/articles/40502416581905',
+    auto: [
+      { t: 'bnc', n: 4, lbl: 'LINK' },
+      { t: 'sfp', n: 4, lbl: ['LINK 5', 'LINK 6', 'LINK 7', 'LINK 8'] },
+    ] },
+
+  // Four AES3 variants on one faceplate: five XLR every time, split by model
+  // name. The numbers in the name are CHANNELS and each XLR carries a stereo
+  // pair, so 6I4O is three in and two out — confirmed against A&H's faceplate
+  // drawing, which brackets the first three sockets separately from the last
+  // two. All four are 10 channels in total.
+  { id: 'ah-dl-aes10o', brand: 'Allen & Heath', model: 'AES3 10 out (M-DL-AES10O)',
+    fmt: 'ah-dl-io', note: '5 stereo AES3 outputs',
+    src: 'https://support.allen-heath.com/hc/en-gb/articles/40489352616977',
+    auto: [{ t: 'xlrm', n: 5, sig: 'aes3', lbl: 'AES OUT' }] },
+  { id: 'ah-dl-aes2i8o', brand: 'Allen & Heath', model: 'AES3 2 in / 8 out (M-DL-AES2I8O)',
+    fmt: 'ah-dl-io', note: '1 stereo AES3 input, 4 stereo outputs',
+    src: 'https://support.allen-heath.com/hc/en-gb/articles/40489352616977',
+    auto: [
+      { t: 'xlrf', n: 1, sig: 'aes3', lbl: 'AES IN' },
+      { t: 'xlrm', n: 4, sig: 'aes3', lbl: 'AES OUT' },
+    ] },
+  { id: 'ah-dl-aes4i6o', brand: 'Allen & Heath', model: 'AES3 4 in / 6 out (M-DL-AES4I6O)',
+    fmt: 'ah-dl-io', note: '2 stereo AES3 inputs, 3 stereo outputs',
+    src: 'https://support.allen-heath.com/hc/en-gb/articles/40489352616977',
+    auto: [
+      { t: 'xlrf', n: 2, sig: 'aes3', lbl: 'AES IN' },
+      { t: 'xlrm', n: 3, sig: 'aes3', lbl: 'AES OUT' },
+    ] },
+  { id: 'ah-dl-aes6i4o', brand: 'Allen & Heath', model: 'AES3 6 in / 4 out (M-DL-AES6I4O)',
+    fmt: 'ah-dl-io', note: '3 stereo AES3 inputs, 2 stereo outputs',
+    src: 'https://support.allen-heath.com/hc/en-gb/articles/40489352616977',
+    auto: [
+      { t: 'xlrf', n: 3, sig: 'aes3', lbl: 'AES IN' },
+      { t: 'xlrm', n: 2, sig: 'aes3', lbl: 'AES OUT' },
+    ] },
+];
+
+// Registered here rather than by the index, so the data and the side
+// effect that publishes it cannot drift apart.
+registerCards(OPTION_CARDS);

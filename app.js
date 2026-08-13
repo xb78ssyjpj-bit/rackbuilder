@@ -5,7 +5,8 @@ import {
   hasRear, renderNoRear, cardsFor, cardById,
   U, FACE_L, FACE_R, HALF_W, HALF_L, HALF_R, HALF_EAR_W, HALF_INSET,
 } from './panel.js';
-import { SEED_DEVICES, CATEGORIES } from './devices.js';
+import { SEED_DEVICES } from './devices.js';
+import { CATEGORIES } from './devices/_lib.js';
 import { createFlow, FAMILIES } from './flow.js';
 import { VERSION } from './version.js';
 

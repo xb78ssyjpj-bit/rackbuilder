@@ -32,7 +32,7 @@ git -C rackbuilder log --oneline
 To compare two points, including a specific file:
 
 ```bash
-git -C rackbuilder diff v1.0.0 v1.1.0 -- devices.js
+git -C rackbuilder diff v1.0.0 v1.1.0 -- devices/
 ```
 
 One commit per coherent change, with the reasoning in the commit body. Every
@@ -68,9 +68,11 @@ commit subjects produces something nobody reads; the point of a changelog is the
 
 ### Adding a device
 
-1. Add the entry to `devices.js`, **inside its brand's existing section** rather
-   than at the end of the file. This is the whole conflict-avoidance strategy —
-   see below.
+1. Open **`devices/<brand>.js`** and add the entry. That is the whole of it —
+   one file per manufacturer, so the file to edit is a filename rather than a
+   search. A new brand means a new file plus one import and one spread in
+   `devices.js`; nothing else needs telling, because the bundler and the dev
+   server both discover `devices/*.js` on their own.
 2. `node tools/check.mjs` — catches duplicate ids, undeclared categories,
    connectors that fall off the panel, and two sockets sharing a label.
 3. Commit with the source you used in the message. The library's value is that
@@ -81,15 +83,20 @@ Follow the existing policy: **work from the manufacturer's own documentation, an
 where it does not say, leave it out and note it in `TODO.md` rather than guess.**
 Half the entries here carry a comment explaining what was and was not verified.
 
-### Two people editing devices.js
+### Two people editing the library
 
-It is one 3,800-line array, which sounds like a merge nightmare and mostly is
-not — git merges edits that are far apart in a file without complaint. Conflicts
-come from two habits, both avoidable:
+The library is a folder — `devices/`, one module per brand — so two people
+adding gear to different manufacturers never touch the same file. That used to
+be a convention ("add inside the brand's section, not at the end") that nobody
+could enforce; it is now structural.
 
-- **Appending new devices at the end of the file.** Two people doing that on the
-  same day conflict every time. Add inside the relevant brand's section instead;
-  those are spread throughout the file, so you are rarely in the same place.
+What can still conflict:
+
+- **Two people adding the same brand.** Unavoidable and fine — the edits are
+  usually far apart in a short file, which git merges without complaint.
+- **Adding a brand at the same time.** `devices.js` gains one import and one
+  spread, so simultaneous new brands touch the same two blocks. It is a
+  two-line conflict and obvious to resolve.
 - **Reformatting.** A tidy-up that touches lines you did not mean to change
   turns a clean merge into a manual one. Leave formatting alone.
 
@@ -112,7 +119,9 @@ exactly what `check.mjs` catches.
 python3 rackbuilder/tools/bundle.py
 ```
 
-Inlines the CSS and concatenates the modules into one self-contained file.
+Inlines the CSS and concatenates every module — including each brand file under
+`devices/`, which it discovers rather than being told about — into one
+self-contained file.
 **Output is named for the version**, from `version.js`:
 
 - `dist/rackbuilder-v1.1.0.html` — a complete document. **Double-click it.** No
@@ -913,14 +922,15 @@ Three ways to grow it, in increasing effort:
    record; paste it back in. Ask it to cite the datasheet it used. This box also
    takes the output of **+ Device**'s Copy JSON, which is the way to hand a
    device you drew to somebody else.
-3. **Edit `devices.js`** — paste a Copy JSON record in, or hand-place elements
-   for the devices you care most about. `ah-ar2412` and `db-d20` are the worked
+3. **Edit `devices/<brand>.js`** — paste a Copy JSON record in, or hand-place
+   elements for the devices you care most about. `ah-ar2412` and `db-d20` are the worked
    examples: both were drawn from the manufacturer's own orthographic front
    view, which is the standard the rest of the library is held to.
 
-There are also generators for faces that repeat: `switchFront()` for network
-switches (see the NetBox importer), `mixrackFront()` for control-less boxes that
-are just vents and lettering, and `pdu16Front()` for the Penn Elcom PDUs.
+There are also generators for faces that repeat. `switchFront()` is used by more
+than one brand so it lives in `devices/_lib.js`; the single-brand ones sit in the
+file that uses them — `mixrackFront()` in `allen-heath.js`, `pdu16Front()` in
+`penn-elcom.js`, the PLD and legacy-amp faces in `qsc.js`.
 
 Devices added through 1 and 2 live in the project file, so they travel with a
 saved `.json`. Devices in `devices.js` are shared across all projects — which is
