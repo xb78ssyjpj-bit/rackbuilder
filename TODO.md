@@ -434,16 +434,34 @@ so far, and it is why several entries below are L despite being simple code.
 
 ### M — a session each
 
-- **Other audio networking standards: SLink, AES50, DigiACE, Optocore.** The
-  mechanism already exists — `sig` on a declaration overrides the signal family,
-  which is how AES3 rides on XLR. This is adding families to `FAMILIES` in
-  `flow.js` and then a pass through the library deciding which etherCON is which
-  protocol. Worth getting right rather than fast: **SLink is Allen & Heath,
-  AES50 is Midas / Klark Teknik, DigiACE is DiGiCo, Optocore is its own thing on
-  fibre** — they are not interchangeable and an SQ's port is SLink. The socket
-  is already *named* `SLINK` on the SQ-Rack; what is wrong is that its family is
-  the generic `network`, so it draws the same colour as a laptop's ethernet and
-  the flow view will happily patch it to one.
+- **Other audio networking standards: SLink, gigaACE, AES50, DigiACE, Optocore.**
+  The mechanism already exists — `sig` on a declaration overrides the signal
+  family, which is how AES3 rides on XLR. This is adding families to `FAMILIES`
+  in `flow.js` and then a pass through the library deciding which etherCON is
+  which protocol. Worth getting right rather than fast: **SLink and gigaACE are
+  Allen & Heath, AES50 is Midas / Klark Teknik, DigiACE is DiGiCo, Optocore is
+  its own thing on fibre** — they are not interchangeable, and an SQ's port is
+  SLink. The socket is already *named* `SLINK` on the SQ-Rack; what is wrong is
+  that its family is the generic `network`, so it draws the same colour as a
+  laptop's ethernet and the flow view will happily patch it to one.
+
+  **SLink and gigaACE are not peers, and modelling them as a flat list of
+  families will get this wrong.** From A&H's own guides, already read while
+  adding the option cards: SLink is an *intelligent port* that switches between
+  protocols — "Mode automatically switches between dSnake/ME, DX and
+  gigaACE/GX", and the SQ SLink card's own copy says "gigaACE, GX, DX, or
+  dSnake connectivity". gigaACE is one of the things SLink can be, and it also
+  appears in its own right: as the dLive MixRack-to-Surface link, and as
+  M-DL-GACE, a card giving "128x128ch 96kHz gigaACE point-to-point". So a port
+  can be *SLink, currently speaking gigaACE*.
+
+  Two ways out, and the choice wants making before any data is entered: either
+  a family per protocol with SLink as a superset that patches to any of them,
+  or a family for the port type with the protocol as a second, informational
+  field. The first is more honest about what will and will not connect; the
+  second is less work. Either way the compatibility question — *can this cable
+  legally go here* — is the thing worth encoding, since that is what the flow
+  view is for.
 - **Devices mounted inside the rack rather than on the ears.** Power supplies,
   routers, anything that lives in the box without taking a U. An `internal: true`
   item, excluded from U occupancy and from the bay layout, still counted in
