@@ -19,6 +19,50 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.7.1 — 2026-08-12
+
+**Added**
+
+- **The IO of any device can now be edited — a List mode beside the Grid.**
+  v1.7.0 shipped editing that could only reach a panel the grid could draw,
+  which is 12 faces out of 599. The other 587 — every `auto` face and 208
+  hand-placed ones — showed a note explaining they were preserved and gave you
+  no way to correct a single socket, which is most of the reason to open the
+  dialog at all.
+
+  List edits whatever shape the face actually is:
+
+  | Face | What the list gives you |
+  |---|---|
+  | `auto` | the declarations — type, count, name, order. Order **is** panel order |
+  | hand-placed | type, count and name per element; positions left alone |
+  | grid-drawn | every placed cell |
+
+  Type, count, name, reorder, add and remove throughout. A run declared
+  `n: 8, gap: 58` stays **one row with a count** rather than exploding into
+  eight elements, so editing keeps the source's shape. A name accepts either one
+  label for the whole run or a comma-separated list naming each socket, which is
+  how `IN 16, IN 15, …` reads back.
+
+**Fixed**
+
+- **The preview went blank on any `auto` face.** It assumed every face had an
+  `elements` array; an `auto` one has no such thing, so it threw and left the
+  last drawing on screen — which after v1.7.0 meant most library devices. It now
+  goes through `renderDevice`, the same path the rack itself draws with, so it
+  handles every face shape including half-width and ears.
+- **An option-card slot rendered as an XLR in the list.** `slot` is not a
+  connector type, so its `<select>` fell to the first option and showed *XLR
+  female* while the underlying value was still `slot` — one stray click would
+  have turned an I/O Port aperture into an XLR. Rows the editor does not own are
+  now locked and labelled for what they are (`SLOT · I/O Port`).
+- **`keep` held a live reference into `SEED_DEVICES`.** Editing a preserved
+  face's IO would have rewritten the shared library in memory for the rest of
+  the session, including for projects that never opened the editor. It is cloned
+  on the way in.
+
+---
+
 ## v1.7.0 — 2026-08-12
 
 **Added**

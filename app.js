@@ -2114,6 +2114,7 @@ const dlgAdd = $('#dlgAdd');
 //   { t, lbl }              a connector, `lbl` being its real name on the panel
 //   { text }                a piece of panel lettering
 const BLANK_FACE = () => ({ rows: 1, cols: 8, cells: [], keep: null });
+const clone = (o) => (o == null ? null : JSON.parse(JSON.stringify(o)));
 
 // Read an existing face back into the grid, so a device can be edited rather
 // than rebuilt. Returns null when the panel cannot honestly be put on a uniform
@@ -2170,6 +2171,7 @@ function gridFromSpec(spec, ru, width) {
 }
 let draft = null;            // the device being built
 let draftFace = 'front';     // which face the grid is showing
+let draftMode = 'grid';      // 'grid' places by position, 'list' edits the IO
 let draftSel = null;         // index of the selected cell
 let draftBrush = 'xlrf';     // what clicking a cell places
 let draftAnchor = null;      // last cell clicked, for shift-click runs
@@ -2240,8 +2242,9 @@ function draftRecord() {
   ['front', 'rear'].forEach((n) => {
     const f = draft[n];
     if (!faceUsed(n)) {
-      // Nothing drawn: keep whatever the device already had on this face, which
-      // is how a panel too irregular to grid survives an edit to its weight.
+      // Nothing drawn on the grid: the face is whatever it already was, with
+      // any list edits already applied to that same object. This is how a panel
+      // too irregular to grid survives — and now also how its IO gets fixed.
       if (f.keep) rec[n] = f.keep; else delete rec[n];
       return;
     }
@@ -2254,19 +2257,16 @@ function draftRecord() {
   return rec;
 }
 
+// Through renderDevice, the same path the rack draws with. It already handles
+// every shape a face can be — hand-placed elements, an `auto` list, half width,
+// ears, or nothing at all — which the preview must too now that editing can
+// leave a face as the `auto` declaration it arrived as.
 function renderDraftPreview() {
   const box = $('#addPreview');
   box.innerHTML = '';
   const rec = draftRecord();
-  const layout = rec[draftFace] || { elements: [] };
-  const spec = { ru: draft.ru, ...layout };
-  if (!layout.elements.length && !(layout.labels || []).length) {
-    spec.labels = [{ text: `${rec.brand} ${rec.model}`, x: draft.width === 'full' ? 500 : HALF_W / 2,
-                     y: draft.ru * 50 + 8, size: 20, ls: 2, anchor: 'middle' }];
-  }
-  box.appendChild(draft.width === 'full'
-    ? renderPanel(spec)
-    : renderHalfPanel(spec, draft.width === 'half-ears' ? { ears: 'left' } : {}));
+  box.appendChild(renderDevice(rec, draftFace, null,
+    draft.width === 'half-ears' ? { ears: 'left' } : {}));
 }
 
 // --- the grid ---------------------------------------------------------------
@@ -2343,6 +2343,223 @@ function newCell() {
     return t ? { text: t } : null;
   }
   return { t: draftBrush };
+}
+
+// --- the socket list --------------------------------------------------------
+// The grid can only draw a face that sits on a uniform grid, and most of this
+// library does not — 208 of 220 hand-placed faces and every `auto` face are
+// kept as they are. Without a second way in, their IO could not be corrected at
+// all, which is most of the reason you would open this dialog.
+//
+// So the list edits whatever shape the face actually has:
+//   cells     the grid's own cells, when the face is grid-backed
+//   auto      an `auto` declaration list — order IS panel order
+//   elements  hand-placed elements, positions untouched
+// A run declared as `n: 8, gap: 58` stays one row with a count, so editing it
+// keeps the source's shape instead of exploding into eight separate elements.
+const KNOWN_CONN = new Set(CONNECTOR_TYPES.map(([v]) => v));
+
+function faceShape(name) {
+  const f = draft[name];
+  if (f.keep && Array.isArray(f.keep.elements)) return 'elements';
+  if (f.keep && f.keep.auto) return 'auto';
+  return 'cells';
+}
+
+// Every editable entry on a face, as a uniform row the list can render.
+function faceEntries(name) {
+  const f = draft[name];
+  const kind = faceShape(name);
+  if (kind === 'auto') {
+    return f.keep.auto.map((e, i) => ({ i, kind, t: e.t, n: e.n || 1, lbl: e.lbl, ref: e }));
+  }
+  if (kind === 'elements') {
+    const out = f.keep.elements.map((e, i) => ({ i, kind, t: e.t, n: e.n || 1, lbl: e.lbl, ref: e }));
+    (f.keep.labels || []).forEach((l, i) =>
+      out.push({ i, kind: 'label', text: l.text, ref: l }));
+    return out;
+  }
+  const out = [];
+  (f.cells || []).forEach((c, i) => {
+    if (!c) return;
+    if (c.text) out.push({ i, kind: 'label', text: c.text, ref: c });
+    else out.push({ i, kind, t: c.t, n: 1, lbl: c.lbl, ref: c });
+  });
+  return out;
+}
+
+function ioChanged() {
+  if (faceShape(draftFace) === 'cells') renderDraftGrid();
+  renderIOList(); refreshFaceNote(); renderDraftPreview();
+}
+
+function addEntry() {
+  const f = faceOf();
+  const kind = faceShape(draftFace);
+  if (kind === 'auto') { f.keep.auto.push({ t: draftBrush === '__text' ? 'xlrf' : draftBrush, n: 1 }); }
+  else if (kind === 'elements') {
+    // A hand-placed face has no free cell to drop into, so a new socket lands
+    // just right of the rightmost thing on the busiest row, at that row's own
+    // pitch. It is a guess about position and only about position — say so.
+    const els = f.keep.elements;
+    const last = els.reduce((a, b) => (b.x + (b.n || 1) * (b.gap || 0) > a.x + (a.n || 1) * (a.gap || 0) ? b : a),
+      els[0] || { x: FACE_L, y: draft.ru * U / 2, n: 1, gap: 0 });
+    const pitch = last.gap || 70;
+    els.push({ t: draftBrush === '__text' ? 'xlrf' : draftBrush,
+               x: Math.min(FACE_R - 20, last.x + ((last.n || 1) - 1) * (last.gap || 0) + pitch),
+               y: last.y, n: 1 });
+    toast('Added at the end of that row — check where it landed.');
+  } else {
+    const i = (f.cells || []).findIndex((c, k) => !c && k < cellCount(f));
+    if (i < 0) { toast('No free cell on this face — add a row or column.', true); return; }
+    f.cells[i] = newCell() || { t: 'xlrf' };
+  }
+  ioChanged();
+}
+
+function removeEntry(e) {
+  const f = faceOf();
+  if (e.kind === 'cells') f.cells[e.i] = null;
+  else if (e.kind === 'label' && faceShape(draftFace) === 'cells') f.cells[e.i] = null;
+  else if (e.kind === 'label') f.keep.labels.splice(e.i, 1);
+  else if (e.kind === 'auto') f.keep.auto.splice(e.i, 1);
+  else f.keep.elements.splice(e.i, 1);
+  draftSel = null; selectCell(null);
+  ioChanged();
+}
+
+// Order is meaningful on an `auto` face — autoLayout flows the list left to
+// right as seen from behind — so moving a row moves the socket on the panel.
+function moveEntry(e, dir) {
+  const f = faceOf();
+  const arr = e.kind === 'auto' ? f.keep.auto
+    : e.kind === 'elements' ? f.keep.elements : null;
+  if (!arr) {                       // grid-backed: swap the two cells
+    const cells = f.cells, from = e.i;
+    let to = from + dir;
+    while (to >= 0 && to < cellCount(f) && !cells[to]) to += dir;
+    if (to < 0 || to >= cellCount(f)) return;
+    [cells[from], cells[to]] = [cells[to], cells[from]];
+    ioChanged(); return;
+  }
+  const to = e.i + dir;
+  if (to < 0 || to >= arr.length) return;
+  [arr[e.i], arr[to]] = [arr[to], arr[e.i]];
+  ioChanged();
+}
+
+function renderIOList() {
+  const box = $('#addList');
+  if (draftMode !== 'list') { box.hidden = true; return; }
+  box.hidden = false;
+  box.innerHTML = '';
+
+  const kind = faceShape(draftFace);
+  const entries = faceEntries(draftFace);
+
+  const head = document.createElement('p');
+  head.className = 'hint';
+  head.textContent = kind === 'auto'
+    ? 'Generated layout — the order here is the order across the panel, left to '
+      + 'right as seen from behind the rack.'
+    : kind === 'elements'
+      ? 'Hand-placed panel. Types, counts and names are editable; the positions '
+        + 'are the ones the drawing was made with and are left alone.'
+      : 'Every socket placed on the grid.';
+  box.appendChild(head);
+
+  if (!entries.length) {
+    const p = document.createElement('p');
+    p.className = 'libempty';
+    p.textContent = 'Nothing on this face yet.';
+    box.appendChild(p);
+  }
+
+  entries.forEach((e) => {
+    const row = document.createElement('div');
+    row.className = 'iorow';
+
+    if (e.kind === 'label') {
+      row.innerHTML = '<span class="iotag">TEXT</span>';
+      const t = document.createElement('input');
+      t.value = e.text; t.className = 'ioname';
+      t.oninput = () => { e.ref.text = t.value; renderDraftPreview(); };
+      row.appendChild(t);
+    } else if (!KNOWN_CONN.has(e.t)) {
+      // Something this editor does not own — an option-card slot is the case
+      // that exists today. A <select> of connector types has no entry for it,
+      // so it renders showing 'XLR female' and one stray click turns a card
+      // aperture into an XLR. Shown as what it is, and left alone.
+      const slot = (draft.base && draft.base.slots || [])
+        .find((s) => s.id === e.ref.slot);
+      const what = e.t === 'slot'
+        ? `SLOT · ${slot ? slot.name : (e.ref.slot || '?')}`
+        : String(e.t).toUpperCase();
+      row.innerHTML = `<span class="iotag lock">${esc(what)}</span>`
+        + '<span class="lockmsg">not editable here</span>';
+    } else {
+      const sel = document.createElement('select');
+      CONNECTOR_TYPES.forEach(([v, label]) => {
+        const o = document.createElement('option');
+        o.value = v; o.textContent = label; o.selected = v === e.t;
+        sel.appendChild(o);
+      });
+      sel.onchange = () => { e.ref.t = sel.value; ioChanged(); };
+      row.appendChild(sel);
+
+      // A count only means anything where one declaration stands for a run.
+      if (kind !== 'cells') {
+        const n = document.createElement('input');
+        n.type = 'number'; n.min = '1'; n.max = '64'; n.value = e.n; n.className = 'ion';
+        n.title = 'How many';
+        n.oninput = () => {
+          const v = Math.max(1, Math.min(64, +n.value || 1));
+          if (v === 1) delete e.ref.n; else e.ref.n = v;
+          if (kind === 'elements' && v > 1 && !e.ref.gap) e.ref.gap = 70;
+          ioChanged();
+        };
+        row.appendChild(n);
+      }
+
+      const nm = document.createElement('input');
+      nm.className = 'ioname';
+      nm.placeholder = 'name, e.g. AES50 A';
+      nm.value = Array.isArray(e.lbl) ? e.lbl.join(', ') : (e.lbl || '');
+      nm.title = 'One name, or a comma-separated list to name each socket';
+      nm.oninput = () => {
+        const v = nm.value.trim();
+        if (!v) delete e.ref.lbl;
+        else e.ref.lbl = v.includes(',') ? v.split(',').map((s) => s.trim()) : v;
+        ioChanged();
+      };
+      row.appendChild(nm);
+    }
+
+    const up = document.createElement('button');
+    up.type = 'button'; up.className = 'iomove'; up.textContent = '↑';
+    up.title = 'Move earlier'; up.onclick = () => moveEntry(e, -1);
+    const dn = document.createElement('button');
+    dn.type = 'button'; dn.className = 'iomove'; dn.textContent = '↓';
+    dn.title = 'Move later'; dn.onclick = () => moveEntry(e, 1);
+    const rm = document.createElement('button');
+    rm.type = 'button'; rm.className = 'iodel'; rm.textContent = '×';
+    rm.title = 'Remove'; rm.onclick = () => removeEntry(e);
+    row.append(up, dn, rm);
+    box.appendChild(row);
+  });
+
+  const add = document.createElement('button');
+  add.type = 'button'; add.className = 'btn sm';
+  add.textContent = '+ Add socket';
+  add.onclick = addEntry;
+  box.appendChild(add);
+
+  const total = entries.filter((e) => e.kind !== 'label')
+    .reduce((a, e) => a + (e.n || 1), 0);
+  const foot = document.createElement('p');
+  foot.className = 'hint';
+  foot.textContent = `${total} socket${total === 1 ? '' : 's'} on this face.`;
+  box.appendChild(foot);
 }
 
 // --- selected cell ----------------------------------------------------------
@@ -2440,13 +2657,19 @@ function refreshFaceNote() {
   // than presenting an empty grid that looks like the device has no panel.
   const keep = faceOf().keep;
   const warn = $('#addKeep');
-  warn.hidden = !keep || faceUsed(draftFace);
+  warn.hidden = !keep || faceUsed(draftFace) || draftMode !== 'grid';
   if (!warn.hidden) {
     const kind = Array.isArray(keep.elements) ? 'hand-placed drawing' : 'generated auto layout';
     warn.textContent = `This ${draftFace} is a ${kind} that does not sit on a `
-      + 'uniform grid, so it is kept exactly as it is. Place anything here and '
-      + 'you replace it.';
+      + `uniform grid, so the grid is empty and the panel is kept exactly as it `
+      + `is. Use List to correct its sockets. Place anything here and you `
+      + `replace the whole face.`;
   }
+  // The grid cannot show a preserved face, so List is where the work happens.
+  $('#addGrid').hidden = draftMode !== 'grid';
+  $('#addGridHint').hidden = draftMode !== 'grid';
+  $$('#addMode button').forEach((b) => b.classList.toggle('on', b.dataset.mode === draftMode));
+  renderIOList();
 }
 
 function openDraft(existing = null) {
@@ -2488,10 +2711,13 @@ function openDraft(existing = null) {
     category: existing.category || 'audio',
     ru: existing.ru || 1, width,
     depth: existing.depth || 0, weight: existing.weight || 0, power: existing.power || 0,
+    // `keep` is CLONED. It would otherwise be the live object out of
+    // SEED_DEVICES, and editing its IO would rewrite the library in memory for
+    // the rest of the session — including for projects that never asked.
     front: gridFromSpec(existing.front, existing.ru || 1, width)
-      || { ...BLANK_FACE(), keep: existing.front || null },
+      || { ...BLANK_FACE(), keep: clone(existing.front) },
     rear: gridFromSpec(existing.rear, existing.ru || 1, width)
-      || { ...BLANK_FACE(), keep: existing.rear || null },
+      || { ...BLANK_FACE(), keep: clone(existing.rear) },
   } : {
     base: null,
     brand: '', model: '', category: 'audio', ru: 1, width: 'full',
@@ -2540,6 +2766,10 @@ $$('#addFace button').forEach((b) => {
     rebuildGridOpts(); renderDraftGrid(); selectCell(null);
     refreshFaceNote(); renderDraftPreview();
   };
+});
+
+$$('#addMode button').forEach((b) => {
+  b.onclick = () => { draftMode = b.dataset.mode; refreshFaceNote(); };
 });
 
 $('#addRows').onchange = () => resizeFace(+$('#addRows').value, faceOf().cols);

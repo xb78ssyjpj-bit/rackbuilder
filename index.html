@@ -164,6 +164,14 @@
       <button type="button" class="btn sm" id="addClearFace">Clear face</button>
     </div>
 
+    <div class="facebar">
+      <div class="seg sm" id="addMode" role="group" aria-label="Editing mode">
+        <button type="button" data-mode="grid" class="on">Grid</button>
+        <button type="button" data-mode="list">List</button>
+      </div>
+      <span class="facenote">Grid places by position · List edits the sockets</span>
+    </div>
+
     <div class="gridopts">
       <label>Rows<select id="addRows"></select></label>
       <label>Per row<select id="addCols"></select></label>
@@ -174,9 +182,10 @@
 
     <p class="warn" id="addKeep" hidden></p>
     <div class="pgrid" id="addGrid"></div>
-    <p class="hint">Click a cell to place. Drag across to fill a run, shift-click
-       to extend from the last one, right-click to clear. Click a filled cell to
-       select it and give that socket its real name.</p>
+    <p class="hint" id="addGridHint">Click a cell to place. Drag across to fill a
+       run, shift-click to extend from the last one, right-click to clear. Click
+       a filled cell to select it and give that socket its real name.</p>
+    <div class="iolist" id="addList" hidden></div>
 
     <div class="cellsel" id="addSel" hidden></div>
 

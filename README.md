@@ -942,10 +942,26 @@ be reverted. To make a fix everybody's, **Copy JSON** and paste it into
 Editing starts from the original record, so fields the editor does not model —
 `src`, `slots`, `bands`, `patch`, `shelf` — survive untouched.
 
-The editor draws on a uniform grid and most panels here are not on one, so a
-face is loaded back into the grid only when it truly fits. Everything else is
-**kept exactly as it is**, with an amber note saying so and the real drawing
-still shown in the preview. Place anything on that face and you replace it.
+Each face has two editing modes:
+
+- **Grid** places by position — the punch grid, for panels that sit on one.
+- **List** edits the sockets themselves — type, count, name, order, add, remove.
+  This is the flow view's port rows made editable, and it works on *every* face
+  whatever its shape.
+
+That split matters because the grid can only draw a panel that is on a uniform
+grid, and most here are not: they are hand-placed at real pitch, or an `auto`
+declaration with no positions at all. Those faces are **kept exactly as they
+are** — an amber note says so in Grid, and the real drawing stays in the preview
+— while **List still edits their IO**. On an `auto` face the list order *is* the
+order across the panel, left to right as seen from behind the rack.
+
+A run declared `n: 8, gap: 58` stays one row with a count, so editing keeps the
+shape the source was written in. A name is either one label for the whole run or
+a comma-separated list naming each socket.
+
+Rows the editor does not own — an option-card `slot`, a `screw` — are locked and
+labelled rather than shown as an editable connector.
 
 ### Spec accuracy
 

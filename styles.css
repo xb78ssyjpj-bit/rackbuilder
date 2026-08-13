@@ -522,6 +522,31 @@ dialog menu {
 .pcell.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
 .pcell.text { background: rgba(217,164,65,.16); border-color: #d9a441; color: var(--fg); }
 
+/* The socket list — the flow view's port rows, made editable. It is the only
+   way into an `auto` face or a hand-placed one, so it has to carry everything:
+   type, count, name, order and removal. */
+.iolist { display: flex; flex-direction: column; gap: 5px; margin: 8px 0 0; }
+.iorow { display: flex; gap: 5px; align-items: center; }
+.iorow select { flex: 1 1 auto; min-width: 0; margin: 0; }
+.iorow .ion { width: 56px; margin: 0; text-align: center; }
+.iorow .ioname { flex: 1 1 40%; min-width: 0; margin: 0; }
+.iorow .iotag {
+  flex: 1 1 auto; font: 600 10px var(--mono); letter-spacing: .1em;
+  color: #d9a441; padding-left: 2px;
+}
+.iorow .iotag.lock { color: var(--dim); }
+.iorow .lockmsg {
+  flex: 1 1 40%; font: 400 11px var(--mono); color: var(--dim); opacity: .7;
+}
+.iorow .iomove, .iorow .iodel {
+  background: none; border: 1px solid var(--line); border-radius: 4px;
+  color: var(--dim); cursor: pointer; padding: 0;
+  width: 24px; height: 26px; font-size: 12px; line-height: 1; flex: none;
+}
+.iorow .iomove:hover { color: var(--fg); border-color: var(--accent); }
+.iorow .iodel:hover { color: var(--danger); border-color: var(--danger); }
+.iolist .btn { align-self: flex-start; margin-top: 2px; }
+
 .cellsel {
   margin: 10px 0 0; padding: 11px 13px;
   background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
