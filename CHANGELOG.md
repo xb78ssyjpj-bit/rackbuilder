@@ -19,6 +19,55 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.5.0 — 2026-08-12
+
+**Added**
+
+- **Ten Penn Elcom rack PDUs**, from Penn Elcom's own product pages and their
+  product photography:
+
+  | Model | In | Out |
+  |---|---|---|
+  | PDU16-UK / -UK32 | C-FORM 16 A / 32 A | 8 × UK 13 A |
+  | PDU16-EU / -EU32 | C-FORM 16 A / 32 A | 8 × Schuko |
+  | PDU16-PC / -PC32 | C-FORM 16 A / 32 A | 8 × powerCON |
+  | PDU16-UK-TR1 | TRUE1 16 A | 8 × UK 13 A |
+  | PDU32-CF | C-FORM 32 A | 8 × powerCON, two banks |
+  | PDU32-CTR1 | C-FORM 32 A | 8 × TRUE1, two banks |
+  | PDU32-PC | powerCON 32 A | 8 × powerCON, two banks |
+
+  **Worth knowing before you plan a rack: only ONE of the eight outlets is on
+  the front.** The other seven are on the back panel. Penn Elcom state that
+  outright for the TR1 and the photographs confirm it across the PDU16 range —
+  it is not what you would assume from "8 sockets", and it changes which way the
+  unit wants to face. The PDU32 two-channel units go further: nothing on the
+  front but the inlet, the two bank trips and the monitor, all eight outputs on
+  the back.
+
+  Every front is drawn with the real furniture — earth stud, C-FORM or TRUE1
+  inlet, Channel A trip, the THRU LINK outlet, the LCD monitor, Channel B trip.
+  Ports read `MAINS IN`, `THRU LINK`, `OUT 1`–`OUT 8`, and on the two-channel
+  units `A1`–`A4` / `B1`–`B4`.
+
+**Changed**
+
+- **A breaker is a control, not a connector.** It was filed under Power, which
+  made it a patchable port and a punchable patch-panel hole — so each new PDU
+  arrived with two rows in the flow view that no cable could ever land on. It
+  moves to Controls / panel. No existing device had a breaker port, so nothing
+  else changes; it is still placeable from **+ Device**.
+
+**Known soft spot**
+
+Depth is the weak figure. Penn Elcom quote "Case Size" with the three numbers in
+a different order on almost every page — 140×98×430, 88×140×430, 87×98×430 —
+where 430 is plainly the body width (483 over the ears) and 87/88 is the 2U
+height, leaving *both* 98 and 140 claiming to be depth. 140 mm is used
+throughout and all ten are marked `approx`, because understating a depth is the
+direction that puts a device in a rack it does not fit.
+
+---
+
 ## v1.4.1 — 2026-08-12
 
 **Fixed**

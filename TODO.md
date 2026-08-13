@@ -137,6 +137,34 @@ run, and one straight-on photograph of a dLive MixRack rear would settle it: the
 - No weight or power per card, because nobody publishes it. If a manufacturer
   does, the field is there to fill in.
 
+## 5b. Penn Elcom — the rest of the PDU range
+
+Ten of the 2U units are in (v1.5.0). Not done, and why:
+
+- **The universal-socket models** — PDU16-UN, PDU16-UN32, PDU16-AV, PDU16-AVC.
+  A "universal" outlet takes UK, US, EU and AU plugs and looks like none of
+  them. There is no primitive for it and drawing it as a Schuko or a BS1363
+  would be a lie about what you can plug in. Needs a `universal_thru` primitive
+  first. PDU16-AV also wants a dual-USB charger module and an IEC C13 outlet
+  strip on one face.
+- **The 1U range** — PDU16-10DJ-UK/EU (10-channel), PDU16-5DJ-AV-UK/EU
+  (5-channel switched), PDU6-UK, PDU-EU-6, PDU6SW, PDU01-14 (surge + EMI
+  filter), PDU-EU-8/8SW/8SWR, RG-6517, RG-6518FR. All straightforward, just not
+  done this pass.
+- **Vertical 0U PDUs** — PDU-UK-20B, PDU20-UK, PDU-EU-20B, PDU-US-20B,
+  PDU-AU-20B, PDU-CN-20B, PDU08-US. These mount in the rear channel rather than
+  on the rails, so they do not fit the app's rack-unit model at all — same
+  situation as the wall-mount DT164-W, out of scope rather than missing.
+- **Truss-mount plug boards** — PDU16-5UK-T1, PDU16-6UK. Not rack units.
+- **US / AU / CN socket variants** of everything above.
+- **R2249/1UK-PH16**, the 16-way punched Phoenix panel, is a patch panel rather
+  than a PDU and would suit the existing `patch: true` model.
+
+Penn Elcom's own copy has paste errors worth watching for: the PDU16-UK32 page
+describes "8 x Universal Sockets" in a product titled and tagged UK, and the
+PDU16-EU32 page does the same. The structured Plug Type field was trusted over
+the prose.
+
 ## 6. Network
 
 - ~~Luminex GigaCore~~ — **done.** GigaCore 14R and the Yamaha SWP1-8/16MMF are

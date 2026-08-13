@@ -613,13 +613,18 @@ export const CONNECTOR_GROUPS = [
     ['true1_thru', 'TRUE1 thru'], ['cee16_thru', 'CEE 16 A thru'],
     ['cee32_1_thru', 'CEE 32 A 1ph thru'], ['cee32_3_thru', 'CEE 32 A 3ph thru'],
     ['cee63_1_thru', 'CEE 63 A 1ph thru'], ['cee125_3_thru', 'CEE 125 A 3ph thru'],
-    ['powerlock_thru', 'Powerlock thru'], ['breaker', 'Breaker'],
+    ['powerlock_thru', 'Powerlock thru'],
   ]],
   ['Multipin', [
     ['socapex_in', 'Socapex 19p in'], ['socapex_thru', 'Socapex 19p thru'],
     ['veam_in', 'VEAM in'], ['veam_thru', 'VEAM thru'],
   ]],
+  // A breaker lives here, not under Power, because it is a switch: you cannot
+  // plug anything into it. Left in the power group it became a patchable port
+  // and a punchable patch-panel hole, which is how a rack PDU ended up with two
+  // rows in the flow view that no cable could ever land on.
   ['Controls / panel', [
+    ['breaker', 'Breaker'],
     ['knob', 'Knob'], ['encoder', 'Encoder'], ['button', 'Button'],
     ['led', 'LED'], ['meter', 'Meter'], ['fader', 'Fader'],
     ['display', 'Display'], ['vent', 'Vent'], ['mesh', 'Mesh'],
