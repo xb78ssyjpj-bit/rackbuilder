@@ -370,8 +370,10 @@ tabs, per-socket naming, placed lettering, half-rack support and JSON export.
   prefixes.
 - **Ports have no direction of their own** — see the README. Only XLR gender and
   the power in/thru variants know which way round they are.
-- **A cable cannot be labelled from the canvas.** The `label` field exists on
-  every cable and is exported to CSV, but nothing sets it yet.
+- ~~A cable cannot be labelled~~ — **done in v1.8.1.** Inline field per matrix
+  row, shown in the wire's tooltip and second column of the CSV. Still not
+  settable *from the canvas* — you go through the matrix — and there is no
+  bulk/auto numbering, which is the other half of the same job.
 - **Nodes do not reflow when expanded**, so opening a 48-port switch will
   overlap whatever is below it. **Arrange** fixes it; nothing does automatically.
 - **`sonnet-rackmac-mini` is the one device that carries signal but has no
