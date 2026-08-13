@@ -387,3 +387,104 @@ tabs, per-socket naming, placed lettering, half-rack support and JSON export.
   because those two were confirmed. Other 1U rears with big jack, BNC or
   euroblock banks are folded automatically only when they overflow — see the
   README. Where a real rear view is to hand, set `stack` explicitly instead.
+
+## 11. Requested, sized
+
+Asked for on 2026-08-12, sized rather than scheduled. The scale is effort, not
+importance:
+
+| | Meaning |
+|---|---|
+| **S** | An hour or less. Known cause, known fix, no design decision. |
+| **M** | Half a day. Some design, or a lot of data entry. |
+| **L** | A day or more, or blocked on documentation nobody has yet. |
+| **XL** | Needs a design pass before an estimate means anything. |
+
+Data items are sized by **how hard the documentation is to get**, not by how
+hard the typing is. That has been the binding constraint on every device added
+so far, and it is why several entries below are L despite being simple code.
+
+### S — cheap, do these first
+
+- **Naming IO in the edit dialog loses focus after every keystroke.** A
+  regression I shipped in v1.7.1: the name field's `oninput` calls `ioChanged()`,
+  which calls `renderIOList()`, which rebuilds the row — including the input you
+  are typing into. The fix is to not re-render the list on a name edit; update
+  the preview and, if the face is grid-backed, the one cell's text. Everything
+  else in that dialog re-renders correctly, so this is a one-function change.
+  **This makes the feature it belongs to close to unusable — it should go first.**
+- **Side view ignores group colours.** `renderRack()` paints `it.color` onto the
+  bay item; `renderSide()` never reads it — zero occurrences of `color` in the
+  whole function. Mirror what the bays already do.
+- **Cables cannot be labelled, but the field exists.** `c.label` is already on
+  every cable, already searched in the Cables matrix, and already exported as
+  the CSV `Note` column. Only the editor is missing — an input on the matrix row
+  or on the selected cable, and the whole path lights up.
+- **DM0 I/O Port count.** Blocked on documentation, not code — see §5. A&H's DM
+  MixRack guide covers "3 sizes" and is silent on the DM0. One line of data once
+  somebody can see one.
+
+### Already built — check before costing
+
+- **A cable spreadsheet with from/to already exists.** Flow view → **Cables** →
+  **Export CSV**. Columns: Cable, Type, Source, Source socket, Source location,
+  Target, Target socket, Target location, Note. The location columns give rack
+  and U. If this is not what was wanted, the gap is worth stating precisely,
+  because the export itself is done.
+
+### M — a session each
+
+- **Other audio networking standards: SLink, AES50, DigiACE, Optocore.** The
+  mechanism already exists — `sig` on a declaration overrides the signal family,
+  which is how AES3 rides on XLR. This is adding families to `FAMILIES` in
+  `flow.js` and then a pass through the library deciding which etherCON is which
+  protocol. Worth getting right rather than fast: **SLink is Allen & Heath,
+  AES50 is Midas / Klark Teknik, DigiACE is DiGiCo, Optocore is its own thing on
+  fibre** — they are not interchangeable and an SQ's port is SLink. The socket
+  is already *named* `SLINK` on the SQ-Rack; what is wrong is that its family is
+  the generic `network`, so it draws the same colour as a laptop's ethernet and
+  the flow view will happily patch it to one.
+- **Devices mounted inside the rack rather than on the ears.** Power supplies,
+  routers, anything that lives in the box without taking a U. An `internal: true`
+  item, excluded from U occupancy and from the bay layout, still counted in
+  weight, power and depth, and placeable in the flow view. The ask was for the
+  flow half only, which is the smaller part — but if an internal device is
+  invisible in the rack views, people will forget it is in there and under-order
+  power. Worth a strip or a count somewhere in the bay.
+- **Split `devices.js` into a folder — yes, worth doing.** Opinion asked for, so:
+  do it as **one ES module per brand plus a hand-written index**, not a folder
+  scanned at runtime. Runtime loading would break the `file://` single-file
+  build, which cannot fetch anything, and would need a manifest — which is the
+  index, only worse. Per-brand modules keep every existing tool working:
+  `bundle.py` already concatenates modules, `check.mjs` already imports one
+  entry point. The benefit is real and specific: the README currently tells
+  people to add devices *inside the brand's section* purely to avoid merge
+  conflicts, and that is a convention nobody can enforce. Files make it
+  structural. The index becomes a new shared line, but it changes only when a
+  brand is added, which is far rarer than adding a device. Mechanical enough to
+  script the split; the work is in `bundle.py` and the import graph.
+
+### L — a day or more, or blocked on documentation
+
+- **Harris frames and cards.** The option-card mechanism from v1.3.0 already
+  covers this shape — a frame is a device with many slots, a card is a faceplate
+  that fits one format. What makes it L is scale and sources: a broadcast frame
+  carries 10–20 cards, so the slot layout needs to handle a row of apertures
+  rather than one, and Harris/Imagine documentation is harder to reach than
+  A&H's. Establish the frame's slot pitch from a real drawing before any of it,
+  the same way the SQ aperture was measured.
+- **Make placing IO genuinely intuitive.** Currently a uniform grid, which is
+  honest but abstract — you place into cells, not onto a panel. Candidates:
+  drag from a connector palette onto the preview itself, snap to the pitch of
+  whatever is already on that row, arrow-key nudge, and drag-to-repeat for runs.
+  This is the one item that should not be estimated until it is designed, so it
+  is L as a placeholder and could be XL.
+
+### XL — explicitly lowest priority
+
+- **A library of external devices — consoles, PA, anything at the other end of
+  the cable.** The flow view already takes ad-hoc external nodes with whatever
+  sockets you give them; this is about not retyping a DiGiCo SD12's socket list
+  every show. The cost is not the code, it is that every console added is
+  another device researched to the same standard as the rack gear — and consoles
+  have far more I/O than the boxes in here. Sized XL for that reason alone.
