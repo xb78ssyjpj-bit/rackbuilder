@@ -19,6 +19,57 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.9.0 — 2026-08-13
+
+**Added**
+
+- **`powerMax`, and peak rows in the summary.** One number cannot answer both
+  questions a rack poses. `power` is what a device draws doing its job;
+  `powerMax` is the manufacturer's stated maximum, which is what a feed and a
+  breaker have to survive. A D80 idles at 180 W and peaks at 7000.
+
+  The summary now shows both, and the peak rows appear only when something in
+  the rack actually states one. Three D80s read:
+
+  | | |
+  |---|---|
+  | Power | 540 W |
+  | Current @230V | 2.3 A |
+  | **Peak power** | **21000 W** |
+  | **Peak @230V** | **91.3 A** |
+
+  Before this release that rack reported `0 W+`.
+
+**Fixed**
+
+- **d&b amplifier mains draw, from d&b's own manuals.** The D80, D20 and DS10
+  now carry real figures out of the Technical specifications tables:
+
+  | | Standby | Idle | Max (short term RMS) | Mains |
+  |---|---|---|---|---|
+  | D80 | 9 W | 180 W | **7000 W** | powerCON-HC, 208–240 V |
+  | D20 | 9 W | 48 W | **2200 W** | powerCON, 100–240 V |
+  | DS10 | — | — | **10 W** | powerCON, 100–240 V |
+
+- **The D20's 400 W was not a real figure.** It carried a code comment saying so
+  — *"power figure is NOT from the datasheet — set it from the manual"* — and it
+  is none of the manual's three numbers. Now 48 W idle, 2200 W peak.
+
+**A wrong claim in TODO, corrected**
+
+§7 said mains draw was missing for every amp except the QSC PLX/PLX2/RMX, and
+that d&b, L-Acoustics and Martin "all have vector-art PDFs that yield no text".
+**The second half is false.** d&b's manuals extract cleanly with
+`pdftotext -layout`; what failed before was a fetch tool handing back the raw
+PDF, which is not the same thing as the PDF being unreadable. The URL pattern
+and the models still owed are now recorded, along with the note that
+L-Acoustics and Martin deserve the same retry before anyone assumes otherwise.
+
+DS100 is the one that genuinely publishes nothing — its manual gives fan noise
+at idle and no consumption figure at all.
+
+---
+
 ## v1.8.1 — 2026-08-12
 
 **Fixed**

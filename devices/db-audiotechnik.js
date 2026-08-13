@@ -4,10 +4,12 @@ export const D_B_AUDIOTECHNIK = [
   // Hand-placed from the manufacturer's orthographic front view.
   // 2 RU x 19" x 460 mm, 10.8 kg. Front: 3.5" TFT upper left, SCROLL/EDIT
   // encoder on the lower recessed step, POWER rotary far right.
-  // NOTE: power figure is NOT from the datasheet — set it from the manual.
+  // Power is from d&b's manual 1.9, Technical specifications: standby 9 W,
+  // idle 48 W, max 2.2 kW short term RMS. The 400 W that stood here before was
+  // never sourced and is not any of those numbers.
   { id: 'db-d20', brand: 'd&b audiotechnik', model: 'D20', category: 'audio',
-    ru: 2, depth: 460, weight: 10.8, power: 400, approx: true,
-    src: 'https://www.dbaudio.com/global/en/products/amplifiers/d20/',
+    ru: 2, depth: 460, weight: 10.8, power: 48, powerMax: 2200, approx: true,
+    src: 'https://www.dbaudio.com/assets/products/downloads/manuals-documentation/electronics/dbaudio-manual-d20-1.9-en.pdf',
     front: { elements: [
       { t: 'display', x: 161, y: 88, w: 154, h: 110 },
       // the recessed lower section runs right across the panel
@@ -137,9 +139,12 @@ export const D_B_AUDIOTECHNIK = [
       { t: 'nl4', n: 2, lbl: ['OUT A', 'OUT B'] },
     ] } },
 
+  // Manual 1.14, Technical specifications: powerCON-HC, 208-240 V high range,
+  // standby 9 W, idle 180 W, max 7000 W short term RMS. That maximum is 30 A at
+  // 230 V, which is why it is on a 32 A connector.
   { id: 'db-d80', brand: 'd&b audiotechnik', model: 'D80', category: 'audio',
-    ru: 2, depth: 530, weight: 19, approx: true,
-    src: 'https://www.dbaudio.com/global/en/products/amplifiers/d80/',
+    ru: 2, depth: 530, weight: 19, power: 180, powerMax: 7000, approx: true,
+    src: 'https://www.dbaudio.com/assets/products/downloads/manuals-documentation/electronics/dbaudio-manual-d80-1.14-en.pdf',
     front: { elements: [
       { t: 'display', x: 200, y: 85, w: 190, h: 120 },
       { t: 'line', x: 615, y: 140, w: 630 },
@@ -264,9 +269,11 @@ export const D_B_AUDIOTECHNIK = [
   // connectors — AES3 carries two channels per XLR, so 4 in / 16 out is 2 and 8
   // sockets. Sixteen XLRs would be 384 mm of connector and could not fit a 1U
   // face at all, which is how the discrepancy showed up.
+  // Manual 1.11: "Power consumption 10 W (max)" — a single figure, so typical
+  // and maximum are the same thing here.
   { id: 'db-ds10', brand: 'd&b audiotechnik', model: 'DS10', category: 'audio',
-    ru: 1, depth: 232, weight: 3.75, approx: true,
-    src: 'https://www.dbaudio.com/global/en/products/processing-and-matrix/ds10/',
+    ru: 1, depth: 232, weight: 3.75, power: 10, powerMax: 10, approx: true,
+    src: 'https://www.dbaudio.com/assets/products/downloads/manuals-documentation/electronics/dbaudio-manual-ds10-1.11-en.pdf',
     front: { elements: [
       { t: 'button', x: 220, y: 50, w: 30, h: 24 },
       { t: 'led', x: 320, y: 50, n: 6, gap: 40 },

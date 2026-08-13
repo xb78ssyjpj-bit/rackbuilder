@@ -973,6 +973,27 @@ a comma-separated list naming each socket.
 Rows the editor does not own — an option-card `slot`, a `screw` — are locked and
 labelled rather than shown as an editable connector.
 
+### Power figures
+
+Two fields, because one number cannot answer both questions a rack poses:
+
+- **`power`** — what the device draws doing its job. What the summary totals.
+- **`powerMax`** — the manufacturer's stated maximum. What a feed and a breaker
+  have to survive.
+
+A d&b D80 idles at 180 W and peaks at 7000 W; reporting either alone is
+misleading, and reporting only the first under-sizes the supply. The summary
+shows peak rows only when something in the rack states one.
+
+A device with no `power` at all is one the manufacturer does not publish a
+figure for. That is not zero watts, so the totals carry a `+` and a count rather
+than quietly under-reporting.
+
+Manufacturer PDFs that "yield no text" usually do yield text — try
+`pdftotext -layout` before recording a figure as unobtainable. d&b's hardware
+manuals extract cleanly that way, which is where the D80, D20 and DS10 figures
+came from.
+
 ### Spec accuracy
 
 `ru` is reliable throughout. Entries flagged `approx: true` have ballpark

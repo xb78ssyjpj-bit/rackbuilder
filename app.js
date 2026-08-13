@@ -1452,7 +1452,12 @@ function renderPatchEditor(box, it, dev) {
 // -------------------------------------------------------------- summary ----
 function renderSummary() {
   const r = rack();
-  let w = 0, p = 0, maxD = 0, approx = false, noPower = 0;
+  // Two power totals, because one number cannot answer both questions a rack
+  // poses. `power` is what it draws doing its job; `powerMax` is the
+  // manufacturer's stated maximum, which is what a feed and a breaker have to
+  // survive. A D80 idles at 180 W and peaks at 7000 — reporting either alone is
+  // misleading, and reporting only the first under-sizes the supply.
+  let w = 0, p = 0, pk = 0, maxD = 0, approx = false, noPower = 0, noPeak = 0;
   // Count U rows actually occupied — two half-width units sharing a row are 1U,
   // not 2U.
   const rowsUsed = new Set();
@@ -1464,12 +1469,24 @@ function renderSummary() {
     // publish a figure for — quite common on RF gear. That is NOT zero watts,
     // and letting it total silently would under-report the whole rack.
     if (d.power === undefined || d.power === null) noPower++;
+    // Falling back to `power` keeps the peak total honest for gear that draws
+    // what it draws — a switch has no meaningful peak. Only devices with no
+    // figure at all are counted as missing.
+    pk += (d.powerMax ?? d.power) || 0;
+    if (d.powerMax === undefined || d.powerMax === null) noPeak++;
     for (let k = 0; k < itemRU(it); k++) rowsUsed.add(it.u + k);
     maxD = Math.max(maxD, d.depth || 0);
     if (d.approx) approx = true;
   });
   const usedU = rowsUsed.size;
   const amps = p / 230;
+  const peakAmps = pk / 230;
+  // Only worth its own rows when something in the rack actually states a peak;
+  // otherwise it would just repeat the line above it.
+  const showPeak = r.items.some((it) => {
+    const d = devById(it.devId);
+    return d && d.powerMax != null && d.powerMax !== d.power;
+  });
   const over = usedU > r.ru;
   const caseKg = Number(r.weight) || 0;
   $('#summary').innerHTML = `
@@ -1478,7 +1495,10 @@ function renderSummary() {
       over ? ' ⚠' : ''}</td></tr>
     <tr><td>Max depth</td><td>${maxD} mm${r.depth ? ` / ${r.depth}` : ''}</td></tr>
     <tr><td>Power</td><td>${p} W${noPower ? '+' : ''}</td></tr>
-    <tr><td>Current @230V</td><td>${amps.toFixed(1)} A${noPower ? '+' : ''}</td></tr>
+    <tr><td>Current @230V</td><td>${amps.toFixed(1)} A${noPower ? '+' : ''}</td></tr>` +
+    (showPeak ? `
+    <tr><td>Peak power</td><td>${pk} W${noPeak ? '+' : ''}</td></tr>
+    <tr><td>Peak @230V</td><td>${peakAmps.toFixed(1)} A${noPeak ? '+' : ''}</td></tr>` : '') + `
     <tr><td>Kit weight</td><td>${w.toFixed(1)} kg</td></tr>` +
     (caseKg ? `<tr><td>Case</td><td>${caseKg.toFixed(1)} kg</td></tr>
     <tr><td>Total</td><td>${(w + caseKg).toFixed(1)} kg</td></tr>` : '');

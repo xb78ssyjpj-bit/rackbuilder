@@ -183,22 +183,41 @@ the prose.
 
 ## 7. Amplifiers
 
-- **Mains draw is missing for every amplifier except the 17 QSC PLX / PLX2 /
-  RMX** — d&b, L-Acoustics and Martin Audio all publish output power only, and
-  all three have vector-art PDFs that yield no text. This is still the biggest
-  real gap in the library: an amp rack is the heaviest electrical load in a
-  system and the summary reports it as near zero (with a `+` and a count, so it
-  is at least not silently wrong). Fixing the rest needs the figures read off the
-  units or paper manuals.
+- **Mains draw, and the claim that used to be here.** This section said the
+  figure was missing for every amp except the QSC PLX/PLX2/RMX, and that d&b,
+  L-Acoustics and Martin "all have vector-art PDFs that yield no text". **The
+  second half is false.** d&b's hardware manuals extract cleanly with
+  `pdftotext -layout`; the earlier attempts used a fetch tool that hands back
+  the raw PDF. Fixed in v1.9.0 for the D80, D20 and DS10, straight out of d&b's
+  own Technical specifications tables.
+
+  The manuals sit at a predictable path. Versions differ per model and per
+  language, so probe rather than guess:
+
+  ```
+  https://www.dbaudio.com/assets/products/downloads/
+    manuals-documentation/electronics/dbaudio-manual-<model>-<ver>-en.pdf
+  ```
+
+  Still owed, now known to be gettable the same way: **D40, 40D, 30D, 10D, 5D**,
+  whose manuals are not at that path under those names and need finding; and a
+  **`powerMax` for D6, D12 and D90**, which carry a realistic-programme `power`
+  from their power balance tables but no stated maximum yet. **DS100 genuinely
+  publishes none** — its manual gives fan noise at idle and no consumption
+  figure at all.
+
+  **L-Acoustics and Martin Audio remain open** and are the other half of this
+  gap. Retry them with `pdftotext` before assuming their PDFs are art.
+
 - **The QSC figures are 1/8-power typical, not worst case.** QSC's own tables
   also give a "severe, 1/3 power" current that runs 1.5-2x higher. `power` here
   carries the typical row because that is what the summary is for; **do not size
   a breaker from the summary.** A second field for peak draw would be the honest
-  fix, and would let the summary show a range.
-- **The D20's 400 W has never been verified** — it predates all this and carries
-  a "not from the datasheet" note in the code. d&b's manual PDF is over the
-  fetch size limit. It is the only amp with any figure at all, which makes it
-  the odd one out; consider removing it for consistency.
+  fix — and arrived in v1.9.0 as **`powerMax`**, with its own summary rows.
+  So the QSC amps should now get that 1/3-power row entered as their peak,
+  rather than the warning being the only mitigation.
+- ~~The D20's 400 W has never been verified~~ — **corrected in v1.9.0.** It was
+  not any real figure: the manual gives standby 9 W, idle 48 W, max 2.2 kW.
 - **L-Acoustics front panels are indicative, not drawn from source.** Their spec
   tables render client-side and their PDFs are vector art, so RU/depth/weight
   came from third-party listings and the fascia layouts follow family grammar.
