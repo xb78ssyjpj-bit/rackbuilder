@@ -2389,9 +2389,30 @@ function faceEntries(name) {
   return out;
 }
 
+// A change that alters the SHAPE of the list — a type swapped, a row added,
+// removed or moved. Rebuilds everything, which is fine because all of those
+// come from a click rather than from typing.
 function ioChanged() {
   if (faceShape(draftFace) === 'cells') renderDraftGrid();
   renderIOList(); refreshFaceNote(); renderDraftPreview();
+}
+
+// A change made WHILE TYPING — a socket name, a count. Deliberately does not
+// call renderIOList(): that rebuilds every row including the input under the
+// cursor, so the field is destroyed and refocused between keystrokes and you
+// get one character per click. Everything a keystroke can affect is updated
+// directly instead.
+function ioTyped(e) {
+  if (faceShape(draftFace) === 'cells') paintCell(e.i);
+  renderDraftPreview();
+  const foot = $('#addIoTotal');
+  if (foot) foot.textContent = ioTotalText();
+}
+
+function ioTotalText() {
+  const total = faceEntries(draftFace).filter((e) => e.kind !== 'label')
+    .reduce((a, e) => a + (e.n || 1), 0);
+  return `${total} socket${total === 1 ? '' : 's'} on this face.`;
 }
 
 function addEntry() {
@@ -2517,7 +2538,8 @@ function renderIOList() {
           const v = Math.max(1, Math.min(64, +n.value || 1));
           if (v === 1) delete e.ref.n; else e.ref.n = v;
           if (kind === 'elements' && v > 1 && !e.ref.gap) e.ref.gap = 70;
-          ioChanged();
+          e.n = v;
+          ioTyped(e);
         };
         row.appendChild(n);
       }
@@ -2531,7 +2553,8 @@ function renderIOList() {
         const v = nm.value.trim();
         if (!v) delete e.ref.lbl;
         else e.ref.lbl = v.includes(',') ? v.split(',').map((s) => s.trim()) : v;
-        ioChanged();
+        e.lbl = e.ref.lbl;
+        ioTyped(e);
       };
       row.appendChild(nm);
     }
@@ -2555,11 +2578,10 @@ function renderIOList() {
   add.onclick = addEntry;
   box.appendChild(add);
 
-  const total = entries.filter((e) => e.kind !== 'label')
-    .reduce((a, e) => a + (e.n || 1), 0);
   const foot = document.createElement('p');
   foot.className = 'hint';
-  foot.textContent = `${total} socket${total === 1 ? '' : 's'} on this face.`;
+  foot.id = 'addIoTotal';
+  foot.textContent = ioTotalText();
   box.appendChild(foot);
 }
 
@@ -2786,7 +2808,12 @@ $('#addClearFace').onclick = () => {
 };
 
 $('#formAdd').oninput = (e) => {
-  if (e.target.closest('#addSel') || e.target.id === 'addText') return;
+  // Everything below is inside the form, so its input events bubble to here.
+  // The panes that own their own updating have to be excluded or this handler
+  // re-renders them mid-keystroke — which is exactly how the socket-name field
+  // ended up destroying and replacing itself after every character typed.
+  if (e.target.closest('#addSel') || e.target.closest('#addList')
+      || e.target.id === 'addText') return;
   const ru = draft.ru, width = draft.width;
   syncDraftFromForm();
   // Height and width change what a cell means, so the grid has to be re-laid.

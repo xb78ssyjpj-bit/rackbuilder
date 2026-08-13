@@ -19,6 +19,44 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.8.1 — 2026-08-12
+
+**Fixed**
+
+- **Naming a socket in the edit dialog lost focus after every keystroke** — one
+  character per click, which made the list editor from v1.7.1 close to unusable.
+  The socket-count field had it too.
+
+  The cause was not where I first looked. The name field's own handler was the
+  obvious suspect, but fixing it changed nothing: the `input` event **bubbles**,
+  and the form's own `oninput` — which repaints the whole dialog — was catching
+  it and rebuilding the row being typed into. It already excluded two panes;
+  it now excludes the socket list as well, and typing routes through an update
+  that touches the preview and the one cell rather than re-rendering the list.
+
+**Added**
+
+- **Cables can be named.** An inline field on each row of the Cables matrix.
+  The name shows in the wire's tooltip on the canvas, is searchable in the
+  matrix, and goes into the CSV.
+
+  The data field had existed since the matrix was written and was already being
+  exported — there was simply never a way to put anything in it.
+
+- **The cable CSV leads with the name.** `Label` is now the second column,
+  straight after the number, rather than a trailing `Note`:
+
+  ```
+  Cable,Label,Type,Source,Source socket,Source location,Target,Target socket,Target location
+  "14","LX FOH 1","Analogue audio","DX168","XLRf 1","STAGE · U5","PLD4.5","USBb 1","STAGE · U9"
+  ```
+
+  Anyone with a saved sheet built on the old column order will need to re-import
+  — the header changed name and position in the same release deliberately, so it
+  breaks visibly rather than silently loading into the wrong column.
+
+---
+
 ## v1.8.0 — 2026-08-12
 
 **Changed**

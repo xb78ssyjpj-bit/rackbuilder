@@ -568,6 +568,11 @@ export function createFlow(ctx) {
       const col = FAMILIES[c.fam] ? FAMILIES[c.fam].color : '#888';
       const on = selCable === c.id;
       const g = sel('g', { class: 'wire' + (on ? ' on' : ''), 'data-cable': c.id });
+      // The number is on the chip; the name, if it has one, is what you are
+      // actually looking for when you hover a cable you cannot place.
+      const tip = sel('title');
+      tip.textContent = c.label ? `${c.n} — ${c.label}` : `Cable ${c.n}`;
+      g.appendChild(tip);
       g.appendChild(sel('path', { d: wirePath(a, b, bow, self), class: 'hit' }));
       g.appendChild(sel('path', {
         d: wirePath(a, b, bow, self), stroke: col, fill: 'none',
@@ -1101,6 +1106,9 @@ export function createFlow(ctx) {
               + `<div class="mend"><b>${esc(r.srcNode)}</b><span>${esc(r.srcPort)}</span></div>`
               + `<span class="marr">&rarr;</span>`
               + `<div class="mend"><b>${esc(r.dstNode)}</b><span>${esc(r.dstPort)}</span></div>`
+              + `<input class="mlabel" data-label="${r.c.id}" placeholder="label"`
+              + ` title="What this cable is called on the job — it goes in the CSV"`
+              + ` value="${esc(r.c.label || '')}">`
               + `<button type="button" class="mdel" data-del="${r.c.id}" title="Remove cable">&times;</button>`
               + `</div>`).join('')
             + `</div>`
@@ -1116,8 +1124,21 @@ export function createFlow(ctx) {
     s.oninput = (e) => { matrixQ = e.target.value; renderMatrix(); $('#mSearch', box).focus(); };
     box.querySelectorAll('.mrow').forEach((r) => {
       r.onclick = (e) => {
-        if (e.target.closest('.mdel')) return;
+        if (e.target.closest('.mdel') || e.target.closest('.mlabel')) return;
         selCable = r.dataset.cable; drawWires(); renderMatrix();
+      };
+    });
+    // Naming a cable must NOT re-render the matrix: that rebuilds the input
+    // being typed into and the field loses focus between keystrokes. The label
+    // goes straight onto the cable, and only the drawing — which shows it in
+    // the wire's tooltip — is refreshed.
+    box.querySelectorAll('.mlabel').forEach((inp) => {
+      inp.onpointerdown = (e) => e.stopPropagation();
+      inp.oninput = () => {
+        const c = flow().cables.find((x) => x.id === inp.dataset.label);
+        if (!c) return;
+        c.label = inp.value;
+        drawWires(); save();
       };
     });
     box.querySelectorAll('.mdel').forEach((b) => {
@@ -1130,11 +1151,11 @@ export function createFlow(ctx) {
     const rows = cableRows();
     if (!rows.length) { toast('No cables to export.', true); return; }
     const q = (v) => `"${String(v).replace(/"/g, '""')}"`;
-    const csv = ['Cable,Type,Source,Source socket,Source location,'
-               + 'Target,Target socket,Target location,Note']
+    const csv = ['Cable,Label,Type,Source,Source socket,Source location,'
+               + 'Target,Target socket,Target location']
       .concat(rows.map((r) => [
-        r.c.n, FAMILIES[r.fam].label, r.srcNode, r.srcPort, r.srcMeta,
-        r.dstNode, r.dstPort, r.dstMeta, r.c.label || '',
+        r.c.n, r.c.label || '', FAMILIES[r.fam].label,
+        r.srcNode, r.srcPort, r.srcMeta, r.dstNode, r.dstPort, r.dstMeta,
       ].map(q).join(','))).join('\n');
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));

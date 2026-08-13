@@ -906,6 +906,17 @@ dialog menu {
 }
 .mend span { display: block; font: 9px var(--mono); color: var(--dim); }
 .marr { color: var(--dim); flex: none; }
+/* Naming a cable. Narrow on purpose — it sits on a row that already carries
+   both ends, and a name here is a short one: "LX FOH 1", not a sentence. */
+.mlabel {
+  flex: 0 1 92px; min-width: 52px; margin: 0;
+  padding: 3px 5px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 4px;
+  color: var(--fg); font: 10px var(--mono);
+}
+.mlabel:focus { outline: none; border-color: var(--accent); }
+.mlabel::placeholder { color: var(--dim); opacity: .6; }
+
 .mdel {
   flex: none; width: 18px; height: 18px; padding: 0;
   background: transparent; border: 0; border-radius: 4px;
