@@ -19,6 +19,43 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.6.0 — 2026-08-12
+
+**Changed**
+
+- **+ Device is now a drawing tool.** It was a list of "8 of these, 2 of those",
+  which could only ever produce an auto-layout — fine for inventory, useless for
+  saying *where* anything is, and with no way at all to describe a rear.
+
+  It is now the patch-panel punch grid applied to a whole device. Pick rows and
+  columns, click cells to place, drag for a run, shift-click to extend,
+  right-click to clear — the same gestures the punch editor already uses. Every
+  filled cell becomes a real element at a real coordinate, so what comes out is
+  a hand-placed panel, not a generated one.
+
+**Added**
+
+- **Front *and* rear**, on tabs, each with its own grid. The note beside the
+  tabs says what is on the face you are not looking at, because a rear you
+  forgot about is the easiest mistake this tool can let you make.
+- **Select a socket and give it its real name.** An etherCON on an A&H box is
+  `AES50`, on a Yamaha it is `Dante` — a drawing that only ever says `EC 1` has
+  thrown that away. The name is what the flow view labels the port with, and it
+  is why a socket you place reads back as `AES50 A` rather than `EC 1`.
+- **Text labels placed in position** — the first entry in the Place list. Panel
+  lettering goes in a cell like anything else.
+- **Half-rack devices, at any U height**, with or without rack ears. Previously
+  + Device could only make full-width units, so a 3U half-rack had to be
+  hand-written into `devices.js`.
+- **Copy JSON** — the record in exactly the shape `devices.js` uses. Paste it
+  into a collaborator's **Find specs** box, or into `devices.js` to put it in
+  the library everybody gets. The `id` is stripped on copy so a pasted record
+  gets a fresh one rather than colliding with the device it came from. On a
+  `file://` page the clipboard is often blocked; the JSON then lands in the Find
+  specs box instead, with a toast saying so.
+
+---
+
 ## v1.5.0 — 2026-08-12
 
 **Added**

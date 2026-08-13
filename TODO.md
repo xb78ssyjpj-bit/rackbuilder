@@ -263,7 +263,7 @@ Other caveats:
 - **Midas publishes almost no wattage either** — only the DL32 (55 W) and DL251
   (110 W, dual PSU) have figures.
 
-## ~~8b. The batch of asked-for items~~ — done bar one
+## ~~8b. The batch of asked-for items~~ — done
 
 Shipped: IEC shorthand now reads `IEC in` / `IEC out`; combo reads `XLR/TRS`
 (patch cells wrap and shrink for codes over four characters); cable chips slide
@@ -272,13 +272,23 @@ apart; a run of sockets can be picked and patched in one drag; both sidebars
 drag-resize and remember their width; AES3 is a declarable `sig` on a port; and
 there is a side elevation. All documented in the README.
 
-**Still open, deliberately excluded from that batch:**
+The one item deliberately excluded from that batch — **+ Device building a front
+panel only** — was rebuilt in v1.6.0 as a punch-grid editor with front and rear
+tabs, per-socket naming, placed lettering, half-rack support and JSON export.
 
-- **The + Device dialog builds a front panel only.** `index.html` hardcodes an
-  `<h3>Front panel</h3>` and a single `connRows` list, so a device added by hand
-  can never have a rear — which since the flow view arrived also means it can
-  never have rear ports on the canvas. Wants front/rear tabs writing to
-  `front.auto` and `rear.auto`.
+**Loose ends from the device editor:**
+
+- **The grid is uniform.** Every cell in a row is the same width, so a face
+  mixing a 65 mm C-FORM with 24 mm etherCONs spaces them evenly rather than
+  packing them. Good enough to place things truthfully; not the same as
+  hand-placed `x`/`y`, which is still what the best entries in `devices.js` use.
+- **No `sig`, `stack` or `n`-with-`gap` from the editor.** A run of eight
+  sockets becomes eight separate elements rather than one declaration with
+  `n: 8`, which is more verbose in the exported JSON than a hand-written entry
+  would be. It renders identically.
+- **Text size is fixed** at 13 px. Real panels use a range.
+- **No editing an existing custom device** — you rebuild it. The record is in
+  the project file, so Copy JSON before you close is the workaround.
 
 **Loose ends from what did ship:**
 

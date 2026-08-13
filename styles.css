@@ -486,6 +486,41 @@ dialog menu {
   max-height: 130px; overflow: auto;
 }
 
+/* --- device editor -------------------------------------------------------- */
+/* Which face you are drawing, and a standing reminder that the other one
+   exists — a rear you forgot about is the whole reason this editor was rebuilt. */
+.facebar {
+  display: flex; align-items: center; gap: 10px;
+  margin: 16px 0 8px;
+}
+.facenote { font: 400 11px var(--mono); color: var(--dim); flex: 1; }
+
+.gridopts { display: flex; gap: 8px; }
+.gridopts label { flex: 1; margin-bottom: 6px; }
+.gridopts select { margin: 0; }
+
+/* A placed cell reads as its socket NAME once it has one, because that is what
+   you are looking for when you come back to check the panel. */
+/* A device grid is often only 3 or 4 wide, and square cells that size become
+   enormous tiles. Fixed height instead: wide-and-short also reads more like the
+   panel it stands for. */
+#addGrid .pcell { aspect-ratio: auto; height: 38px; font-size: 8px; }
+#addGrid .pcell.long { font-size: 7px; }
+
+.pcell.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.pcell.text { background: rgba(217,164,65,.16); border-color: #d9a441; color: var(--fg); }
+
+.cellsel {
+  margin: 10px 0 0; padding: 11px 13px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+}
+.cellsel .selwhat {
+  margin: 0 0 8px; font: 600 12px var(--mono);
+  letter-spacing: .04em; color: var(--fg);
+}
+.cellsel .hint { margin: 6px 0 0; }
+.cellsel label { margin-bottom: 0; }
+
 .connrows { display: flex; flex-direction: column; gap: 6px; }
 .connrow { display: flex; gap: 6px; align-items: center; }
 .connrow select { flex: 1; margin: 0; }

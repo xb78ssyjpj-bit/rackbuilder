@@ -139,6 +139,12 @@
       <label>Brand<input name="brand" required autocomplete="off"></label>
       <label>Model<input name="model" required autocomplete="off"></label>
       <label>Rack units<input name="ru" type="number" min="1" max="20" value="1" required></label>
+      <label>Width
+        <select name="width" id="addWidth">
+          <option value="full">Full 19"</option>
+          <option value="half">Half rack</option>
+          <option value="half-ears">Half rack, with ears</option>
+        </select></label>
       <label>Category
         <select name="category" id="addCat"></select></label>
       <label>Depth mm<input name="depth" type="number" min="0" value="250"></label>
@@ -146,16 +152,35 @@
       <label>Power W<input name="power" type="number" min="0" value="30"></label>
     </div>
 
-    <h3>Front panel</h3>
-    <p class="hint">Add connectors and controls — the panel drawing is generated
-       from this list. Leave empty for a plain labelled panel.</p>
-    <div id="connRows" class="connrows"></div>
-    <button type="button" id="btnConnAdd" class="btn sm">+ Add row</button>
+    <div class="facebar">
+      <div class="seg sm" id="addFace" role="group" aria-label="Panel face">
+        <button type="button" data-face="front" class="on">Front</button>
+        <button type="button" data-face="rear">Rear</button>
+      </div>
+      <span class="facenote" id="addFaceNote"></span>
+      <button type="button" class="btn sm" id="addClearFace">Clear face</button>
+    </div>
+
+    <div class="gridopts">
+      <label>Rows<select id="addRows"></select></label>
+      <label>Per row<select id="addCols"></select></label>
+      <label>Place<select id="addType"></select></label>
+    </div>
+    <label id="addTextWrap" hidden>Label text
+      <input id="addText" placeholder="e.g. INPUTS 1-8" autocomplete="off"></label>
+
+    <div class="pgrid" id="addGrid"></div>
+    <p class="hint">Click a cell to place. Drag across to fill a run, shift-click
+       to extend from the last one, right-click to clear. Click a filled cell to
+       select it and give that socket its real name.</p>
+
+    <div class="cellsel" id="addSel" hidden></div>
 
     <div class="preview"><div id="addPreview"></div></div>
 
     <menu>
       <button type="button" class="btn" id="addCancel">Cancel</button>
+      <button type="button" class="btn" id="addCopy">Copy JSON</button>
       <button type="button" class="btn primary" id="addOk">Add to library</button>
     </menu>
   </form>
@@ -171,6 +196,7 @@
       record — you'll get a JSON block to paste below.
     </p>
     <pre class="snippet" id="findSnippet"></pre>
+    <p class="hint" id="findHint"></p>
     <label>Paste device JSON
       <textarea name="json" id="findJson" rows="7"
         placeholder='{"brand":"…","model":"…","ru":1, …}'></textarea></label>

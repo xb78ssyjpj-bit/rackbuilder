@@ -1,9 +1,9 @@
 import {
-  renderDevice, renderPanel, autoLayout, el,
+  renderDevice, renderPanel, renderHalfPanel, el,
   CONNECTOR_TYPES, CONNECTOR_GROUPS, PATCH_GROUPS, typeLabel,
   patchRU, patchCols, patchRows, patchFit, shortCode, renderEarsOnly,
   hasRear, renderNoRear, cardsFor, cardById,
-  HALF_W, HALF_L, HALF_R, HALF_EAR_W,
+  U, FACE_L, FACE_R, HALF_W, HALF_L, HALF_R, HALF_EAR_W, HALF_INSET,
 } from './panel.js';
 import { SEED_DEVICES, CATEGORIES } from './devices.js';
 import { createFlow, FAMILIES } from './flow.js';
@@ -2082,94 +2082,374 @@ const resetClearRack = armed($('#btnClearRack'), 'Confirm clear', () => {
 // ------------------------------------------------------- add-device form ---
 const dlgAdd = $('#dlgAdd');
 
-function connRow(t = 'xlrf', n = 1) {
-  const row = document.createElement('div');
-  row.className = 'connrow';
-  const sel = document.createElement('select');
-  CONNECTOR_TYPES.forEach(([v, label]) => {
-    const o = document.createElement('option');
-    o.value = v; o.textContent = label;
-    if (v === t) o.selected = true;
-    sel.appendChild(o);
-  });
-  const num = document.createElement('input');
-  num.type = 'number'; num.min = '1'; num.max = '48'; num.value = n;
-  const rm = document.createElement('button');
-  rm.type = 'button'; rm.textContent = '×';
-  rm.onclick = () => { row.remove(); previewAdd(); };
-  sel.onchange = num.oninput = previewAdd;
-  row.append(sel, num, rm);
-  return row;
-}
+// The device editor is the patch-panel punch grid applied to a whole device:
+// one grid per face, click to place, and every cell you fill becomes a real
+// element at a real coordinate. It replaces a list of "8 of these, 2 of those",
+// which could only ever produce an auto-layout — fine for inventory, useless
+// for saying WHERE anything is, and with no way at all to describe a rear.
+//
+// A cell holds one of:
+//   null                    empty
+//   { t, lbl }              a connector, `lbl` being its real name on the panel
+//   { text }                a piece of panel lettering
+const BLANK_FACE = () => ({ rows: 1, cols: 8, cells: [] });
+let draft = null;            // the device being built
+let draftFace = 'front';     // which face the grid is showing
+let draftSel = null;         // index of the selected cell
+let draftBrush = 'xlrf';     // what clicking a cell places
+let draftAnchor = null;      // last cell clicked, for shift-click runs
+let draftPaint = { active: false, value: undefined };
 
-$('#btnConnAdd').onclick = () => { $('#connRows').appendChild(connRow()); previewAdd(); };
+const faceOf = () => draft[draftFace];
+const cellCount = (f) => f.rows * f.cols;
 
-function readAddForm() {
-  const f = $('#formAdd');
-  const items = $$('.connrow', f).map((r) => ({
-    t: $('select', r).value,
-    n: Math.max(1, +$('input', r).value || 1),
-  }));
+// Grid cell -> panel coordinate. Full-width faces use the usable face between
+// the ears; a half-width body has no ears and its own narrower bounds.
+function draftXY(i) {
+  const f = faceOf();
+  const half = draft.width !== 'full';
+  const L = half ? HALF_INSET : FACE_L;
+  const R = half ? HALF_W - HALF_INSET : FACE_R;
+  const r = Math.floor(i / f.cols), c = i % f.cols;
   return {
-    brand: f.brand.value.trim() || 'Generic',
-    model: f.model.value.trim() || 'Device',
-    ru: Math.max(1, +f.ru.value || 1),
-    category: f.category.value,
-    depth: +f.depth.value || 0,
-    weight: +f.weight.value || 0,
-    power: +f.power.value || 0,
-    conns: items,
+    x: Math.round(L + ((R - L) * (c + 0.5)) / f.cols),
+    y: Math.round((draft.ru * U * (r + 0.5)) / f.rows),
   };
 }
 
-function previewAdd() {
-  const d = readAddForm();
-  const box = $('#addPreview');
-  box.innerHTML = '';
-  box.appendChild(renderPanel({
-    ru: d.ru,
-    elements: d.conns.length ? autoLayout(d.conns, d.ru) : [],
-    labels: d.conns.length ? [] : [{
-      text: `${d.brand} ${d.model}`, x: 500, y: d.ru * 50 + 8,
-      size: 24, ls: 3, anchor: 'middle',
-    }],
-  }));
+// One face as the `elements` / `labels` a panel spec wants. Connectors keep the
+// name they were given; lettering becomes a label at the same cell centre.
+function faceSpec(name) {
+  const f = draft[name];
+  const elements = [], labels = [];
+  const save = draftFace;
+  draftFace = name;
+  for (let i = 0; i < cellCount(f); i++) {
+    const cell = f.cells[i];
+    if (!cell) continue;
+    const { x, y } = draftXY(i);
+    if (cell.text) labels.push({ text: cell.text, x, y, size: 13, ls: .8, anchor: 'middle' });
+    else elements.push({ t: cell.t, x, y, ...(cell.lbl ? { lbl: cell.lbl } : {}) });
+  }
+  draftFace = save;
+  return { elements, labels };
 }
 
-$('#btnAdd').onclick = () => {
-  const sel = $('#addCat');
-  sel.innerHTML = '';
+const faceUsed = (name) => (draft[name].cells || []).some(Boolean);
+
+// The record exactly as devices.js holds one, so it can be pasted into the
+// library file or into another builder's Find specs box unchanged.
+function draftRecord() {
+  const rec = {
+    id: 'u-' + uid(),
+    brand: draft.brand || 'Generic',
+    model: draft.model || 'Device',
+    category: draft.category,
+    ru: draft.ru,
+    ...(draft.width !== 'full' ? { half: true } : {}),
+    ...(draft.width === 'half-ears' ? { ears: true } : {}),
+    depth: draft.depth, weight: draft.weight, power: draft.power,
+    approx: true,
+  };
+  ['front', 'rear'].forEach((n) => {
+    if (!faceUsed(n)) return;
+    const s = faceSpec(n);
+    rec[n] = { elements: s.elements, ...(s.labels.length ? { labels: s.labels } : {}) };
+  });
+  // A device with nothing on either face is a labelled block, and an explicitly
+  // empty elements array is how this library says exactly that.
+  if (!rec.front && !rec.rear) rec.front = { elements: [] };
+  return rec;
+}
+
+function renderDraftPreview() {
+  const box = $('#addPreview');
+  box.innerHTML = '';
+  const rec = draftRecord();
+  const layout = rec[draftFace] || { elements: [] };
+  const spec = { ru: draft.ru, ...layout };
+  if (!layout.elements.length && !(layout.labels || []).length) {
+    spec.labels = [{ text: `${rec.brand} ${rec.model}`, x: draft.width === 'full' ? 500 : HALF_W / 2,
+                     y: draft.ru * 50 + 8, size: 20, ls: 2, anchor: 'middle' }];
+  }
+  box.appendChild(draft.width === 'full'
+    ? renderPanel(spec)
+    : renderHalfPanel(spec, draft.width === 'half-ears' ? { ears: 'left' } : {}));
+}
+
+// --- the grid ---------------------------------------------------------------
+function placeCell(i, value) {
+  const f = faceOf();
+  const before = JSON.stringify(f.cells[i] ?? null);
+  f.cells[i] = value;
+  if (JSON.stringify(value ?? null) === before) return;
+  paintCell(i);
+  renderDraftPreview();
+}
+
+function cellFace(cell) {
+  if (!cell) return { txt: '', cls: '', title: 'empty' };
+  if (cell.text) return { txt: cell.text.slice(0, 8), cls: ' on text', title: `Label: ${cell.text}` };
+  return {
+    txt: cell.lbl || shortCode(cell.t),
+    cls: ' on',
+    title: cell.lbl ? `${typeLabel(cell.t)} — "${cell.lbl}"` : typeLabel(cell.t),
+  };
+}
+
+function paintCell(i) {
+  const el = $(`#addGrid .pcell[data-i="${i}"]`);
+  if (!el) return;
+  const cell = faceOf().cells[i];
+  const { txt, cls, title } = cellFace(cell);
+  el.className = 'pcell' + cls + (txt.length > 4 ? ' long' : '')
+    + (draftSel === i ? ' sel' : '');
+  el.textContent = txt;
+  el.title = title;
+}
+
+function renderDraftGrid() {
+  const f = faceOf();
+  const grid = $('#addGrid');
+  grid.style.gridTemplateColumns = `repeat(${f.cols}, 1fr)`;
+  grid.innerHTML = '';
+  for (let i = 0; i < cellCount(f); i++) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pcell';
+    b.dataset.i = i;
+    b.oncontextmenu = (e) => { e.preventDefault(); placeCell(i, null); selectCell(null); };
+    b.onpointerdown = (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      const cur = f.cells[i];
+      // A filled cell you press again is one you want to look at, not overwrite.
+      if (cur && !e.shiftKey) { selectCell(i); return; }
+      if (e.shiftKey && draftAnchor != null) {
+        const [a, z] = [draftAnchor, i].sort((m, n) => m - n);
+        for (let k = a; k <= z; k++) placeCell(k, newCell());
+        return;
+      }
+      draftPaint = { active: true, value: newCell() };
+      draftAnchor = i;
+      placeCell(i, draftPaint.value);
+      selectCell(i);
+    };
+    b.onpointerenter = () => {
+      if (draftPaint.active) placeCell(i, newCell());
+    };
+    grid.appendChild(b);
+    paintCell(i);
+  }
+}
+
+// A fresh cell of whatever the brush currently is. Labels carry their own text,
+// so each one is its own object rather than a shared reference.
+function newCell() {
+  if (draftBrush === '__text') {
+    const t = $('#addText').value.trim();
+    return t ? { text: t } : null;
+  }
+  return { t: draftBrush };
+}
+
+// --- selected cell ----------------------------------------------------------
+// Selecting a socket and naming it is the whole point of the exercise: an
+// etherCON on an A&H box is 'AES50', on a Yamaha it is 'Dante', and a drawing
+// that just says 'EC 1' has thrown that away.
+function selectCell(i) {
+  const prev = draftSel;
+  draftSel = i;
+  if (prev != null) paintCell(prev);
+  if (i != null) paintCell(i);
+  const box = $('#addSel');
+  const cell = i == null ? null : faceOf().cells[i];
+  if (!cell) { box.hidden = true; box.innerHTML = ''; return; }
+  box.hidden = false;
+  if (cell.text) {
+    box.innerHTML = '<label>Label text<input id="selText"></label>'
+      + '<div class="row btns"><button type="button" class="btn sm danger" id="selDel">Remove</button></div>';
+    const inp = $('#selText', box);
+    inp.value = cell.text;
+    inp.oninput = () => { cell.text = inp.value; paintCell(i); renderDraftPreview(); };
+  } else {
+    box.innerHTML = `<p class="selwhat">${esc(typeLabel(cell.t))}</p>`
+      + '<label>Socket name<input id="selName" placeholder="e.g. AES50 A"></label>'
+      + '<p class="hint">What the panel actually calls it. Blank uses the '
+      + 'connector\'s own short code.</p>'
+      + '<div class="row btns"><button type="button" class="btn sm danger" id="selDel">Remove</button></div>';
+    const inp = $('#selName', box);
+    inp.value = cell.lbl || '';
+    inp.oninput = () => {
+      const v = inp.value.trim();
+      if (v) cell.lbl = v; else delete cell.lbl;
+      paintCell(i); renderDraftPreview();
+    };
+  }
+  $('#selDel', box).onclick = () => { placeCell(i, null); selectCell(null); };
+}
+
+// --- wiring -----------------------------------------------------------------
+addEventListener('pointerup', () => { draftPaint.active = false; });
+
+function syncDraftFromForm() {
+  const f = $('#formAdd');
+  draft.brand = f.brand.value.trim();
+  draft.model = f.model.value.trim();
+  draft.category = f.category.value;
+  draft.ru = Math.max(1, Math.min(20, +f.ru.value || 1));
+  draft.width = f.width.value;
+  draft.depth = +f.depth.value || 0;
+  draft.weight = +f.weight.value || 0;
+  draft.power = +f.power.value || 0;
+}
+
+function rebuildGridOpts() {
+  const f = faceOf();
+  const rowSel = $('#addRows'), colSel = $('#addCols');
+  const opt = (sel, v, label, on) => {
+    const o = document.createElement('option');
+    o.value = v; o.textContent = label; o.selected = on;
+    sel.appendChild(o);
+  };
+  rowSel.innerHTML = '';
+  // Rows are capped at 2 per U: a connector is 24-46 mm tall and a rack unit is
+  // 44.45, so three rows in 1U is not a panel anybody could build.
+  const maxRows = Math.max(1, draft.ru * 2);
+  for (let n = 1; n <= maxRows; n++) opt(rowSel, n, n === 1 ? '1 (centred)' : n, n === f.rows);
+  colSel.innerHTML = '';
+  [2, 3, 4, 6, 8, 10, 12, 16, 20, 24].forEach((n) => opt(colSel, n, n, n === f.cols));
+}
+
+// Resizing keeps whatever cells still land in the new grid, the same rule the
+// patch editor follows — silently dropping someone's work is not on.
+function resizeFace(rows, cols) {
+  const f = faceOf();
+  const next = new Array(rows * cols).fill(null);
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (r < f.rows && c < f.cols) next[r * cols + c] = f.cells[r * f.cols + c] ?? null;
+    }
+  }
+  f.rows = rows; f.cols = cols; f.cells = next;
+  draftSel = null; draftAnchor = null;
+  selectCell(null); renderDraftGrid(); renderDraftPreview();
+}
+
+function refreshFaceNote() {
+  const other = draftFace === 'front' ? 'rear' : 'front';
+  $('#addFaceNote').textContent = faceUsed(other)
+    ? `${other} face has ${draft[other].cells.filter(Boolean).length} placed`
+    : `${other} face empty`;
+}
+
+function openDraft() {
+  const catSel = $('#addCat');
+  catSel.innerHTML = '';
   Object.entries(CATEGORIES).forEach(([k, v]) => {
     const o = document.createElement('option');
     o.value = k; o.textContent = v;
-    sel.appendChild(o);
+    catSel.appendChild(o);
   });
+
+  const tSel = $('#addType');
+  tSel.innerHTML = '';
+  const txt = document.createElement('option');
+  txt.value = '__text'; txt.textContent = 'Text label';
+  tSel.appendChild(txt);
+  CONNECTOR_GROUPS.forEach(([name, list]) => {
+    const og = document.createElement('optgroup');
+    og.label = name;
+    list.forEach(([v, label]) => {
+      const o = document.createElement('option');
+      o.value = v; o.textContent = label; o.selected = v === draftBrush;
+      og.appendChild(o);
+    });
+    tSel.appendChild(og);
+  });
+
   $('#formAdd').reset();
-  $('#connRows').innerHTML = '';
-  $('#connRows').appendChild(connRow());
-  previewAdd();
+  // AFTER the reset, not before: reset() restores every control to its default,
+  // and with no option carrying a `selected` attribute that is the first one —
+  // which would silently arm the text-label brush every time the dialog opened.
+  tSel.value = draftBrush;
+  draft = {
+    brand: '', model: '', category: 'audio', ru: 1, width: 'full',
+    depth: 250, weight: 3, power: 30,
+    front: BLANK_FACE(), rear: BLANK_FACE(),
+  };
+  draftFace = 'front'; draftSel = null; draftAnchor = null;
+  $$('#addFace button').forEach((b) => b.classList.toggle('on', b.dataset.face === 'front'));
+  $('#addTextWrap').hidden = draftBrush !== '__text';
+  syncDraftFromForm();
+  rebuildGridOpts();
+  renderDraftGrid();
+  selectCell(null);
+  refreshFaceNote();
+  renderDraftPreview();
   dlgAdd.showModal();
+}
+
+$('#btnAdd').onclick = openDraft;
+
+$$('#addFace button').forEach((b) => {
+  b.onclick = () => {
+    draftFace = b.dataset.face;
+    $$('#addFace button').forEach((x) => x.classList.toggle('on', x === b));
+    draftSel = null; draftAnchor = null;
+    rebuildGridOpts(); renderDraftGrid(); selectCell(null);
+    refreshFaceNote(); renderDraftPreview();
+  };
+});
+
+$('#addRows').onchange = () => resizeFace(+$('#addRows').value, faceOf().cols);
+$('#addCols').onchange = () => resizeFace(faceOf().rows, +$('#addCols').value);
+$('#addType').onchange = () => {
+  draftBrush = $('#addType').value;
+  $('#addTextWrap').hidden = draftBrush !== '__text';
+};
+$('#addClearFace').onclick = () => {
+  faceOf().cells = new Array(cellCount(faceOf())).fill(null);
+  draftSel = null; selectCell(null); renderDraftGrid();
+  refreshFaceNote(); renderDraftPreview();
 };
 
-$('#formAdd').oninput = previewAdd;
+$('#formAdd').oninput = (e) => {
+  if (e.target.closest('#addSel') || e.target.id === 'addText') return;
+  const ru = draft.ru, width = draft.width;
+  syncDraftFromForm();
+  // Height and width change what a cell means, so the grid has to be re-laid.
+  if (draft.ru !== ru || draft.width !== width) { rebuildGridOpts(); renderDraftGrid(); }
+  refreshFaceNote(); renderDraftPreview();
+};
 
 // Cancel must not be a submit button: the form has `required` fields, so
 // submitting fires HTML5 validation and the dialog refuses to close.
 $('#addCancel').onclick = () => dlgAdd.close();
+
+// The point of the JSON is that it travels: paste it into another builder's
+// Find specs box, or straight into devices.js to make it part of the library
+// everybody gets.
+$('#addCopy').onclick = async () => {
+  const rec = draftRecord();
+  delete rec.id;          // the library assigns its own; a copied one collides
+  const text = JSON.stringify(rec, null, 2);
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('Device JSON copied — paste it into Find specs, or into devices.js.');
+  } catch {
+    // Clipboard needs a permission that a file:// page does not always have.
+    $('#findSnippet').textContent = text;
+    toast('Clipboard blocked — the JSON is in the Find specs box.', true);
+  }
+};
 
 // Commit on the button rather than the dialog's `close` event — `close` does not
 // fire reliably across browsers, and a silently dropped device is a bad failure.
 $('#addOk').onclick = () => {
   const f = $('#formAdd');
   if (!f.reportValidity()) return;
-  const d = readAddForm();
-  state.project.custom.push({
-    id: 'u-' + uid(),
-    brand: d.brand, model: d.model, category: d.category,
-    ru: d.ru, depth: d.depth, weight: d.weight, power: d.power,
-    approx: true,
-    front: d.conns.length ? { auto: d.conns } : { elements: [] },
-  });
+  state.project.custom.push(draftRecord());
   save(); renderLib();
   dlgAdd.close();
 };
@@ -2181,10 +2461,15 @@ $('#btnFind').onclick = () => {
   $('#findSnippet').textContent =
     'Give me a Rack Builder device record for <BRAND> <MODEL> as JSON:\n' +
     '{ "brand", "model", "category" (audio|wireless|network|video|power|accessory),\n' +
-    '  "ru", "depth" mm, "weight" kg, "power" W,\n' +
-    '  "front": { "auto": [ {"t":"xlrf","n":8}, {"t":"ethercon","n":2} ] } }\n' +
+    '  "ru", "depth" mm, "weight" kg, "power" W, "half": true for half-rack,\n' +
+    '  "front": { "auto": [ {"t":"xlrf","n":8,"lbl":"MIC"}, {"t":"ethercon","n":2} ] },\n' +
+    '  "rear":  { "auto": [ ... ] } }\n' +
     'Use only these connector types: ' + CONNECTOR_TYPES.map((c) => c[0]).join(', ') +
     '\nCite the datasheet URL you used for the figures.';
+  $('#findHint').textContent =
+    'This box also takes a record built with + Device — its Copy JSON button '
+    + 'produces exactly this format, so a device drawn on one machine can be '
+    + 'pasted straight into another, or into devices.js to reach everybody.';
   $('#findJson').value = '';
   $('#findErr').hidden = true;
   dlgFind.showModal();
