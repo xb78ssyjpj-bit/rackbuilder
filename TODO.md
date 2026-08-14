@@ -384,6 +384,47 @@ What the pass did not settle, and what it raised:
   off a drawing.** It is the second soft figure in the library after
   `ah-dl-io`. See §9b.
 
+## 8d. Barco, and fractional rack units
+
+The **PDS-4K** (v1.10.6) is the second Haiku research-pass entry. Its figures —
+484.1 x 66.2 x 409 mm, 6.21 kg, 151 W — are **not re-checked** and are owed a
+manual pass, same as §8c. They do come from Barco's own spec sheet on
+assets.barco.com rather than a reseller, which the Pulse 4K's did not.
+
+- **It is the first fractional-RU device in the library: `ru: 1.5`.** Barco give
+  6.62 cm, which is 1.49 U. Nothing needed changing to support it, and that is
+  worth writing down before somebody "fixes" it:
+  - `occupied()` already works. A 1.5U unit at U1 spans `[1, 2.5)`, so a device
+    dropped at U2 is correctly refused.
+  - **`usedU` already ceilings**, because it is a `for (k = 0; k < itemRU; k++)`
+    loop — k takes 0 and 1 for ru 1.5, so the device claims two rows. "U used"
+    therefore reports the rack space consumed rather than the sum of panel
+    heights, which is the number you actually want. **This is right by accident
+    of the loop condition, not by design.** Anything that rewrites that loop
+    needs to keep the ceiling behaviour deliberately.
+  - The bay draws it 1.5U tall, so the spare half-U is visible as empty rack.
+    The side view gets a true 66.7 mm.
+  - **What does NOT happen is packing.** Two PDS-4Ks land at U1 and U3, not U1
+    and U2.5, because slots are integer. That matches how most people rack them
+    and is the safe direction, but it is not what a pair of them physically
+    does — two 1.5U units genuinely fit in 3U. There is no way to express that.
+- **Only Model 1 (HDMI only) is in.** Barco ship Model 2 / **PDS-4K SDI** as
+  well, which fills the blanked IN 7, IN 8 and four PGM holes with 12G-SDI
+  BNCs. Its drawing is Image 4-3 in the same user guide, already read; it is a
+  short job and was left out only to keep this trial to one device to check.
+- **The Option slot is drawn as the blanked vented aperture it is.** It takes
+  Event Master cards. Not modelled with the option-card mechanism because the
+  aperture was never measured and the card range was not established — same
+  call as the Pulse 4K's audio card.
+- **Barco publish one unlabelled power figure**, "Input power: 100-240 VAC
+  50/60Hz 151W", with the panel silkscreened "2A". There is no idle/typical
+  split, so it is recorded as `powerMax` only and the rack reads `0.0 A+` idle.
+  If that 151 W turns out to be a typical rather than a ceiling, the entry is
+  under-reporting idle and over-reporting nothing — the safe direction, but
+  worth settling.
+- **Front and rear both silkscreen a port simply `USB`.** They read `USB FRONT`
+  / `USB REAR`, the same kind of departure as the Pulse 4K's `IN #1 SDI`.
+
 ## 9. Smaller things
 
 - Individual connector numbering on high-density panels (DX168 etc.) is dropped

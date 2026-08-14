@@ -19,6 +19,78 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.10.6 — 2026-08-14
+
+**Added**
+
+- **Barco PDS-4K** (Model 1, HDMI only) — 4K presentation switcher from the
+  Event Master range. New brand, second entry in **Video**.
+
+  Both faces are hand-placed from Barco's user guide R5912621, Image 4-1 and
+  Image 4-2. Those are **true orthographic line drawings**, not photographs,
+  which is why this rear is measured and hand-placed where the Pulse 4K's is
+  `auto` — a line drawing has no perspective to introduce error.
+
+  | | |
+  |---|---|
+  | Rear | C14 inlet, USB-A, RJ45, Option slot, `IN 1`–`IN 6`, `PGM 1A/1B/2A/2B`, `MVR` |
+  | Front | PWR/STBY, USB, LCD, ADJUST encoder, ESC, 2 x 10 source buttons, LOGO/FREEZE/TAKE per row |
+  | | 484.1 x 66.2 x 409 mm, 6.21 kg, 151 W |
+
+**The first fractional rack unit — `ru: 1.5`**
+
+Barco give 6.62 cm, which is 1.49 U. **Nothing needed changing to support it**,
+and that is worth recording before someone tidies it away:
+
+- `occupied()` already works — a 1.5U unit at U1 spans `[1, 2.5)`, so a device
+  dropped at U2 is correctly refused.
+- **`usedU` already ceilings**, because it is a `for (k = 0; k < itemRU; k++)`
+  loop: k takes 0 and 1 for `ru: 1.5`, so the unit claims two rows. "U used"
+  reports rack space consumed rather than the sum of panel heights, which is
+  the number you want. **That is right by accident of the loop condition, not
+  by design** — anything rewriting it must keep the behaviour on purpose.
+- The bay draws it 1.5U tall, so the spare half-U shows as empty rack, and the
+  side view gets a true 66.7 mm.
+
+What it does *not* do is pack: two PDS-4Ks land at U1 and U3, not U1 and U2.5,
+because slots are integer. That is how most people rack them and it is the safe
+direction, but two of them genuinely do fit in 3U and there is no way to say so.
+
+**Research pass, run 2 — for comparison with v1.10.5**
+
+| | Pulse 4K | PDS-4K |
+|---|---|---|
+| Subagent tokens | 99,322 | **91,018** |
+| Tool calls | 69 | **56** |
+| Duration | 6m07s | **6m48s** |
+| Images returned | **none** | 3, all usable |
+| Source quality | datasheet via a reseller | manufacturer's own CDN |
+
+The prompt was kept structurally identical so the numbers compare — the
+"go to the quick start guide first" lesson from v1.10.5 was deliberately *not*
+folded in. Run 2 was cheaper and got the images, but still needed the PDF
+rendered at 300 dpi to read the silkscreen: the images it fetched were 945 px
+wide, where the guide's own figure is legible at 2481.
+
+It also reported the rear USB as USB-B; Barco's line drawing shows an A shell
+and their text describes plugging in a USB stick or a wireless dongle, which is
+a host port. Drawn as USB-A.
+
+**Soft spots, flagged**
+
+- **Barco publish one unlabelled power figure.** "Input power: 100-240 VAC
+  50/60Hz 151W", panel silkscreened "2A", no idle/typical split. Recorded as
+  `powerMax` only, so the rack reads `0.0 A+` idle.
+- **Only Model 1 is in.** Model 2 / PDS-4K SDI fills the blanked `IN 7`, `IN 8`
+  and four PGM holes with 12G-SDI BNCs. Its drawing is Image 4-3 in the same
+  guide; left out to keep this trial to one device to check.
+- **The Option slot is drawn as the blanked vented aperture it is**, not
+  modelled as an option-card slot — the aperture was never measured.
+- **The specification figures were not re-checked**, by instruction. TODO §8d
+  lists them.
+
+---
+
 ## v1.10.5 — 2026-08-14
 
 **Added**

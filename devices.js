@@ -25,6 +25,7 @@ import { ALLEN_HEATH } from './devices/allen-heath.js';
 import { ANALOG_WAY } from './devices/analog-way.js';
 import { APC } from './devices/apc.js';
 import { ATEN } from './devices/aten.js';
+import { BARCO } from './devices/barco.js';
 import { BEHRINGER } from './devices/behringer.js';
 import { CISCO } from './devices/cisco.js';
 import { CLEAR_COM } from './devices/clear-com.js';
@@ -60,6 +61,7 @@ export const SEED_DEVICES = [
   ...ANALOG_WAY,
   ...APC,
   ...ATEN,
+  ...BARCO,
   ...BEHRINGER,
   ...CISCO,
   ...CLEAR_COM,
