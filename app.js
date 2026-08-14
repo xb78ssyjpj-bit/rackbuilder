@@ -644,6 +644,21 @@ function renderSide() {
       + `${moving ? ' moving' : ''}${selected ? ' sel' : ''}" data-uid="${it.uid}">`);
     p.push(`<rect x="${x.toFixed(1)}" y="${(y + 1.2).toFixed(1)}" width="${d}" `
       + `height="${(ru * U_MM_H - 2.4).toFixed(1)}" rx="2"/>`);
+    // The group colour, as the bays and the export sheet already draw it. Here
+    // it sits at the RAIL rather than always on the left — front gear is
+    // anchored to the front rail and rear gear to the rear one, so putting the
+    // stripe on the outside edge keeps it out of the gap down the middle, which
+    // is the thing this view exists to show. Clamped to the box: a device with
+    // no depth draws nothing at all, and a stripe would be the only mark on it.
+    // Inline style, not fill=: a presentation attribute loses to the
+    // `.sitem rect` rule, and to `.sitem.bad rect` on a clashing item.
+    if (it.color && it.color !== 'none') {
+      const sw = Math.min(3, d);
+      p.push(`<rect class="sgrp" x="${(rear ? x + d - sw : x).toFixed(1)}" `
+        + `y="${(y + 1.2).toFixed(1)}" width="${sw}" `
+        + `height="${(ru * U_MM_H - 2.4).toFixed(1)}" rx="1.2" `
+        + `style="fill:${esc2(it.color)};stroke:none"/>`);
+    }
     // Trim to what the box can hold rather than letting the name run out over
     // the neighbouring gear — a shallow device is exactly where a long model
     // name would otherwise sit on top of whatever is behind it.

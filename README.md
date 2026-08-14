@@ -653,6 +653,11 @@ U1 is at the top, matching the bays and their rulers. Zoom with the same
 controls the bays use — the drawing scales through its own viewBox, and the
 frame scrolls when it outgrows the window.
 
+**Group colours show here too**, as a stripe at the **rail** — on the left edge
+of a front-mounted device and the right edge of a rear-mounted one. It follows
+the face rather than sitting always on the left, so the colour never intrudes
+into the gap down the middle, which is what you came to this view to look at.
+
 **Devices drag here too** — up and down the rack, and across the midline to flip
 between the front and rear faces. Crossing the midline *is* the gesture, because
 the midline is what the two faces are either side of. Placement goes through the

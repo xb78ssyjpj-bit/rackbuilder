@@ -448,9 +448,11 @@ so far, and it is why several entries below are L despite being simple code.
 - ~~**Naming IO in the edit dialog loses focus after every keystroke**~~ —
   **fixed in v1.8.1.** Not where it looked: the `input` event bubbles, and the
   form's own `oninput` was rebuilding the row being typed into.
-- **Side view ignores group colours.** `renderRack()` paints `it.color` onto the
-  bay item; `renderSide()` never reads it — zero occurrences of `color` in the
-  whole function. Mirror what the bays already do.
+- ~~**Side view ignores group colours**~~ — **fixed in v1.10.3.** The stripe
+  sits at the rail rather than always on the left, so it follows the face a
+  device is mounted to. Note for anyone drawing into that SVG next: colour has
+  to go in an inline `style`, because a `fill=` presentation attribute loses to
+  the `.sitem rect` rule and would have drawn silently wrong.
 - ~~**Cables cannot be labelled**~~ — **done in v1.8.1.** Inline field per matrix
   row; shows in the wire tooltip, searchable, and now the second CSV column.
 - **DM0 I/O Port count.** Blocked on documentation, not code — see §5. A&H's DM

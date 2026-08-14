@@ -19,6 +19,36 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.10.3 — 2026-08-14
+
+**Fixed**
+
+- **The side elevation ignored group colours.** The bays have painted `it.color`
+  onto a rack item since the beginning and the export sheet draws it as a bar
+  beside each elevation, but `renderSide()` never read the field at all — so
+  colour-coding a rack survived every view except the one you check depth in.
+
+  The stripe sits at the **rail**, not always on the left: front gear is
+  anchored to the front rail and rear gear to the rear one, so the marker lands
+  on the outside edge of each box and stays out of the gap down the middle,
+  which is the thing this view exists to show. Front-mounted devices carry it on
+  their left edge, rear-mounted on their right.
+
+  It is clamped to the width of the box it marks, so a device with no depth —
+  which draws nothing here — does not suddenly acquire a 3 mm sliver.
+
+**A note on how it is drawn, because it will bite the next person**
+
+The stripe sets its colour with an inline `style`, not a `fill=` attribute. An
+SVG presentation attribute loses to any stylesheet rule, and `.sitem rect` sets
+`fill` for every rect in the group — so `fill="#d16b8a"` would have drawn a
+box-coloured stripe and looked like the colour had not been read. Same for
+`stroke`, which `.sitem.bad rect` turns red on a depth clash. Verified both
+ways: computed `fill` is the group colour and computed `stroke` is `none` on a
+clashing item as well as a clean one.
+
+---
+
 ## v1.10.2 — 2026-08-13
 
 **Added**
