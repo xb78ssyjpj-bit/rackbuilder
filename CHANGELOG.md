@@ -19,6 +19,42 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.10.1 — 2026-08-13
+
+**Added**
+
+- **Idle and peak draw for the Martin Audio amplifiers**, supplied by the user:
+
+  | | idle / peak | | idle / peak |
+  |---|---|---|---|
+  | iK41 | 132 / 1780 W | VIA2004 | 26 / 628 W |
+  | iK42 | 195 / 3475 W | VIA2502 | 33 / 763 W |
+  | iK81 | 204 / 2967 W | VIA5002 | 53 / 1514 W |
+  | | | VIA5004 | 33 / 1514 W |
+
+  Five iK42s read **4.2 A idle, 75.5 A peak** — and no `+`, because everything
+  in that rack now has both figures.
+
+  VIA5002 and VIA5004 share a peak but not an idle, and the 5002 idles *higher*
+  than the 5004. Recorded as given rather than tidied: a plausible-looking
+  correction is exactly how a wrong figure gets into a library.
+
+**Where the amplifier section stands**
+
+**Martin Audio was the last brand with no draw data at all.** Of 49 devices
+across d&b, L-Acoustics, Martin and QSC, 44 now carry an idle figure and 21 a
+peak. What is left:
+
+- **QSC PLX / PLX2 / RMX** have a typical figure but no peak. QSC's own tables
+  give a "severe, 1/3 power" row that is 1.5–2× higher and belongs in
+  `powerMax`.
+- **QSC PLD4.2 / 4.3 / 4.5** have neither — QSC publish heat loss rather than
+  mains draw for those.
+- **L-Acoustics P1** and **d&b DS100** publish nothing; both are processors
+  rather than amplifiers.
+
+---
+
 ## v1.10.0 — 2026-08-13
 
 **Changed**

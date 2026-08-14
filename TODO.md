@@ -215,8 +215,14 @@ the prose.
   carry idle and peak. **LA1.16i and LA8 are still not in the library**; their
   wattage is recorded in `devices/l-acoustics.js` ready for the chassis figures.
 
-  **Martin Audio is the last one open.** Retry with `pdftotext` before assuming
-  their PDFs are art — that assumption was wrong about d&b.
+  **Martin Audio landed in v1.10.1** — iK41, iK42, iK81 and the four VIAs all
+  carry idle and peak. That was the last brand with no draw data at all.
+
+  What is left across the whole amplifier section: **QSC PLX/PLX2/RMX** have a
+  typical figure but no peak, and QSC's own "severe, 1/3 power" row is what
+  belongs in `powerMax`; **QSC PLD4.2/4.3/4.5** have neither, QSC publishing
+  heat loss rather than mains draw for those; **L-Acoustics P1** and **d&b
+  DS100** publish nothing and are processors rather than amps.
 
   **D6 and D12 are the remaining inconsistency**: their `power` is a
   programme row off the power balance table, not idle like every other amp.

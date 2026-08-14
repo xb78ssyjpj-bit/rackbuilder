@@ -1,5 +1,18 @@
 // Martin Audio — 10 devices
 
+// Idle and peak mains draw for the iKON and VIA amplifiers, supplied by the
+// user:
+//
+//   iK41 132/1780 · iK42 195/3475 · iK81 204/2967
+//   VIA2004 26/628 · VIA2502 33/763 · VIA5002 53/1514 · VIA5004 33/1514
+//
+// VIA5002 and VIA5004 share a peak but not an idle, and the 5002 idles higher
+// than the 5004 — recorded as given rather than tidied, since a plausible-
+// looking correction is how wrong figures get into a library.
+//
+// The DX processors keep their own 30 W, which is a single published figure
+// rather than an idle/peak pair.
+
 export const MARTIN_AUDIO = [
   // ----------------------------------------------------- Martin Audio amps ---
   // The iKON and VIA amps share one 2U chassis (482 x 88 x 441, powerCON 32A);
@@ -16,7 +29,7 @@ export const MARTIN_AUDIO = [
   // publish 30 W nominal, which is used.
 
   { id: 'martin-ik42', brand: 'Martin Audio', model: 'iKON iK42', category: 'audio',
-    ru: 2, depth: 441, weight: 12.5, approx: true,
+    ru: 2, depth: 441, weight: 12.5, power: 195, powerMax: 3475, approx: true,
     src: 'https://martin-audio.com/products/electronics/ik42',
     front: { elements: [
       { t: 'display', x: 300, y: 90, w: 280, h: 110 },
@@ -34,7 +47,7 @@ export const MARTIN_AUDIO = [
     ] } },
 
   { id: 'martin-ik41', brand: 'Martin Audio', model: 'iKON iK41', category: 'audio',
-    ru: 2, depth: 441, weight: 12.5, approx: true,
+    ru: 2, depth: 441, weight: 12.5, power: 132, powerMax: 1780, approx: true,
     src: 'https://martin-audio.com/products/electronics/ik41',
     front: { elements: [
       { t: 'display', x: 300, y: 90, w: 280, h: 110 },
@@ -54,7 +67,7 @@ export const MARTIN_AUDIO = [
   // 8 output channels over 4 NL4 — an NL4 carries two channels, which is how the
   // "8-channel amp with 4 speakON" reading resolves rather than being an error.
   { id: 'martin-ik81', brand: 'Martin Audio', model: 'iKON iK81', category: 'audio',
-    ru: 2, depth: 441, weight: 12.5, approx: true,
+    ru: 2, depth: 441, weight: 12.5, power: 204, powerMax: 2967, approx: true,
     src: 'https://martin-audio.com/products/electronics/ik81',
     front: { elements: [
       { t: 'display', x: 300, y: 90, w: 280, h: 110 },
@@ -74,7 +87,7 @@ export const MARTIN_AUDIO = [
   // VIA fronts follow Martin Audio's own description: a mains switch and one
   // level control per channel, each with signal / clip / protect metering.
   { id: 'martin-via2004', brand: 'Martin Audio', model: 'VIA2004', category: 'audio',
-    ru: 2, depth: 441, weight: 8, approx: true,
+    ru: 2, depth: 441, weight: 8, power: 26, powerMax: 628, approx: true,
     src: 'https://martin-audio.com/products/electronics/via2004',
     front: { elements: [
       { t: 'knob', x: 280, y: 80, n: 4, gap: 150, r: 24 },
@@ -95,7 +108,7 @@ export const MARTIN_AUDIO = [
     ] } },
 
   { id: 'martin-via5004', brand: 'Martin Audio', model: 'VIA5004', category: 'audio',
-    ru: 2, depth: 441, weight: 10, approx: true,
+    ru: 2, depth: 441, weight: 10, power: 33, powerMax: 1514, approx: true,
     src: 'https://martin-audio.com/products/electronics/via5004',
     front: { elements: [
       { t: 'knob', x: 280, y: 80, n: 4, gap: 150, r: 24 },
@@ -116,7 +129,7 @@ export const MARTIN_AUDIO = [
     ] } },
 
   { id: 'martin-via2502', brand: 'Martin Audio', model: 'VIA2502', category: 'audio',
-    ru: 2, depth: 441, weight: 8, approx: true,
+    ru: 2, depth: 441, weight: 8, power: 33, powerMax: 763, approx: true,
     src: 'https://martin-audio.com/products/electronics/via2502',
     front: { elements: [
       { t: 'knob', x: 380, y: 80, n: 2, gap: 200, r: 24 },
@@ -137,7 +150,7 @@ export const MARTIN_AUDIO = [
     ] } },
 
   { id: 'martin-via5002', brand: 'Martin Audio', model: 'VIA5002', category: 'audio',
-    ru: 2, depth: 441, weight: 10, approx: true,
+    ru: 2, depth: 441, weight: 10, power: 53, powerMax: 1514, approx: true,
     src: 'https://martin-audio.com/products/electronics/via5002',
     front: { elements: [
       { t: 'knob', x: 380, y: 80, n: 2, gap: 200, r: 24 },
