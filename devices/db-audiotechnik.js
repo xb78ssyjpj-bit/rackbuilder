@@ -1,5 +1,21 @@
 // d&b audiotechnik — 12 devices
 
+// Peak mains draw across the amplifier range. D20 (2200 W) and D80 (7000 W)
+// match d&b's own manuals exactly, which is the check on the rest of it.
+//
+//   5D 550 · 5DM 550 · 10D 1300 · D20 2200 · 30D 2200 · D25 2275 · 25D 2275
+//   D40 2900 · 40D 2900 · D90 3650 · D80 7000
+//
+// The pairs are the same platform in mobile and installation dress — D20/30D,
+// D40/40D, D25/25D — which is why their figures match.
+//
+// 5DM, D25 and 25D are NOT in the library: no RU, depth, weight or connector
+// face has been established for them, and a power figure alone is not a device.
+//
+// D6 and D12 are absent from that list, being the older generation. They keep
+// the realistic-programme `power` read off their power balance tables and have
+// no stated maximum yet.
+
 export const D_B_AUDIOTECHNIK = [
   // Hand-placed from the manufacturer's orthographic front view.
   // 2 RU x 19" x 460 mm, 10.8 kg. Front: 3.5" TFT upper left, SCROLL/EDIT
@@ -61,7 +77,7 @@ export const D_B_AUDIOTECHNIK = [
   // Mains: powerCON-HC, a 32 A connector the library has no primitive for —
   // drawn as a standard powerCON, which is the closest honest thing.
   { id: 'db-d90', brand: 'd&b audiotechnik', model: 'D90', category: 'audio',
-    ru: 2, depth: 465, weight: 18.8, power: 1775,
+    ru: 2, depth: 465, weight: 18.8, power: 1775, powerMax: 3650,
     src: 'https://www.dbaudio.com/global/en/products/amplifiers/d90/',
     front: { elements: [
       { t: 'display', x: 250, y: 100, w: 200, h: 92 },
@@ -163,7 +179,7 @@ export const D_B_AUDIOTECHNIK = [
     ] } },
 
   { id: 'db-d40', brand: 'd&b audiotechnik', model: 'D40', category: 'audio',
-    ru: 2, depth: 512, weight: 13.8, approx: true,
+    ru: 2, depth: 512, weight: 13.8, powerMax: 2900, approx: true,
     src: 'https://www.dbaudio.com/global/en/products/amplifiers/d40/',
     front: { elements: [
       { t: 'display', x: 210, y: 85, w: 210, h: 120 },
@@ -185,7 +201,7 @@ export const D_B_AUDIOTECHNIK = [
   // The xD install amps use Euroblock throughout rather than XLR and speakON —
   // worth knowing before you plan a loom off one of these.
   { id: 'db-40d', brand: 'd&b audiotechnik', model: '40D', category: 'audio',
-    ru: 2, depth: 465, weight: 13.3, approx: true,
+    ru: 2, depth: 465, weight: 13.3, powerMax: 2900, approx: true,
     src: 'https://www.dbaudio.com/global/en/products/amplifiers/40d/',
     front: { elements: [
       { t: 'display', x: 220, y: 100, w: 210, h: 110 },
@@ -201,7 +217,7 @@ export const D_B_AUDIOTECHNIK = [
     ] } },
 
   { id: 'db-30d', brand: 'd&b audiotechnik', model: '30D', category: 'audio',
-    ru: 2, depth: 435, weight: 10.6, approx: true,
+    ru: 2, depth: 435, weight: 10.6, powerMax: 2200, approx: true,
     src: 'https://www.dbaudio.com/global/en/products/amplifiers/30d/',
     front: { elements: [
       { t: 'led', x: 250, y: 84, n: 4, gap: 140 },
@@ -226,7 +242,7 @@ export const D_B_AUDIOTECHNIK = [
   // Same chassis as the 30D — d&b publish identical dimensions and weight for
   // the pair; they differ in output power, not in the box.
   { id: 'db-10d', brand: 'd&b audiotechnik', model: '10D', category: 'audio',
-    ru: 2, depth: 435, weight: 10.6, approx: true,
+    ru: 2, depth: 435, weight: 10.6, powerMax: 1300, approx: true,
     src: 'https://www.dbaudio.com/global/en/products/amplifiers/10d/',
     front: { elements: [
       { t: 'led', x: 250, y: 84, n: 4, gap: 140 },
@@ -251,7 +267,7 @@ export const D_B_AUDIOTECHNIK = [
   // 241 mm wide — half the full 483 mm panel, so it bolts rail-to-centre with
   // its own ears rather than needing a tray. IEC mains, unlike the rest of d&b.
   { id: 'db-5d', brand: 'd&b audiotechnik', model: '5D', category: 'audio',
-    half: true, ears: true, ru: 1, depth: 435, weight: 4.6, approx: true,
+    half: true, ears: true, ru: 1, depth: 435, weight: 4.6, powerMax: 550, approx: true,
     src: 'https://www.dbaudio.com/global/en/products/amplifiers/5d/',
     front: { elements: [
       { t: 'led', x: 150, y: 36, n: 4, gap: 62 },

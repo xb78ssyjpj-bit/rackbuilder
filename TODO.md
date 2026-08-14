@@ -199,12 +199,17 @@ the prose.
     manuals-documentation/electronics/dbaudio-manual-<model>-<ver>-en.pdf
   ```
 
-  Still owed, now known to be gettable the same way: **D40, 40D, 30D, 10D, 5D**,
-  whose manuals are not at that path under those names and need finding; and a
-  **`powerMax` for D6, D12 and D90**, which carry a realistic-programme `power`
-  from their power balance tables but no stated maximum yet. **DS100 genuinely
-  publishes none** — its manual gives fan noise at idle and no consumption
-  figure at all.
+  **The whole d&b amp range now carries a peak** — D40, 40D, 30D, 10D, 5D and
+  D90 were supplied by the user in v1.9.1; D20 and D80 came from the manuals and
+  match that list exactly, which is the check on the rest.
+
+  Still owed there: a **typical draw** for D40, 40D, 30D, 10D and 5D, which have
+  a peak but no idle figure and so total as `0 W+`; a **`powerMax` for D6 and
+  D12**, the older generation, absent from that list; and **5DM, D25 and 25D**,
+  which are not in the library at all — a power figure alone is not a device,
+  and no RU, depth, weight or connector face has been established for them.
+  **DS100 genuinely publishes none** — its manual gives fan noise at idle and no
+  consumption figure at all.
 
   **L-Acoustics and Martin Audio remain open** and are the other half of this
   gap. Retry them with `pdftotext` before assuming their PDFs are art.

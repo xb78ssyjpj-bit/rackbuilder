@@ -19,6 +19,39 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.9.1 — 2026-08-13
+
+**Added**
+
+- **A peak mains figure for the whole d&b amplifier range**, supplied by the
+  user:
+
+  | | Peak | | Peak |
+  |---|---|---|---|
+  | 5D | 550 W | D40 / 40D | 2900 W |
+  | 10D | 1300 W | D90 | 3650 W |
+  | D20 / 30D | 2200 W | D80 | 7000 W |
+
+  **D20 and D80 match d&b's own manuals exactly** — those two were extracted
+  from the Technical specifications tables in v1.9.0, before this list existed —
+  which is the check on the rest of it. The pairs share a figure because they
+  are the same platform in mobile and installation dress: D20/30D, D40/40D.
+
+  A rack of four 40Ds now reads **11600 W / 50.4 A peak**. It still reads `0 W+`
+  running, because a peak is not a typical and none of those five publish one —
+  the `+` and its warning say so rather than the total quietly pretending.
+
+**Not added**
+
+- **5DM, D25 and 25D** are in the supplied list but not in the library. A power
+  figure alone is not a device: no rack units, depth, weight or connector face
+  has been established for any of them.
+- **D6 and D12** are absent from the list, being the older generation. They keep
+  the realistic-programme `power` read off their own power balance tables and
+  still have no stated maximum.
+
+---
+
 ## v1.9.0 — 2026-08-13
 
 **Added**
