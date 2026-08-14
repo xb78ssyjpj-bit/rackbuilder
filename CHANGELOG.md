@@ -19,6 +19,54 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.10.0 — 2026-08-13
+
+**Changed**
+
+- **The summary reports amps, not watts.** Two rows — **Idle @230V** and
+  **Peak @230V** — and the wattage is gone from the display. Nobody sizes a
+  distro in watts; you size it in amps against a breaker, so the conversion
+  belongs in the tool rather than in your head. The export sheet matches, per
+  rack and in the project total.
+
+  The watts are still **stored** on every device, as `power` and `powerMax`.
+  They are what manufacturers publish and what any future per-phase or
+  power-factor work would need.
+
+**Added**
+
+- **Idle and peak draw for eight d&b amps and five L-Acoustics**, supplied by
+  the user:
+
+  | d&b | idle / peak | L-Acoustics | idle / peak |
+  |---|---|---|---|
+  | 5D | 50 / 550 W | LA2Xi | 27 / 1020 W |
+  | 10D | 48 / 1300 W | LA4X | 60 / 1600 W |
+  | D20 · 30D | 48 / 2200 W | LA7.16 · LA7.16i | 136 / 4300 W |
+  | D40 · 40D | 130 / 2900 W | LA12X | 141 / 5500 W |
+  | D90 | 160 / 3650 W | | |
+  | D80 | 180 / 7000 W | | |
+
+  Four LA12X now read **2.5 A idle, 95.7 A peak**. L-Acoustics had no power
+  figure at all before this.
+
+**Fixed**
+
+- **D90's `power` was 1775 W, which is not idle.** It was a CF 12 dB
+  realistic-programme row off d&b's power balance table — a different quantity
+  from every other entry. Now the stated 160 W idle, so the field means the same
+  thing on every amp.
+
+**Still inconsistent, and flagged**
+
+- **D6 (215 W) and D12 (640 W)** keep programme-row figures rather than idle.
+  They are the older generation and absent from the supplied table.
+- **Not in the library**, wattage recorded in the source comments ready for
+  when the chassis figures are: d&b **5DM**, **D25**, **25D**; L-Acoustics
+  **LA1.16i** and **LA8**. A power figure alone is not a device.
+
+---
+
 ## v1.9.1 — 2026-08-13
 
 **Added**

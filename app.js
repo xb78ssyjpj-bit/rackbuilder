@@ -1452,11 +1452,14 @@ function renderPatchEditor(box, it, dev) {
 // -------------------------------------------------------------- summary ----
 function renderSummary() {
   const r = rack();
-  // Two power totals, because one number cannot answer both questions a rack
-  // poses. `power` is what it draws doing its job; `powerMax` is the
-  // manufacturer's stated maximum, which is what a feed and a breaker have to
-  // survive. A D80 idles at 180 W and peaks at 7000 — reporting either alone is
-  // misleading, and reporting only the first under-sizes the supply.
+  // Two totals, because one number cannot answer both questions a rack poses:
+  // what it sits there drawing, and what the feed has to survive. A D80 idles
+  // at 180 W and peaks at 7000.
+  //
+  // Both are reported in AMPS. Watts is what the manufacturers publish and what
+  // the library stores, but nobody sizes a distro in watts — you size it in
+  // amps against a breaker, so the conversion belongs here rather than in the
+  // reader's head.
   let w = 0, p = 0, pk = 0, maxD = 0, approx = false, noPower = 0, noPeak = 0;
   // Count U rows actually occupied — two half-width units sharing a row are 1U,
   // not 2U.
@@ -1481,12 +1484,6 @@ function renderSummary() {
   const usedU = rowsUsed.size;
   const amps = p / 230;
   const peakAmps = pk / 230;
-  // Only worth its own rows when something in the rack actually states a peak;
-  // otherwise it would just repeat the line above it.
-  const showPeak = r.items.some((it) => {
-    const d = devById(it.devId);
-    return d && d.powerMax != null && d.powerMax !== d.power;
-  });
   const over = usedU > r.ru;
   const caseKg = Number(r.weight) || 0;
   $('#summary').innerHTML = `
@@ -1494,11 +1491,8 @@ function renderSummary() {
     <tr><td>U used</td><td${over ? ' style="color:var(--danger)"' : ''}>${usedU} / ${r.ru}${
       over ? ' ⚠' : ''}</td></tr>
     <tr><td>Max depth</td><td>${maxD} mm${r.depth ? ` / ${r.depth}` : ''}</td></tr>
-    <tr><td>Power</td><td>${p} W${noPower ? '+' : ''}</td></tr>
-    <tr><td>Current @230V</td><td>${amps.toFixed(1)} A${noPower ? '+' : ''}</td></tr>` +
-    (showPeak ? `
-    <tr><td>Peak power</td><td>${pk} W${noPeak ? '+' : ''}</td></tr>
-    <tr><td>Peak @230V</td><td>${peakAmps.toFixed(1)} A${noPeak ? '+' : ''}</td></tr>` : '') + `
+    <tr><td>Idle @230V</td><td>${amps.toFixed(1)} A${noPower ? '+' : ''}</td></tr>
+    <tr><td>Peak @230V</td><td>${peakAmps.toFixed(1)} A${noPeak ? '+' : ''}</td></tr>
     <tr><td>Kit weight</td><td>${w.toFixed(1)} kg</td></tr>` +
     (caseKg ? `<tr><td>Case</td><td>${caseKg.toFixed(1)} kg</td></tr>
     <tr><td>Total</td><td>${(w + caseKg).toFixed(1)} kg</td></tr>` : '');
@@ -1513,8 +1507,8 @@ function renderSummary() {
   }
   pw.hidden = !noPower;
   if (noPower) {
-    pw.textContent = `${noPower} device${noPower > 1 ? 's' : ''} publish no power `
-      + 'figure, so the watts and amps above are a floor, not a total. Hence the +.';
+    pw.textContent = `${noPower} device${noPower > 1 ? 's' : ''} publish no draw `
+      + 'figure, so the amps above are a floor, not a total. Hence the +.';
   }
 
   const clashes = depthClashes();
@@ -1658,17 +1652,19 @@ function elevation(r, view, ox, oy) {
 }
 
 function rackStats(r) {
-  let w = 0, pw = 0, maxD = 0, noPower = 0;
+  let w = 0, pw = 0, pk = 0, maxD = 0, noPower = 0, noPeak = 0;
   const rows = new Set();
   r.items.forEach((it) => {
     const d = devById(it.devId);
     if (!d) return;
     w += itemWeight(it); pw += d.power || 0;
     if (d.power === undefined || d.power === null) noPower++;
+    pk += (d.powerMax ?? d.power) || 0;
+    if (d.powerMax === undefined || d.powerMax === null) noPeak++;
     for (let k = 0; k < itemRU(it); k++) rows.add(it.u + k);
     maxD = Math.max(maxD, d.depth || 0);
   });
-  return { w, pw, maxD, noPower, usedU: rows.size, n: r.items.length,
+  return { w, pw, pk, maxD, noPower, noPeak, usedU: rows.size, n: r.items.length,
            caseKg: Number(r.weight) || 0 };
 }
 
@@ -1706,10 +1702,11 @@ function buildExportSVG() {
 
   // ---- one block per rack, front and rear side by side ----
   let y = EX.HEAD;
-  let totKit = 0, totCase = 0, totW = 0, totNoPower = 0;
+  let totKit = 0, totCase = 0, totW = 0, totPk = 0, totNoPower = 0, totNoPeak = 0;
   racks.forEach((r, i) => {
     const s = rackStats(r);
     totKit += s.w; totCase += s.caseKg; totW += s.pw; totNoPower += s.noPower;
+    totPk += s.pk; totNoPeak += s.noPeak;
 
     p.push(tx(r.name || `Rack ${i + 1}`, EX.M, y + 30, { size: 27, weight: 700 }));
     p.push(tx(`${r.ru}U`, EX.M + 300, y + 30, { size: 21, fill: '#666' }));
@@ -1725,10 +1722,10 @@ function buildExportSVG() {
       `${s.w.toFixed(1)} kg kit`,
       s.caseKg ? `${s.caseKg.toFixed(1)} kg case` : null,
       s.caseKg ? `${(s.w + s.caseKg).toFixed(1)} kg total` : null,
-      `${s.pw} W${s.noPower ? '+' : ''}`,
-      `${(s.pw / 230).toFixed(1)} A @230V${s.noPower ? '+' : ''}`,
+      `${(s.pw / 230).toFixed(1)} A idle${s.noPower ? '+' : ''}`,
+      `${(s.pk / 230).toFixed(1)} A peak${s.noPeak ? '+' : ''}`,
       `max depth ${s.maxD} mm${r.depth ? ` of ${r.depth}` : ''}`,
-      s.noPower ? `${s.noPower} device${s.noPower > 1 ? 's' : ''} publish no W figure` : null,
+      s.noPower ? `${s.noPower} device${s.noPower > 1 ? 's' : ''} publish no draw figure` : null,
     ].filter(Boolean);
     p.push(`<line x1="${EX.M}" y1="${sy - 24}" x2="${EX.W - EX.M}" y2="${sy - 24}" `
       + `stroke="#ddd" stroke-width="2"/>`);
@@ -1802,12 +1799,12 @@ function buildExportSVG() {
   p.push(tx([`${totKit.toFixed(1)} kg kit`,
              totCase ? `${totCase.toFixed(1)} kg cases` : null,
              `${(totKit + totCase).toFixed(1)} kg all in`,
-             `${totW} W${totNoPower ? '+' : ''}`,
-             `${(totW / 230).toFixed(1)} A @230V${totNoPower ? '+' : ''}`]
+             `${(totW / 230).toFixed(1)} A idle${totNoPower ? '+' : ''}`,
+             `${(totPk / 230).toFixed(1)} A peak${totNoPeak ? '+' : ''}`]
             .filter(Boolean).join('   ·   '), EX.M + 260, y + 30, { size: 20 }));
   p.push(tx('Figures marked approximate in the library are not datasheet-verified.'
             + (totNoPower ? `  ${totNoPower} device${totNoPower > 1 ? 's' : ''} publish `
-              + 'no power figure, so W and A are a floor (+), not a total.' : ''),
+              + 'no draw figure, so the amps are a floor (+), not a total.' : ''),
             EX.M, y + 62, { size: 16, fill: '#999' }));
 
   p.push('</svg>');

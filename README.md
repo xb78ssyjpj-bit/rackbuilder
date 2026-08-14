@@ -982,8 +982,13 @@ Two fields, because one number cannot answer both questions a rack poses:
   have to survive.
 
 A d&b D80 idles at 180 W and peaks at 7000 W; reporting either alone is
-misleading, and reporting only the first under-sizes the supply. The summary
-shows peak rows only when something in the rack states one.
+misleading, and reporting only the first under-sizes the supply.
+
+**The summary and the export sheet show amps, not watts** — `Idle @230V` and
+`Peak @230V`. Nobody sizes a distro in watts; you size it in amps against a
+breaker. The watts stay in the library because that is what manufacturers
+publish, and because anything later — per-phase totals, power factor — starts
+from them.
 
 A device with no `power` at all is one the manufacturer does not publish a
 figure for. That is not zero watts, so the totals carry a `+` and a count rather

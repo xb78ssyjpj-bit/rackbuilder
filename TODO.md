@@ -211,8 +211,15 @@ the prose.
   **DS100 genuinely publishes none** — its manual gives fan noise at idle and no
   consumption figure at all.
 
-  **L-Acoustics and Martin Audio remain open** and are the other half of this
-  gap. Retry them with `pdftotext` before assuming their PDFs are art.
+  **L-Acoustics landed in v1.10.0** — LA2Xi, LA4X, LA7.16, LA7.16i and LA12X all
+  carry idle and peak. **LA1.16i and LA8 are still not in the library**; their
+  wattage is recorded in `devices/l-acoustics.js` ready for the chassis figures.
+
+  **Martin Audio is the last one open.** Retry with `pdftotext` before assuming
+  their PDFs are art — that assumption was wrong about d&b.
+
+  **D6 and D12 are the remaining inconsistency**: their `power` is a
+  programme row off the power balance table, not idle like every other amp.
 
 - **The QSC figures are 1/8-power typical, not worst case.** QSC's own tables
   also give a "severe, 1/3 power" current that runs 1.5-2x higher. `power` here

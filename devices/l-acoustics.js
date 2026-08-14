@@ -1,5 +1,14 @@
 // L-Acoustics — 7 devices
 
+// Idle and peak mains draw, supplied by the user:
+//
+//   LA2Xi 27/1020 · LA4X 60/1600 · LA7.16 136/4300 · LA7.16i 136/4300
+//   LA12X 141/5500
+//
+// NOT in the library and still owed: LA1.16i (70/1040), which has never had an
+// RU height established, and LA8 (115/3100), which is not an entry here at all.
+// The wattage is recorded here so it is ready when the chassis figures are.
+
 export const L_ACOUSTICS = [
   // FRONT PANELS ARE NOT CONFIRMED for the amplified controllers. They are drawn
   // to the family grammar — display, encoder, per-channel LEDs, power — and
@@ -10,7 +19,7 @@ export const L_ACOUSTICS = [
   // ratings (LA12X 4x3300 W etc.) are output power and are deliberately NOT used.
 
   { id: 'lacoustics-la12x', brand: 'L-Acoustics', model: 'LA12X', category: 'audio',
-    ru: 2, depth: 455, weight: 14.5, approx: true,
+    ru: 2, depth: 455, weight: 14.5, power: 141, powerMax: 5500, approx: true,
     src: 'https://www.l-acoustics.com/products/la12x/',
     front: { elements: [
       { t: 'display', x: 300, y: 90, w: 250, h: 100 },
@@ -30,7 +39,7 @@ export const L_ACOUSTICS = [
     ] } },
 
   { id: 'lacoustics-la4x', brand: 'L-Acoustics', model: 'LA4X', category: 'audio',
-    ru: 2, depth: 398, weight: 11.3, approx: true,
+    ru: 2, depth: 398, weight: 11.3, power: 60, powerMax: 1600, approx: true,
     src: 'https://www.l-acoustics.com/products/la4x/',
     front: { elements: [
       { t: 'display', x: 300, y: 90, w: 250, h: 100 },
@@ -51,7 +60,7 @@ export const L_ACOUSTICS = [
 
   // 16 output channels over 8 NL4 — two channels per connector.
   { id: 'lacoustics-la716', brand: 'L-Acoustics', model: 'LA7.16', category: 'audio',
-    ru: 2, depth: 465, weight: 17.5, approx: true,
+    ru: 2, depth: 465, weight: 17.5, power: 136, powerMax: 4300, approx: true,
     src: 'https://www.l-acoustics.com/products/la7-16/',
     front: { elements: [
       { t: 'display', x: 300, y: 90, w: 250, h: 100 },
@@ -71,7 +80,7 @@ export const L_ACOUSTICS = [
     ] } },
 
   { id: 'lacoustics-la716i', brand: 'L-Acoustics', model: 'LA7.16i', category: 'audio',
-    ru: 2, depth: 465, weight: 17.5, approx: true,
+    ru: 2, depth: 465, weight: 17.5, power: 136, powerMax: 4300, approx: true,
     src: 'https://www.l-acoustics.com/products/la7-16i/',
     front: { elements: [
       { t: 'display', x: 300, y: 90, w: 250, h: 100 },
@@ -90,7 +99,7 @@ export const L_ACOUSTICS = [
     ] } },
 
   { id: 'lacoustics-la2xi', brand: 'L-Acoustics', model: 'LA2Xi', category: 'audio',
-    ru: 1, depth: 398, weight: 4.4, approx: true,
+    ru: 1, depth: 398, weight: 4.4, power: 27, powerMax: 1020, approx: true,
     src: 'https://www.l-acoustics.com/products/la2xi/',
     front: { elements: [
       { t: 'display', x: 300, y: 50, w: 180, h: 44 },
