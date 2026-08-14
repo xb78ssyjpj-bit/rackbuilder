@@ -343,6 +343,47 @@ tabs, per-socket naming, placed lettering, half-rack support and JSON export.
 - **A picked run cannot span two cards**, and shift-extend works within one
   card's visible sockets only.
 
+## 8c. Analog Way — and the research pass that produced it
+
+The **Pulse 4K** (v1.10.5) is the first entry gathered by a Haiku subagent
+research pass rather than by hand. By explicit instruction its figures were
+**not** re-checked before entry — RU, 440 x 88 x 434 mm, 7.6 kg, 80 W max, C14
+inlet. **They are owed a manual check.** The panel drawing is a separate
+matter: both faces came from Analog Way's own Quick Start Guide (PLS-4K, page
+2, "FRONT & REAR PANELS DESCRIPTION"), which carries a straight-on photograph
+of each face with the silkscreen legible.
+
+What the pass did not settle, and what it raised:
+
+- **No typical / idle draw.** Analog Way publish one figure, labelled "max
+  consumption: 80W", so the entry carries `powerMax` and no `power` and the
+  unit counts toward the summary's `+`. If an idle figure exists anywhere it
+  was not found.
+- **The Analog & Dante audio card is optional and is currently drawn as
+  fitted** — the LINE IN / LINE OUT minijacks and the two Dante RJ45s. Analog
+  Way's own photograph has it in, so the drawing does. This is the right shape
+  for the option-card mechanism, but **the aperture has never been measured**,
+  and a slot at an invented size is what §5 exists to prevent. One straight-on
+  rear photograph with the 19" span as the ruler would settle it, the same way
+  the SQ-Rack's 88 x 41 mm was got.
+- **Pulse², Pulse²-3G and Pulse²-H are all discontinued** and are not in, on
+  the same grounds as Martin's MA series (§7). They would also need four
+  primitives this library does not have — **HD15, DVI-D, DVI-I, and Analog
+  Way's 5-pin MCO audio connector**. That is the real cost, not the typing.
+- **Both an input's BNC and its HDMI are silkscreened `IN #1`** on the real
+  panel, because they are one selectable input with two plugs. Two sockets on a
+  device may not share a label, so those read `IN #1 SDI` / `IN #1 HDMI`. A
+  small departure from the silkscreen, recorded here because the library's rule
+  is otherwise to use the manufacturer's name verbatim.
+- **The rear is `auto`, deliberately, despite a photograph existing.** The QSG
+  shot is slightly perspective — the top of the case is visible — so measuring
+  x positions off it would give coordinates *less* accurate than the layout
+  engine's own. What the photo settles is the left-to-right order, and on an
+  auto face declaration order is panel order, so that is what it bought.
+- **`displayport` is a new primitive, and its 24 mm is derived rather than read
+  off a drawing.** It is the second soft figure in the library after
+  `ah-dl-io`. See §9b.
+
 ## 9. Smaller things
 
 - Individual connector numbering on high-density panels (DX168 etc.) is dropped
@@ -359,6 +400,17 @@ tabs, per-socket naming, placed lettering, half-rack support and JSON export.
   whether a clip-on lamp is a device at all, given it occupies no U.
 
 ## 9b. Connector detail still owed
+
+- **`displayport` is 24 mm DERIVED, not measured.** Added in v1.10.5 for the
+  Analog Way Pulse 4K. The DP receptacles in Analog Way's own rear-panel
+  photograph measure 1.15x the HDMI ones beside them in the same shot, and this
+  library's `hdmi` is 21 mm. The check on it is that 1.15 is also the ratio of
+  the two published receptacle widths — 16.10 mm DP against 14.0 mm HDMI Type A
+  — so the photograph and the spec sheets agree. It is nonetheless the second
+  figure in this library that is not from a drawing or a stated dimension, the
+  other being `ah-dl-io`. Unlike that one it is **not** flagged by `check.mjs`,
+  because the check gate only inspects slot formats. A dimensioned DisplayPort
+  panel-cutout drawing would settle it.
 
 - **Six devices keep the generic `jack`** because their 1/4" sockets are inputs
   and the manufacturer does not say whether they are balanced: `senn-sr300-iem-g3`,

@@ -19,6 +19,74 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.10.5 — 2026-08-14
+
+**Added**
+
+- **Analog Way Pulse 4K** (PLS-4K) — 2U 4K60 multi-layer mixer and seamless
+  presentation switcher. New brand, and the first entry in the **Video**
+  category with a drawn panel.
+
+  Both faces are hand-placed from Analog Way's own **Quick Start Guide**, page
+  2 — "FRONT & REAR PANELS DESCRIPTION" — which carries a straight-on
+  photograph of each face with every connector called out and the silkscreen
+  legible. The 31 rear sockets carry Analog Way's names verbatim: `IN #1 SDI
+  2K` through `IN #10 4K`, `OUT #1 HDMI`, `MVW SDI`, `GENLOCK LOOP`,
+  `DANTE PRIMARY`, `CONTROL`.
+
+  | | |
+  |---|---|
+  | Rear | 9 BNC, 11 HDMI, 2 DisplayPort, 4 minijack, 2 RJ45, 1 etherCON, C14 |
+  | Front | standby, monitor, USB, 480x272 LCD, scroll knob, 23 buttons |
+  | | 440 x 88 x 434 mm, 7.6 kg, 80 W max |
+
+- **A `displayport` connector primitive.** The Pulse 4K has two and the library
+  had no way to draw them. It is 24 mm with a chamfered corner — a DisplayPort
+  drawn as a plain rectangle is indistinguishable from an HDMI at panel scale,
+  and the chamfer is the whole point of the shape.
+
+**How this one was researched, because the method changed**
+
+The specifications came from a **Haiku subagent research pass** rather than by
+hand, and **were deliberately not re-checked before entry** — that is the point
+of the trial, and the figures are due a manual check. TODO §8c records exactly
+which numbers those are.
+
+Two things the pass got wrong are worth recording, because they are what the
+method has to be built around:
+
+- **It returned no images at all**, having downloaded ten PDFs. The picture is
+  the half that matters — a spec list is an inventory, but only an elevation
+  tells you the order across a panel. It was recovered by rendering the PDFs
+  the pass had already fetched (`pdftoppm -r 300 -png`), which turned out to be
+  *better* than hunting product photos: the quick start guide's panel figure is
+  the manufacturer's own artwork.
+- **Its rear connector list was internally inconsistent** — four HDMI against
+  labels naming ten inputs. The photograph settles it at eleven. This is why
+  the picture is a requirement and not a nicety.
+
+**Soft figures, flagged**
+
+- **`displayport`'s 24 mm is derived, not measured.** The DP receptacles in
+  Analog Way's photograph measure 1.15x the HDMI ones beside them, and this
+  library's `hdmi` is 21 mm. The check is that 1.15 is also the ratio of the
+  published receptacle widths — 16.10 mm against 14.0 mm. It is the second
+  derived dimension here after `ah-dl-io`, and unlike that one `check.mjs` does
+  **not** flag it, because the gate only inspects slot formats.
+- **The Analog & Dante audio card is optional and is drawn as fitted**, because
+  the unit Analog Way photographed has it in. A base unit has four fewer
+  sockets there. It wants the option-card mechanism, which needs the aperture
+  measured first.
+- **No idle draw.** Analog Way publish one figure and label it "max
+  consumption", so the entry carries `powerMax` only and the rack reads `0.0 A+`
+  idle rather than pretending 80 W is what it sits at.
+
+**Not added:** Pulse², Pulse²-3G and Pulse²-H are discontinued, and this
+library does not carry discontinued lines. They would also need HD15, DVI-D,
+DVI-I and Analog Way's 5-pin MCO primitives.
+
+---
+
 ## v1.10.4 — 2026-08-14
 
 **Fixed**

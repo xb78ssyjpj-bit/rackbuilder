@@ -22,6 +22,7 @@
 // the single-file build shares one scope and an alias would collide.
 
 import { ALLEN_HEATH } from './devices/allen-heath.js';
+import { ANALOG_WAY } from './devices/analog-way.js';
 import { APC } from './devices/apc.js';
 import { ATEN } from './devices/aten.js';
 import { BEHRINGER } from './devices/behringer.js';
@@ -56,6 +57,7 @@ import './devices/cards.js';
 
 export const SEED_DEVICES = [
   ...ALLEN_HEATH,
+  ...ANALOG_WAY,
   ...APC,
   ...ATEN,
   ...BEHRINGER,

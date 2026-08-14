@@ -262,6 +262,17 @@ const P = {
   hdmi: { mm: 21, nat: 38, d(g, x, y) {
     path(g, `M${x - 19},${y - 8} h38 v10 l-5,5 h-28 l-5,-5 z`);
   } },
+  // DisplayPort. 24 mm is DERIVED, not read off a drawing: the DP receptacles
+  // in Analog Way's own Pulse 4K rear-panel photograph measure 1.15x the HDMI
+  // ones sitting beside them in the same shot, and this library's hdmi is
+  // 21 mm. The check on it is that 1.15 is also the ratio of the two published
+  // receptacle widths — 16.10 mm for DisplayPort against 14.0 mm for HDMI
+  // Type A — so the photo and the spec sheets agree.
+  // The chamfered corner is the whole point of the shape: a DP drawn as a
+  // plain rectangle is indistinguishable from an HDMI at panel scale.
+  displayport: { mm: 24, nat: 43, d(g, x, y) {
+    path(g, `M${x - 21.5},${y - 8} h43 v16 h-38 l-5,-5 z`);
+  } },
   usba: { mm: 15, nat: 26, d(g, x, y) {
     rect(g, x, y, 26, 12); path(g, `M${x - 8},${y - 2} h16`);
   } },
@@ -595,7 +606,7 @@ export const CONNECTOR_GROUPS = [
   ['Data / video', [
     ['bnc', 'BNC'], ['rj45', 'RJ45'], ['ethercon', 'etherCON'],
     ['opticalcon', 'opticalCON'], ['sfp', 'SFP/SFP+'], ['qsfp', 'QSFP'],
-    ['hdmi', 'HDMI'],
+    ['hdmi', 'HDMI'], ['displayport', 'DisplayPort'],
     ['usba', 'USB-A'], ['usbb', 'USB-B'], ['usbc', 'USB-C'], ['dsub', 'D-sub'],
     ['dcjack', 'DC barrel'],
   ]],
@@ -645,7 +656,8 @@ export const SHORT = {
   nl2: 'NL2', nl4: 'NL4', nl8: 'NL8',
   bnc: 'BNC', rj45: 'RJ45', ethercon: 'EC', opticalcon: 'OC',
   sfp: 'SFP', qsfp: 'QSFP',
-  hdmi: 'HDMI', usba: 'USBa', usbb: 'USBb', usbc: 'USBc', dsub: 'DSUB',
+  hdmi: 'HDMI', displayport: 'DP',
+  usba: 'USBa', usbb: 'USBb', usbc: 'USBc', dsub: 'DSUB',
   dcjack: 'DC',
   socket_in: 'SKOi', socket_thru: 'SKO', bs13a_thru: '13A',
   // Kept distinct on purpose: the code is the only thing telling an inlet from

@@ -894,6 +894,8 @@ stops a row of 16 A CEE fitting where a row of XLR would.
 | MIDI 5-pin DIN | 21 mm | 19 |
 | ADAT / optical (TOSLINK) | 13 × 11 mm | 31 |
 | IEC C13/C14 | 27 mm | 15 |
+| HDMI Type A | 21 mm | 19 |
+| DisplayPort | 24 mm | 16 |
 | 13 A / Schuko (rack modules) | 46 / 45 mm | 8 |
 | Socapex 19-pin, Powerlock | 50 mm | needs 2U — taller than a 1U row |
 | CEE 16 A / 32 A / 63 A / 125 A | 65 / 75-80 / 95 / 125 mm | needs 2–3U |
@@ -934,6 +936,22 @@ Three ways to grow it, in increasing effort:
    record; paste it back in. Ask it to cite the datasheet it used. This box also
    takes the output of **+ Device**'s Copy JSON, which is the way to hand a
    device you drew to somebody else.
+
+   **Working on the library from a Claude session, the research is worth
+   splitting off into a Haiku subagent** — one pass that finds the
+   documentation, extracts the specs, and *downloads a straight-on view of each
+   face to disk*. The picture is the half that matters and the half most likely
+   to be skipped: a spec list gives you an inventory, but only an elevation
+   tells you the order across the panel, and the order is what the drawing is
+   for. Point it at the manufacturer's **quick start guide** before the
+   datasheet — a QSG almost always carries a captioned front-and-rear panel
+   figure, which a datasheet almost never does. Analog Way's Pulse 4K was
+   entered this way and its QSG page 2 is the whole drawing.
+
+   If the pass hands back a PDF but no image, render the PDF's pages instead of
+   sending it hunting product photos — `pdftoppm -r 300 -png` gets you the
+   panel figure at readable resolution, and it is the manufacturer's own
+   artwork rather than a retailer's.
 3. **Edit `devices/<brand>.js`** — paste a Copy JSON record in, or hand-place
    elements for the devices you care most about. `ah-ar2412` and `db-d20` are the worked
    examples: both were drawn from the manufacturer's own orthographic front
