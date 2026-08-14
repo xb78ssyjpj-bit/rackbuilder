@@ -76,6 +76,25 @@ const qscAmpRear = (barrier = false) => ({ auto: [
   { t: 'nl4', n: 2, lbl: 'OUT' },
 ] });
 
+// Peak draw for the RMX and PLX2 amplifiers, supplied by the user as maximum
+// current at 230 V with the VA alongside — the VA column is exactly A x 230, so
+// storing it returns the same amps:
+//
+//   RMX 850 1955 · 1450 2875 · 1850HD 3680 · 2450 4715 · 4050HD 7556 · 5050 9741
+//   PLX2 1104 2415 · 1804 3680 · 1802 3818 · 2502 4255 · 3102 6325 · 3602 7245
+//
+// Recorded in `powerMax`, which is watts everywhere else. For a PFC-equipped
+// switch-mode amp the two are near enough the same; these are linear supplies,
+// where VA runs above real watts by the power factor. The figure that matters
+// for a breaker is the VA, so that is what is stored — but it is why the field
+// is a current rating rather than a heat figure.
+//
+// The RMX 5050 wants 42 A on its own. Anything past two of those on one feed is
+// a three-phase conversation, which this tool does not model.
+//
+// The ORIGINAL PLX series — 1202, 1602, 2402, 3002, 3402 — is absent from the
+// supplied table and still has typical draw only.
+
 export const QSC = [
   // -------------------------------------------------- L-Acoustics amps ---
   // RU heights, depths and weights were confirmed separately — L-Acoustics
@@ -161,32 +180,32 @@ export const QSC = [
   // models are 326 mm and 9.5 kg. Only the 02s reach 2 ohms and add binding
   // posts alongside the speakON.
   { id: 'qsc-plx1104', brand: 'QSC', model: 'PLX1104', category: 'audio',
-    ru: 2, depth: 227, weight: 5.9, power: 960,
+    ru: 2, depth: 227, weight: 5.9, power: 960, powerMax: 2415,
     src: 'https://www.qscaudio.com/resource-files/productresources/amp/plx2/q_amp_plx2_specs.pdf',
     front: qscLegacyFront(2, 'PLX1104'), rear: qscAmpRear() },
 
   { id: 'qsc-plx1804', brand: 'QSC', model: 'PLX1804', category: 'audio',
-    ru: 2, depth: 227, weight: 5.9, power: 1128,
+    ru: 2, depth: 227, weight: 5.9, power: 1128, powerMax: 3680,
     src: 'https://www.qscaudio.com/resource-files/productresources/amp/plx2/q_amp_plx2_specs.pdf',
     front: qscLegacyFront(2, 'PLX1804'), rear: qscAmpRear() },
 
   { id: 'qsc-plx1802', brand: 'QSC', model: 'PLX1802', category: 'audio',
-    ru: 2, depth: 326, weight: 9.5, power: 1044,
+    ru: 2, depth: 326, weight: 9.5, power: 1044, powerMax: 3818,
     src: 'https://www.qscaudio.com/resource-files/productresources/amp/plx2/q_amp_plx2_specs.pdf',
     front: qscLegacyFront(2, 'PLX1802'), rear: qscAmpRear() },
 
   { id: 'qsc-plx2502', brand: 'QSC', model: 'PLX2502', category: 'audio',
-    ru: 2, depth: 326, weight: 9.5, power: 900,
+    ru: 2, depth: 326, weight: 9.5, power: 900, powerMax: 4255,
     src: 'https://www.qscaudio.com/resource-files/productresources/amp/plx2/q_amp_plx2_specs.pdf',
     front: qscLegacyFront(2, 'PLX2502'), rear: qscAmpRear() },
 
   { id: 'qsc-plx3102', brand: 'QSC', model: 'PLX3102', category: 'audio',
-    ru: 2, depth: 326, weight: 9.5, power: 1140,
+    ru: 2, depth: 326, weight: 9.5, power: 1140, powerMax: 6325,
     src: 'https://www.qscaudio.com/resource-files/productresources/amp/plx2/q_amp_plx2_specs.pdf',
     front: qscLegacyFront(2, 'PLX3102'), rear: qscAmpRear() },
 
   { id: 'qsc-plx3602', brand: 'QSC', model: 'PLX3602', category: 'audio',
-    ru: 2, depth: 326, weight: 9.5, power: 1380,
+    ru: 2, depth: 326, weight: 9.5, power: 1380, powerMax: 7245,
     src: 'https://www.qscaudio.com/resource-files/productresources/amp/plx2/q_amp_plx2_specs.pdf',
     front: qscLegacyFront(2, 'PLX3602'), rear: qscAmpRear() },
 
@@ -194,32 +213,32 @@ export const QSC = [
   // "less than 16 inches", never a number, so 400 mm is a ceiling not a
   // measurement. The HD models add a protect LED per channel.
   { id: 'qsc-rmx850', brand: 'QSC', model: 'RMX850', category: 'audio',
-    ru: 2, depth: 400, weight: 15.9, power: 540, approx: true,
+    ru: 2, depth: 400, weight: 15.9, power: 540, powerMax: 1955, approx: true,
     src: 'https://www.qscaudio.com/resource-files/productresources/amp/discontinued/rmx/q_amp_rmx_series_specs.pdf',
     front: qscLegacyFront(2, 'RMX850'), rear: qscAmpRear(true) },
 
   { id: 'qsc-rmx1450', brand: 'QSC', model: 'RMX1450', category: 'audio',
-    ru: 2, depth: 400, weight: 18.2, power: 720, approx: true,
+    ru: 2, depth: 400, weight: 18.2, power: 720, powerMax: 2875, approx: true,
     src: 'https://www.qscaudio.com/resource-files/productresources/amp/discontinued/rmx/q_amp_rmx_series_specs.pdf',
     front: qscLegacyFront(2, 'RMX1450'), rear: qscAmpRear(true) },
 
   { id: 'qsc-rmx1850hd', brand: 'QSC', model: 'RMX1850HD', category: 'audio',
-    ru: 2, depth: 400, weight: 20.2, power: 732, approx: true,
+    ru: 2, depth: 400, weight: 20.2, power: 732, powerMax: 3680, approx: true,
     src: 'https://www.qscaudio.com/resource-files/productresources/amp/discontinued/rmx/q_amp_rmx_series_specs.pdf',
     front: qscLegacyFront(2, 'RMX1850HD', true), rear: qscAmpRear(true) },
 
   { id: 'qsc-rmx2450', brand: 'QSC', model: 'RMX2450', category: 'audio',
-    ru: 2, depth: 400, weight: 20.2, power: 756, approx: true,
+    ru: 2, depth: 400, weight: 20.2, power: 756, powerMax: 4715, approx: true,
     src: 'https://www.qscaudio.com/resource-files/productresources/amp/discontinued/rmx/q_amp_rmx_series_specs.pdf',
     front: qscLegacyFront(2, 'RMX2450'), rear: qscAmpRear(true) },
 
   { id: 'qsc-rmx4050hd', brand: 'QSC', model: 'RMX4050HD', category: 'audio',
-    ru: 3, depth: 400, weight: 30.8, power: 1200, approx: true,
+    ru: 3, depth: 400, weight: 30.8, power: 1200, powerMax: 7556, approx: true,
     src: 'https://www.qscaudio.com/resource-files/productresources/amp/discontinued/rmx/q_amp_rmx_series_specs.pdf',
     front: qscLegacyFront(3, 'RMX4050HD', true), rear: qscAmpRear(true) },
 
   { id: 'qsc-rmx5050', brand: 'QSC', model: 'RMX5050', category: 'audio',
-    ru: 3, depth: 400, weight: 33.1, power: 1668, approx: true,
+    ru: 3, depth: 400, weight: 33.1, power: 1668, powerMax: 9741, approx: true,
     src: 'https://www.qscaudio.com/resource-files/productresources/amp/discontinued/rmx/q_amp_rmx_series_specs.pdf',
     front: qscLegacyFront(3, 'RMX5050', true), rear: qscAmpRear(true) },
 ];

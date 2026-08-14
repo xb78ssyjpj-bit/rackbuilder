@@ -218,22 +218,22 @@ the prose.
   **Martin Audio landed in v1.10.1** — iK41, iK42, iK81 and the four VIAs all
   carry idle and peak. That was the last brand with no draw data at all.
 
-  What is left across the whole amplifier section: **QSC PLX/PLX2/RMX** have a
-  typical figure but no peak, and QSC's own "severe, 1/3 power" row is what
-  belongs in `powerMax`; **QSC PLD4.2/4.3/4.5** have neither, QSC publishing
-  heat loss rather than mains draw for those; **L-Acoustics P1** and **d&b
-  DS100** publish nothing and are processors rather than amps.
+  What is left across the whole amplifier section, after v1.10.2: **QSC PLX
+  1202/1602/2402/3002/3402** — the original series, typical only; **QSC
+  PLD4.2/4.3/4.5** — neither figure, QSC publishing heat loss rather than mains
+  draw; **d&b D6 and D12** — typical only, and a programme row at that;
+  **L-Acoustics P1** and **d&b DS100** — publish nothing, both processors.
+  49 devices, 44 with an idle figure, 33 with a peak.
 
   **D6 and D12 are the remaining inconsistency**: their `power` is a
   programme row off the power balance table, not idle like every other amp.
 
-- **The QSC figures are 1/8-power typical, not worst case.** QSC's own tables
-  also give a "severe, 1/3 power" current that runs 1.5-2x higher. `power` here
-  carries the typical row because that is what the summary is for; **do not size
-  a breaker from the summary.** A second field for peak draw would be the honest
-  fix — and arrived in v1.9.0 as **`powerMax`**, with its own summary rows.
-  So the QSC amps should now get that 1/3-power row entered as their peak,
-  rather than the warning being the only mitigation.
+- ~~The QSC figures are 1/8-power typical, not worst case~~ — **peak added in
+  v1.10.2** for the RMX and PLX2 ranges, as maximum current at 230 V, so there
+  is a figure to size from and the old "do not size a breaker from the summary"
+  warning is retired. `power` still carries the 1/8-power typical row.
+  **The original PLX series — 1202, 1602, 2402, 3002, 3402 — was not in the
+  supplied table and still has typical only.**
 - ~~The D20's 400 W has never been verified~~ — **corrected in v1.9.0.** It was
   not any real figure: the manual gives standby 9 W, idle 48 W, max 2.2 kW.
 - **L-Acoustics front panels are indicative, not drawn from source.** Their spec

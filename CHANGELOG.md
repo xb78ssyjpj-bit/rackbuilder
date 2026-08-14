@@ -19,6 +19,52 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.10.2 — 2026-08-13
+
+**Added**
+
+- **Peak draw for the QSC RMX and PLX2 amplifiers**, supplied by the user as
+  maximum current at 230 V:
+
+  | RMX | A | PLX2 | A |
+  |---|---|---|---|
+  | 850 | 8.50 | 1104 | 10.50 |
+  | 1450 | 12.50 | 1804 | 16.00 |
+  | 1850HD | 16.00 | 1802 | 16.60 |
+  | 2450 | 20.50 | 2502 | 18.50 |
+  | 4050HD | 32.85 | 3102 | 27.50 |
+  | 5050 | 42.35 | 3602 | 31.50 |
+
+  Two RMX5050s read **14.5 A idle, 84.7 A peak**.
+
+  Stored as the VA figure, which is exactly current × 230 and so returns the
+  same amps. Worth knowing that `powerMax` is watts everywhere else in the
+  library: for a PFC-equipped switch-mode amp the two are near enough the same,
+  but these are **linear supplies**, where VA runs above real watts by the power
+  factor. The VA is the figure a breaker cares about, so the VA is what is
+  stored.
+
+  **This retires the warning that has stood on the QSC entries since they were
+  added** — "the figures are 1/8-power typical, do not size a breaker from the
+  summary". There is now a peak to size from.
+
+**Where the amplifier section stands**
+
+49 devices across d&b, L-Acoustics, Martin and QSC: **44 with an idle figure, 33
+with a peak.** What is left:
+
+- **QSC PLX 1202 / 1602 / 2402 / 3002 / 3402** — the *original* PLX series,
+  absent from the supplied table. Typical draw only.
+- **QSC PLD4.2 / 4.3 / 4.5** — neither figure; QSC publish heat loss rather than
+  mains draw for these.
+- **d&b D6 and D12** — typical only, and theirs is still a programme row rather
+  than an idle one.
+- **d&b DS100, L-Acoustics P1** — publish nothing; both are processors.
+- **L-Acoustics LS10 and the Martin DX processors** — one published figure each,
+  no idle/peak split, which is reasonable for what they are.
+
+---
+
 ## v1.10.1 — 2026-08-13
 
 **Added**
