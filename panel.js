@@ -189,6 +189,15 @@ const P = {
     dFlange(g, x, y); bore(g, x, y); shade(g, x, y, 12); ring(g, x, y, 12);
     XLR3.forEach(([a, b]) => pin(g, x + a, y + b, 3.6));
   } },
+  // 5-pin XLR, the intercom headset connector. Same Neutrik D shell as a
+  // 3-pin — 24 x 31 mm — so it is the pin count that distinguishes it, which
+  // is exactly what `contacts` is for. Drawn female because a panel-mount
+  // headset socket is: the headset's own connector is the male half.
+  xlr5f: { mm: 24, mmH: 31, nat: D_W, d(g, x, y) {
+    dFlange(g, x, y); bore(g, x, y); ring(g, x, y, 12);
+    contacts(g, x, y, 5, 6.4, 2.4, false);
+    rect(g, x, y - 13.5, 6, 5, 1.4);
+  } },
   combo: { mm: 24, mmH: 31, nat: D_W, d(g, x, y) {
     dFlange(g, x, y); bore(g, x, y); ring(g, x, y, 12);
     XLR3.forEach(([a, b]) => ring(g, x + a, y + b, 2.6));
@@ -595,7 +604,7 @@ export const heightMM = (t) => (P[t] && (P[t].mmH || P[t].mm)) || 0;
 // ---------------------------------------------------------------------------
 export const CONNECTOR_GROUPS = [
   ['Audio', [
-    ['xlrf', 'XLR female'], ['xlrm', 'XLR male'], ['combo', 'Combo XLR/jack'],
+    ['xlrf', 'XLR female'], ['xlrm', 'XLR male'], ['xlr5f', 'XLR 5-pin (intercom)'], ['combo', 'Combo XLR/jack'],
     ['trs', '1/4" TRS (balanced / stereo)'], ['ts', '1/4" TS (unbalanced)'],
     ['jack', '1/4" jack — type not recorded'], ['minijack', '3.5 mm jack'],
     ['euroblock', 'Euroblock 3-pin'],
@@ -650,7 +659,7 @@ export const PATCH_TYPES = PATCH_GROUPS.flatMap(([, l]) => l);
 // Compact codes for the patch-grid cells — "spe" told you nothing.
 // Suffix i / o distinguishes inlet from outlet where both exist.
 export const SHORT = {
-  xlrf: 'XLRf', xlrm: 'XLRm', combo: 'XLR/TRS',
+  xlrf: 'XLRf', xlrm: 'XLRm', xlr5f: 'XLR5', combo: 'XLR/TRS',
   trs: 'TRS', ts: 'TS', jack: 'JACK', minijack: '3.5',
   euroblock: 'EURO', toslink: 'ADAT', midi: 'MIDI', rca: 'RCA',
   nl2: 'NL2', nl4: 'NL4', nl8: 'NL8',

@@ -27,6 +27,7 @@ import { APC } from './devices/apc.js';
 import { ATEN } from './devices/aten.js';
 import { BARCO } from './devices/barco.js';
 import { BEHRINGER } from './devices/behringer.js';
+import { BLACKMAGIC_DESIGN } from './devices/blackmagic-design.js';
 import { CISCO } from './devices/cisco.js';
 import { CLEAR_COM } from './devices/clear-com.js';
 import { D_B_AUDIOTECHNIK } from './devices/db-audiotechnik.js';
@@ -63,6 +64,7 @@ export const SEED_DEVICES = [
   ...ATEN,
   ...BARCO,
   ...BEHRINGER,
+  ...BLACKMAGIC_DESIGN,
   ...CISCO,
   ...CLEAR_COM,
   ...D_B_AUDIOTECHNIK,

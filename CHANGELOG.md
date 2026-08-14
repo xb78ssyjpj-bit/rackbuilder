@@ -19,6 +19,82 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.10.7 — 2026-08-14
+
+**Added**
+
+- **Blackmagic Design ATEM 2 M/E Constellation HD** — 1U live production
+  switcher. New brand, third entry in **Video**.
+
+  Both faces hand-placed from Blackmagic's ATEM Constellation Switchers manual
+  (June 2026), pages 10 and 11. Page 10's rear figure is captioned "3G-SDI and
+  1/4" analog audio inputs on **ATEM 2 M/E Constellation HD**", so it is this
+  exact model rather than a family illustration, and both figures are
+  orthographic line drawings.
+
+  | | |
+  |---|---|
+  | Rear | C14, `CONTROL` + `TALKBACK` RJ45, USB-C, `REF IN`, `SDI IN 1-20`, `SDI OUT 1-12`, `MULTIVIEW 1-2`, `ANALOG AUDIO IN CH 1/2` |
+  | Front | 5-pin XLR headset, 6 talkback buttons, 20 source buttons, CUT/AUTO, 12-button grid, LCD, knob, MENU/SET/LOCK |
+  | | 1U, 52 W. **No depth, no weight — Blackmagic publish neither.** |
+
+- **An `xlr5f` primitive** — 5-pin XLR, the intercom headset connector. Same
+  Neutrik D shell as a 3-pin, so the pin count is the whole difference.
+
+**Fixed — a real bug found while doing this, and only half fixed**
+
+**The Pulse 4K (v1.10.5) and PDS-4K (v1.10.6) panels are drawn ~12% too
+narrow.** Both were hand-placed by mapping the source drawing's ear-to-ear span
+onto viewBox `62..938`. That is wrong — `62`/`938` are `EAR_L`/`EAR_R`, the
+*inner* edges of the rack ears. The panel's full 482.6 mm is `0..1000`.
+
+Connectors are still drawn at true size and the order and relative spacing are
+right, so the panels read correctly; the positions just are not the real ones
+and neither uses the full width of its face.
+
+**The one-line fix was tried and reverted.** `(x - 62) x 1000/876` undoes the
+mapping exactly, but propagates a second error underneath — the pixel spans
+measured were each panel's *body*, not its ear-to-ear outer edge. Transformed,
+the Barco's `MVR` lands at x=952 and its LEDs sit on the rack ear. Shipping
+that to fix a subtle imprecision would have been a bad trade, so **both devices
+are recorded in TODO §8e as needing a proper re-measure** rather than a blanket
+multiply. The ATEM was measured correctly from the start and is the reference.
+
+**Research pass, run 3 — by hand, for comparison**
+
+| | Pulse 4K (Haiku) | PDS-4K (Haiku) | ATEM 2 M/E (by hand) |
+|---|---|---|---|
+| Subagent tokens | 99,322 | 91,018 | **0** |
+| Tool calls | 69 | 56 | **~30, all in the main thread** |
+| Wall clock | 6m07s | 6m48s | longer, and interactive throughout |
+| Images | none | 3, too coarse to read | rendered from the manual |
+| Blocked on | — | — | **needed one question answered** |
+
+The by-hand run cost no subagent tokens but spent main-thread context instead —
+which is the expensive kind, since it stays in the conversation. It also hit
+three dead ends the Haiku pass would have absorbed silently: three guessed
+manual URLs 404'd, B&H returned 403 to `curl`, and Blackmagic's support pages
+render client-side so the real filename
+(`ATEM_Constellation_Switchers_Manual.pdf`) had to be read out of the DOM in a
+browser.
+
+The real difference is **judgement**, not cost. "ATEM Constellation" is eight
+switchers across 1U and 2U, one of them 2/3-rack width. Working in the main
+thread that ambiguity surfaced as a question; a subagent would have picked one
+and reported it as fact.
+
+**Soft spots, flagged**
+
+- **No depth means the device is invisible in the side elevation.** `itemDepth`
+  returns 0, the box gets `width="0"`. The other 219 devices all have a depth
+  so this has never bitten. TODO §8e.
+- **Only the 2 M/E of eight.** The 1 M/E is 2/3-rack width, which the layout
+  model cannot express. The 4 M/E is 2U with **two** internal PSUs.
+- **52 W went in `power`, not `powerMax`** — Blackmagic label it "Power Usage",
+  which reads as operating draw, unlike Barco's unlabelled "Input power".
+
+---
+
 ## v1.10.6 — 2026-08-14
 
 **Added**

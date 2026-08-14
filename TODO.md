@@ -425,6 +425,61 @@ assets.barco.com rather than a reseller, which the Pulse 4K's did not.
 - **Front and rear both silkscreen a port simply `USB`.** They read `USB FRONT`
   / `USB REAR`, the same kind of departure as the Pulse 4K's `IN #1 SDI`.
 
+## 8e. Blackmagic Design — and a scale bug in the two entries before it
+
+The **ATEM 2 M/E Constellation HD** (v1.10.7) was researched **by hand** rather
+than by the Haiku pass, to compare the two methods. See the CHANGELOG for the
+cost comparison.
+
+### The scale bug — REAL, SHIPPED, AND STILL OPEN
+
+**`analogway-pulse-4k` (v1.10.5) and `barco-pds-4k` (v1.10.6) are drawn about
+12% too narrow.** Both were hand-placed by measuring each source drawing's
+ear-to-ear span and mapping it onto viewBox `62..938`. That is wrong: `62` and
+`938` are `EAR_L` and `EAR_R`, the *inner* edges of the rack ears. The panel's
+full 482.6 mm is `0..1000` — `MM = W / 482.6`, so one mm is 2.0721 units and
+the whole viewBox width is the panel.
+
+Everything on those two faces is therefore compressed toward the centre by
+876/1000. Connectors are still drawn at TRUE SIZE (the primitives scale off
+`MM` independently) and the order and relative spacing are right, so the panels
+read correctly — but the positions are not the real ones, and neither panel
+uses the full width of its face.
+
+**The obvious fix does not work and was tried and reverted.** Applying
+`(x - 62) x 1000/876` undoes the mapping exactly, but it faithfully propagates
+a second error underneath: the pixel spans I measured were the panel *body*,
+not the ear-to-ear outer edge. Transformed, the Barco's `MVR` lands at x=952
+and its indicator LEDs sit on the rack ear. **Both devices need re-measuring
+from their source drawings against the true ear-to-ear span, not a blanket
+multiply.**
+
+The ATEM was measured correctly from the start and is the reference for how it
+should be done: find the outermost extent of the rack ears in the drawing, call
+that 0 and 1000, and place everything as a fraction of it.
+
+### What the ATEM itself raised
+
+- **Blackmagic publish no depth and no weight for any Constellation.** The tech
+  specs say "Physical Installation: 1 Rack Unit Size" and stop. Both fields are
+  absent rather than estimated.
+- **A device with no depth draws NOTHING in the side elevation.** `itemDepth()`
+  returns 0, the box gets `width="0"`, and the device silently vanishes from
+  the one view that exists to show depth. Every one of the other 219 devices
+  has a depth, so this has never bitten before. It needs a decision: a hatched
+  "depth not published" box, a minimum sliver, or a note in the side view.
+- **The 1 M/E Constellation HD is 2/3 rack width** — not full, not half. Same
+  class of problem as the 1/3-rack Shure ANI4IN in §9c, and it is why only the
+  2 M/E is in. It mounts in a Blackmagic Universal Rack Shelf.
+- **Only the 2 M/E of eight.** The 4 M/E HD is 2U with **two** internal PSUs
+  and BNC MADI in/out — the library has no device drawn with two mains inlets,
+  so it would exercise something new. The 4K variants and the Constellation 8K
+  are separate research again.
+- **The talkback XLR is on the FRONT**, with an RJ45 marked `TALKBACK` on the
+  rear for third-party intercom. `xlr5f` is a new primitive for it.
+- **The source-button numerals are not drawn.** Twenty buttons across 1U puts
+  them ~32 units apart and they turn to mush, same as §9's connector numbering.
+
 ## 9. Smaller things
 
 - Individual connector numbering on high-density panels (DX168 etc.) is dropped
