@@ -19,6 +19,38 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.10.4 — 2026-08-14
+
+**Fixed**
+
+- **The GitHub Pages site has been broken since v1.8.0.** It served a white
+  page: `devices/_lib.js` returned **404** while every other file in
+  `devices/` returned 200.
+
+  Pages runs the source through **Jekyll**, and Jekyll excludes any file or
+  directory whose name begins with an underscore. `devices/_lib.js` was created
+  by the v1.8.0 library split — the underscore marks it as the shared helper
+  rather than a manufacturer — and from that release on, the published site
+  imported a module that was not there. Four releases went out over the top of
+  it.
+
+  Fixed with a `.nojekyll` marker at the repository root, which turns Jekyll
+  off and serves the tree verbatim.
+
+**Why nobody caught it**
+
+Every Pages deployment reported **success**, including the four that shipped the
+broken site, because the deploy genuinely did succeed — it published a directory
+with one file quietly filtered out of it. A green tick on the Actions tab is a
+claim about the upload, not about whether the page loads. The only thing that
+would have caught this is opening the published URL, which no step in
+`tools/release.py` does.
+
+Nothing else in the repository starts with an underscore, so this was the only
+casualty — checked rather than assumed.
+
+---
+
 ## v1.10.3 — 2026-08-14
 
 **Fixed**

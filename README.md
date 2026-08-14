@@ -83,6 +83,13 @@ Follow the existing policy: **work from the manufacturer's own documentation, an
 where it does not say, leave it out and note it in `TODO.md` rather than guess.**
 Half the entries here carry a comment explaining what was and was not verified.
 
+**A filename starting with `_` needs the `.nojekyll` file at the repository
+root to survive.** GitHub Pages runs the tree through Jekyll, which drops
+anything underscore-prefixed — that silently 404'd `devices/_lib.js` on the
+published site for four releases while every deployment reported success. The
+marker file turns Jekyll off. Don't delete it, and if you add another `_`-named
+file, load the Pages URL once to check.
+
 ### Two people editing the library
 
 The library is a folder — `devices/`, one module per brand — so two people
