@@ -13,6 +13,32 @@
 // standard the rest of this library is held to, and it is what the socket
 // names below are read off.
 //
+// THE FRONT WAS RE-MEASURED IN v1.10.8. The v1.10.5 originals mapped the
+// photograph onto x 62..938, which are EAR_L/EAR_R — the *inner* edges of the
+// rack ears — and so drew the face about 12% too narrow. The panel's full
+// 482.6 mm is 0..1000, because MM = W / 482.6.
+//
+// The QSG image is 2443 px wide at 300 dpi and shows the unit with its rack
+// ears fitted, so the ear-to-ear span is directly measurable: the outermost
+// ink runs x 117..2344 over every row the ears occupy (y 220..500), a span of
+// 2227 px, and that span is a 19" panel by definition — an ear that did not
+// reach 482.6 mm would not bolt to a rack. The face runs y 113..534 (422 px),
+// which at the same scale is 91.4 mm. So x = (px - 117) * 1000/2227 and
+// y = (px - 113) * 200/422. The rear is `auto` and carries no coordinates,
+// so it was never affected.
+//
+// The photograph has almost no horizontal keystone to correct for: the face
+// measures 2227 px wide at y 220 and 2226 px at y 500, drifting 2-3 px right
+// down the face, which is a fraction of a degree of roll rather than
+// perspective. The vertical IS foreshortened — the top surface of the case is
+// visible — which is why the rear was left `auto` and why only the front's
+// left-to-right order was ever taken from it.
+//
+// ONE FIGURE THE RE-MEASURE PUTS IN DOUBT: at 2227 px = 482.6 mm the chassis
+// body between the ears measures 2096 px = 454 mm, against the 440 mm recorded
+// above from the research pass. A photograph is not a specification, but 440
+// is one of the numbers §8c already says is owed a manual check.
+//
 // Only the Pulse 4K is here. Pulse², Pulse²-3G and Pulse²-H are all
 // discontinued, and this library does not carry discontinued lines — see the
 // Martin Audio note in TODO §7. They also need connector primitives that do
@@ -56,38 +82,44 @@ export const ANALOG_WAY = [
     src: 'https://www.analogway.com/products/pulse-4k',
     front: { elements: [
       // left cluster — standby, monitor select, USB host
-      { t: 'button', x: 141, y: 92, w: 24, h: 24 },
-      { t: 'button', x: 141, y: 130, w: 26, h: 18 },
-      { t: 'usba', x: 141, y: 166, lbl: 'USB' },
-      // 480 x 272 colour LCD
-      { t: 'display', x: 264, y: 120, w: 184, h: 104 },
+      { t: 'button', x: 90.7, y: 61.6, w: 23.3, h: 23.7 },
+      { t: 'button', x: 90.7, y: 118, w: 23.3, h: 21.8 },
+      { t: 'usba', x: 90.7, y: 162.6, lbl: 'USB' },
+      // 480 x 272 colour LCD — the glass measures 447 x 254 px, which is 16:9
+      { t: 'display', x: 228.3, y: 99.8, w: 200.7, h: 120.4 },
       // menu scroll knob, with Exit/Menu and Enter below it
-      { t: 'knob', x: 395, y: 112, r: 30 },
-      { t: 'button', x: 375, y: 172, w: 30, h: 18 },
-      { t: 'button', x: 413, y: 172, w: 30, h: 18 },
+      { t: 'knob', x: 392, y: 87.7, r: 44.9 },
+      { t: 'button', x: 367.8, y: 145.3, w: 29.6, h: 30.3 },
+      { t: 'button', x: 405.9, y: 145.3, w: 29.6, h: 30.3 },
       // SCREEN 1 — BKG Set, Layer 1, Layer 2, Image, Load Preset
-      { t: 'button', x: 468, y: 82, n: 5, gap: 33, w: 28, h: 20 },
+      { t: 'button', x: 467.9, y: 65.4, n: 5, gap: 37.7, w: 29.6, h: 31.3 },
       // MASTER (PGM PRW, Load Preset) then AUX (Input, Screen PGM, Load Preset)
-      { t: 'button', x: 468, y: 120, n: 5, gap: 33, w: 28, h: 20 },
+      { t: 'button', x: 467.9, y: 108.5, n: 5, gap: 37.7, w: 29.6, h: 31.3 },
       // SCREEN 2 — same five as SCREEN 1
-      { t: 'button', x: 468, y: 158, n: 5, gap: 33, w: 28, h: 20 },
+      { t: 'button', x: 467.9, y: 152.1, n: 5, gap: 37.7, w: 29.6, h: 31.3 },
       // SELECT keypad, 1-5 over 6-10
-      { t: 'button', x: 652, y: 82, n: 5, gap: 33, w: 28, h: 20 },
-      { t: 'button', x: 652, y: 120, n: 5, gap: 33, w: 28, h: 20 },
+      { t: 'button', x: 680.5, y: 65.2, n: 5, gap: 37.4, w: 29.6, h: 31.3 },
+      { t: 'button', x: 680.5, y: 108.3, n: 5, gap: 37.4, w: 29.6, h: 31.3 },
       // SHORTCUTS — Clear, Freeze, Quick Preset, right-aligned under the keypad
-      { t: 'button', x: 784, y: 158, n: 3, gap: 33, w: 28, h: 20 },
+      { t: 'button', x: 830, y: 150.5, n: 3, gap: 37, w: 29.6, h: 31.3 },
       // TAKE, sitting directly above Quick Preset
-      { t: 'button', x: 850, y: 82, w: 32, h: 20 },
-      { t: 'vent', x: 600, y: 38, w: 560, h: 16, pitch: 22 },
+      { t: 'button', x: 904.4, y: 64.2, w: 29.6, h: 31.3 },
+      // Ventilation. These are eleven long horizontal slots on a 135 px pitch,
+      // not the fine vertical louvre `vent` draws, so they are eleven `bar`
+      // rounded rectangles at the measured pitch — the shape the panel has.
+      // TOP BAND ONLY: the face carries three bands of these. See TODO §8e.
+      { t: 'bar', x: 301.3, y: 20.9, n: 11, gap: 60.7, w: 53.9, h: 8.5, rx: 4 },
     ], labels: [
-      { text: 'ANALOG WAY', x: 150, y: 42, size: 11, ls: .8 },
-      { text: 'Pulse 4K', x: 300, y: 188, size: 9, ls: .3 },
-      { text: 'SCREEN 1', x: 448, y: 64, size: 6, ls: .4 },
-      { text: 'MASTER', x: 448, y: 102, size: 6, ls: .4 },
-      { text: 'SCREEN 2', x: 448, y: 140, size: 6, ls: .4 },
-      { text: 'SELECT', x: 632, y: 64, size: 6, ls: .4 },
-      { text: 'SHORTCUTS', x: 758, y: 140, size: 6, ls: .4 },
-      { text: 'PLS-4K', x: 880, y: 188, size: 7, ls: .5 },
+      { text: 'ANALOG WAY', x: 149.5, y: 31.3, size: 15, ls: 1.5 },
+      { text: 'Pulse 4K', x: 266.3, y: 181, size: 12, ls: 1 },
+      { text: 'SCREEN 1', x: 441.4, y: 46.9, size: 9, ls: .7 },
+      { text: 'MASTER', x: 441.4, y: 90, size: 9, ls: .5 },
+      { text: 'AUX', x: 518.6, y: 90, size: 9, ls: .5 },
+      { text: 'SCREEN 2', x: 441.4, y: 133.6, size: 9, ls: .7 },
+      { text: 'SELECT', x: 658.3, y: 46.9, size: 9, ls: .5 },
+      { text: 'SHORTCUTS', x: 806, y: 133.6, size: 9, ls: .5 },
+      { text: 'PLS-4K', x: 903.9, y: 179.6, size: 8, ls: .5 },
+      { text: 'MONITOR', x: 73.2, y: 101.9, size: 8, ls: .5 },
     ] },
     rear: { auto: [
       { t: 'iec_in', n: 1, lbl: 'MAINS IN' },

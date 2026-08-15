@@ -13,6 +13,30 @@
 // A line drawing has no perspective to introduce error, so measuring x
 // positions off it is honest.
 //
+// EVERY COORDINATE BELOW WAS RE-MEASURED IN v1.10.8. The v1.10.6 originals
+// mapped the drawing onto x 62..938, which are EAR_L/EAR_R — the *inner* edges
+// of the rack ears — and so drew the whole panel about 12% too narrow. The
+// panel's full 482.6 mm is 0..1000, because MM = W / 482.6.
+//
+// The reference is the figure's own ink, not a guess:
+//   - Both figures place the outermost ink — the rack-ear slots — at a span of
+//     exactly 920 px (front 13..932, rear 18..937). Barco's own specification
+//     says "Width: 19.06" (484.1mm) – Rack ear to Rack Ear", so that 920 px is
+//     484.1 mm and x maps (px - edge) * 1000 / 920.
+//   - The chassis body inside those slots is 908 px in both figures, i.e.
+//     477.8 mm. This unit has almost no ear inset; it is very nearly a
+//     full-width panel.
+//   - y: the front bezel spans rows 84..209 (125 px) and the rear plate rows
+//     82..211 (129 px), which at that scale are 65.8 mm and 67.9 mm against
+//     Barco's stated 66.2 mm. Each face's own band maps onto the 150-unit box.
+// The independent check is the mains inlet: the C14 aperture measures 51 px,
+// which at 920 px = 484.1 mm is 26.8 mm against the IEC C14's real 27 mm.
+//
+// CONSEQUENCE WORTH KNOWING: measured properly, `MVR`, the TAKE button and the
+// rear mains lettering all sit outside x 62..938. That is not an error — this
+// app draws a 29.9 mm rack ear where a real 19" ear is 15.9 mm, so an
+// edge-to-edge panel like this one overruns it. See TODO §8e.
+//
 // THE HEIGHT IS THE INTERESTING PART. Barco give 6.62 cm, which is 1.49 rack
 // units, and this entry carries `ru: 1.5`. It is the first fractional-RU
 // device in the library. See TODO §8d — the occupancy maths handles it (a 1.5U
@@ -51,55 +75,62 @@ export const BARCO = [
   { id: 'barco-pds-4k', brand: 'Barco', model: 'PDS-4K',
     category: 'video', ru: 1.5, depth: 409, weight: 6.21, powerMax: 151,
     src: 'https://www.barco.com/en/product/pds-4k',
+    // Image 4-1. x = (px - 13) * 1000/920, y = (px - 84) * 150/125.
     front: { elements: [
-      // PWR and STBY indicators over the USB host port
-      { t: 'led', x: 103, y: 44 },
-      { t: 'led', x: 127, y: 44 },
+      // PWR and STBY indicators, below their lettering at the top of the face
+      { t: 'led', x: 57.6, y: 22.8 },
+      { t: 'led', x: 75, y: 22.8 },
       // Barco silkscreen this and the rear one both simply "USB", so the face
       // is added to keep the two socket names distinct — the same departure
       // the Pulse 4K's `IN #1 SDI` / `IN #1 HDMI` makes, and for the same
       // reason: an ambiguous patch list is a useless patch list.
-      { t: 'usba', x: 114, y: 78, lbl: 'USB FRONT' },
+      { t: 'usba', x: 64.7, y: 74.4, lbl: 'USB FRONT' },
       // display, ADJUST encoder (push to select), ESC
-      { t: 'display', x: 229, y: 71, w: 122, h: 92 },
-      { t: 'encoder', x: 330, y: 80, r: 17 },
-      { t: 'button', x: 366, y: 80, w: 22, h: 18 },
+      { t: 'display', x: 192.9, y: 74.4, w: 138, h: 127.2 },
+      { t: 'encoder', x: 310.3, y: 75, r: 19 },
+      { t: 'button', x: 353.3, y: 74.4, w: 34.8, h: 38.4 },
       // source buttons, ten per row — top row drives screen 1, bottom screen 2
-      { t: 'button', x: 409, y: 54, n: 10, gap: 38.7, w: 30, h: 32 },
-      { t: 'button', x: 409, y: 109, n: 10, gap: 38.7, w: 30, h: 32 },
+      { t: 'button', x: 397.8, y: 48, n: 10, gap: 43.84, w: 34.8, h: 38.4 },
+      { t: 'button', x: 397.8, y: 102, n: 10, gap: 43.84, w: 34.8, h: 38.4 },
       // LOGO/MATTE, FREEZE, TAKE — one set per row
-      { t: 'button', x: 798, y: 54, n: 3, gap: 43.5, w: 30, h: 32 },
-      { t: 'button', x: 798, y: 109, n: 3, gap: 43.5, w: 30, h: 32 },
+      { t: 'button', x: 835.9, y: 48, n: 3, gap: 52.17, w: 34.8, h: 38.4 },
+      { t: 'button', x: 835.9, y: 102, n: 3, gap: 52.17, w: 34.8, h: 38.4 },
     ], labels: [
-      { text: 'PDS-4K', x: 88, y: 112, size: 11, ls: .6 },
-      { text: 'ADJUST', x: 313, y: 52, size: 5, ls: .3 },
-      { text: 'ESC', x: 358, y: 52, size: 5, ls: .3 },
-      // the source numbers are printed BETWEEN the two rows and serve both
-      { text: '1', x: 406, y: 88, size: 6 }, { text: '2', x: 445, y: 88, size: 6 },
-      { text: '3', x: 484, y: 88, size: 6 }, { text: '4', x: 522, y: 88, size: 6 },
-      { text: '5', x: 561, y: 88, size: 6 }, { text: '6', x: 600, y: 88, size: 6 },
-      { text: '7', x: 638, y: 88, size: 6 }, { text: '8', x: 677, y: 88, size: 6 },
-      { text: '9', x: 716, y: 88, size: 6 }, { text: '10', x: 752, y: 88, size: 6 },
-      { text: 'LOGO', x: 786, y: 88, size: 5, ls: .2 },
-      { text: 'FREEZE', x: 826, y: 88, size: 5, ls: .2 },
-      { text: 'TAKE', x: 874, y: 88, size: 5, ls: .2 },
+      { text: 'PDS-4K', x: 36.3, y: 129.6, size: 15, ls: 1 },
+      { text: 'ADJUST', x: 293.5, y: 48, size: 9, ls: .3 },
+      { text: 'ESC', x: 345.7, y: 51.6, size: 8, ls: .3 },
+      // The source numbers are printed BETWEEN the two rows and serve both, so
+      // they are centred on their button rather than offset to the left of it.
+      { text: '1', x: 397.8, y: 79.2, size: 12, anchor: 'middle' },
+      { text: '2', x: 441.6, y: 79.2, size: 12, anchor: 'middle' },
+      { text: '3', x: 485.5, y: 79.2, size: 12, anchor: 'middle' },
+      { text: '4', x: 529.3, y: 79.2, size: 12, anchor: 'middle' },
+      { text: '5', x: 573.2, y: 79.2, size: 12, anchor: 'middle' },
+      { text: '6', x: 617, y: 79.2, size: 12, anchor: 'middle' },
+      { text: '7', x: 660.9, y: 79.2, size: 12, anchor: 'middle' },
+      { text: '8', x: 704.7, y: 79.2, size: 12, anchor: 'middle' },
+      { text: '9', x: 748.6, y: 79.2, size: 12, anchor: 'middle' },
+      { text: '10', x: 792.4, y: 79.2, size: 12, anchor: 'middle' },
+      { text: 'LOGO', x: 835.9, y: 78, size: 7, ls: .3, anchor: 'middle' },
+      { text: 'FREEZE', x: 888.1, y: 78, size: 7, ls: .3, anchor: 'middle' },
+      { text: 'TAKE', x: 940.2, y: 78, size: 7, ls: .3, anchor: 'middle' },
     ] },
-    // Hand-placed from Image 4-2, measured against the 19" ear-to-ear span.
+    // Image 4-2. x = (px - 18) * 1000/920, y = (px - 82) * 150/129.
     rear: { elements: [
-      { t: 'iec_in', x: 119, y: 104, lbl: 'MAINS IN' },
-      { t: 'usba', x: 173, y: 115, lbl: 'USB REAR' },
-      { t: 'rj45', x: 208, y: 114, lbl: 'ETHERNET' },
+      { t: 'iec_in', x: 74.5, y: 111.6, lbl: 'MAINS IN' },
+      { t: 'usba', x: 131, y: 119.2, lbl: 'USB REAR' },
+      { t: 'rj45', x: 168.5, y: 120.3, lbl: 'ETHERNET' },
       // the Option slot — a blanked, vented aperture on this model
-      { t: 'vent', x: 455, y: 49, w: 262, h: 84, pitch: 14 },
+      { t: 'vent', x: 450, y: 48.8, w: 304, h: 95, pitch: 15 },
       // six HDMI 2.0 inputs
-      { t: 'hdmi', x: 265, y: 121, n: 6, gap: 48.4,
+      { t: 'hdmi', x: 232.1, y: 128.5, n: 6, gap: 54.78,
         lbl: ['IN 1', 'IN 2', 'IN 3', 'IN 4', 'IN 5', 'IN 6'] },
       // four HDMI 2.0 programme outputs, in two pairs
-      { t: 'hdmi', x: 651, y: 121, n: 2, gap: 49, lbl: ['PGM 1A', 'PGM 1B'] },
-      { t: 'hdmi', x: 798, y: 121, n: 2, gap: 49, lbl: ['PGM 2A', 'PGM 2B'] },
-      // multiviewer output
-      { t: 'hdmi', x: 896, y: 121, lbl: 'MVR' },
+      { t: 'hdmi', x: 670.1, y: 128.5, n: 2, gap: 55.43, lbl: ['PGM 1A', 'PGM 1B'] },
+      { t: 'hdmi', x: 834.2, y: 128.5, n: 2, gap: 55.43, lbl: ['PGM 2A', 'PGM 2B'] },
+      // multiviewer output — hard against the right-hand end of the face
+      { t: 'hdmi', x: 944, y: 128.5, lbl: 'MVR' },
     ], labels: [
-      { text: '100-240V~ 50/60Hz, 2A', x: 76, y: 62, size: 5, ls: .2 },
+      { text: '100-240V~ 50/60Hz, 2A', x: 37, y: 57, size: 7, ls: .3 },
     ] } },
 ];

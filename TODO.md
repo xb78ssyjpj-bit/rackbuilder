@@ -431,32 +431,70 @@ The **ATEM 2 M/E Constellation HD** (v1.10.7) was researched **by hand** rather
 than by the Haiku pass, to compare the two methods. See the CHANGELOG for the
 cost comparison.
 
-### The scale bug — REAL, SHIPPED, AND STILL OPEN
+### ~~The scale bug~~ — fixed in v1.10.8 by re-measuring both
 
-**`analogway-pulse-4k` (v1.10.5) and `barco-pds-4k` (v1.10.6) are drawn about
-12% too narrow.** Both were hand-placed by measuring each source drawing's
-ear-to-ear span and mapping it onto viewBox `62..938`. That is wrong: `62` and
-`938` are `EAR_L` and `EAR_R`, the *inner* edges of the rack ears. The panel's
-full 482.6 mm is `0..1000` — `MM = W / 482.6`, so one mm is 2.0721 units and
-the whole viewBox width is the panel.
+`analogway-pulse-4k` (v1.10.5) and `barco-pds-4k` (v1.10.6) were drawn about
+12% too narrow, because both were hand-placed by mapping the source drawing's
+ear-to-ear span onto viewBox `62..938`. That is wrong: `62` and `938` are
+`EAR_L` and `EAR_R`, the *inner* edges of the rack ears. The panel's full
+482.6 mm is `0..1000` — `MM = W / 482.6`.
 
-Everything on those two faces is therefore compressed toward the centre by
-876/1000. Connectors are still drawn at TRUE SIZE (the primitives scale off
-`MM` independently) and the order and relative spacing are right, so the panels
-read correctly — but the positions are not the real ones, and neither panel
-uses the full width of its face.
+A blanket `(x - 62) x 1000/876` was tried in v1.10.7 and reverted, because it
+faithfully propagated a second error underneath: the pixel spans measured were
+each panel's *body*, not its ear-to-ear outer edge. Both faces were therefore
+**re-measured from source in v1.10.8**, against the outermost ink in each
+figure, with the mapping written into each device file so the next person can
+check it rather than trust it. Both were also cross-checked against a known
+dimension in their own drawing — the Barco's C14 aperture comes out 26.8 mm
+against a real 27 mm, the Pulse 4K's LCD comes out 16:9 for a 480x272 panel.
 
-**The obvious fix does not work and was tried and reverted.** Applying
-`(x - 62) x 1000/876` undoes the mapping exactly, but it faithfully propagates
-a second error underneath: the pixel spans I measured were the panel *body*,
-not the ear-to-ear outer edge. Transformed, the Barco's `MVR` lands at x=952
-and its indicator LEDs sit on the rack ear. **Both devices need re-measuring
-from their source drawings against the true ear-to-ear span, not a blanket
-multiply.**
+**What is still owed on these two:**
 
-The ATEM was measured correctly from the start and is the reference for how it
-should be done: find the outermost extent of the rack ears in the drawing, call
-that 0 and 1000, and place everything as a fraction of it.
+- **The Pulse 4K face carries three bands of ventilation slots and only the top
+  one is drawn.** The other two sit between the SCREEN 2 row and the SHORTCUTS
+  group, and along the bottom of the face. Measured the same way, they are half
+  an hour's work; they were left out to keep v1.10.8 a re-measure rather than a
+  redraw.
+- **The PDS-4K's mains inlet is a combined switch-and-inlet module** — Barco's
+  Image 4-2 shows a rocker above the C14, inside one flange. It is not drawn.
+  `breaker` is the nearest primitive and is a *portrait* rocker 18 mm wide,
+  where this is a landscape one about 30 x 12 mm, so drawing it with that would
+  be wrong about the thing it is meant to show. Needs a `rocker` primitive.
+- **The PDS-4K front has two panel step lines** at the top and bottom of the
+  source-button block, spanning most of the face. `line` would draw them.
+- **The Pulse 4K's recorded 440 mm body width is contradicted by the source
+  photograph**, which puts the body between the ears at 454 mm. §8c already
+  lists that figure as owed a manual check; this is a second reason to make it.
+
+### What the re-measure exposed: this app draws a rack ear twice as wide as a real one
+
+Measured honestly, the PDS-4K puts its `MVR` output, its TAKE button and its
+rear mains lettering **outside `EAR_L`..`EAR_R`**. That is not a measurement
+error — it is the app's ear convention being wrong, and it has been wrong since
+the beginning:
+
+| | app | real 19" |
+|---|---|---|
+| Ear inner edge | `EAR_L` 62 = **29.9 mm** | 15.9 mm (482.6 panel, 450.85 rack opening) |
+| Mounting hole centre | `chassis()` draws it at x 31 = **15.0 mm** | 8.75 mm (465.1 mm hole centres) |
+| Interior between ears | 876 = **422.8 mm** | 431.8 mm (two 215.9 mm half-rack boxes) |
+
+Nothing in the library has hit this before because every other device measured
+from a drawing has a body inset well clear of 30 mm. The PDS-4K does not: its
+chassis is 477.8 mm inside a 484.1 mm ear-to-ear panel, so it is very nearly
+edge-to-edge and its connectors run to within 16 mm of the panel edge.
+
+**This is a decision, not a bug fix.** Narrowing `EAR_L`/`EAR_R` moves the drawn
+ear on all 220 devices, changes `HALF_W` (which is derived from them, and whose
+own comment already notes it comes out 4.5 mm narrow per side), moves
+`FACE_L`/`FACE_R` and therefore every `auto` layout, and changes what
+`check.mjs` will accept. Worth doing — the numbers above say the current
+figures are guesses that nobody has checked — but worth doing deliberately and
+on its own.
+
+The ATEM was measured correctly from the start and is the second reference for
+how it should be done: find the outermost extent of the rack ears in the
+drawing, call that 0 and 1000, and place everything as a fraction of it.
 
 ### What the ATEM itself raised
 

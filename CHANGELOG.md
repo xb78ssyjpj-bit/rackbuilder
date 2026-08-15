@@ -19,6 +19,83 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.10.8 — 2026-08-15
+
+**Fixed**
+
+- **The Pulse 4K and PDS-4K panels are re-measured.** Both were drawn ~12% too
+  narrow since v1.10.5 and v1.10.6, because both mapped their source drawing
+  onto viewBox `62..938` — `EAR_L`/`EAR_R`, the *inner* edges of the rack ears
+  — where the panel's full 482.6 mm is `0..1000`. Every coordinate on three
+  faces was measured again from the manufacturers' own artwork. The blanket
+  multiply that v1.10.7 tried and reverted is not what happened here; the
+  drawings were re-read.
+
+  The mapping now lives in each device file as an arithmetic expression rather
+  than as a claim, so the next person can re-derive any number in it:
+
+  | | reference | mapping |
+  |---|---|---|
+  | PDS-4K front | Image 4-1, ear ink 13..933 px | `x = (px - 13) * 1000/920` |
+  | PDS-4K rear | Image 4-2, ear ink 18..938 px | `x = (px - 18) * 1000/920` |
+  | Pulse 4K front | QSG p2 photo, ear ink 117..2344 px | `x = (px - 117) * 1000/2227` |
+
+  Each face's own y band maps onto the device's unit box: the PDS-4K's front
+  bezel is rows 84..209 and its rear plate rows 82..211, which at that scale
+  are 65.8 mm and 67.9 mm against Barco's stated 66.2 mm.
+
+  **Both were checked against a known dimension inside their own drawing**,
+  which is the part that makes this trustworthy rather than merely different:
+
+  - The PDS-4K's **C14 aperture measures 51 px**, which at 920 px = 484.1 mm is
+    **26.8 mm against the IEC C14's real 27 mm.** Barco's specification says
+    "Width: 19.06" (484.1mm) – Rack ear to Rack Ear" in as many words, so the
+    920 px of outermost ink is a stated dimension, not an assumption.
+  - The Pulse 4K's **LCD measures 447 x 254 px — 16:9**, for a panel Analog Way
+    describe as 480 x 272. The photograph also has almost no keystone to
+    correct: the face is 2227 px wide at y 220 and 2226 px at y 500.
+
+- **The Pulse 4K's ventilation is drawn as what it is.** Eleven long horizontal
+  slots on a 135 px pitch, as `bar` rounded rectangles at the measured pitch,
+  rather than the fine vertical louvre `vent` draws. The old single `vent` also
+  started 60 px too far left and ran through the ANALOG WAY logo.
+
+**Added, because they are legible in the source and were missed**
+
+- The Pulse 4K's **`AUX` and `MONITOR`** panel lettering.
+- The PDS-4K's source numerals are now **centred on their button** with
+  `anchor: 'middle'` instead of offset to the left of it, which is what makes a
+  numeral printed between two rows land where it is printed.
+
+**What this exposed, and it is worth more than the fix**
+
+**This app draws a rack ear nearly twice as wide as a real one.** Measured
+honestly, the PDS-4K's `MVR`, its TAKE button and its rear mains lettering all
+land outside `EAR_L`..`EAR_R` and overlap the drawn ear.
+
+| | app | real 19" |
+|---|---|---|
+| Ear inner edge | `EAR_L` 62 = **29.9 mm** | 15.9 mm |
+| Mounting hole centre | x 31 = **15.0 mm** from the edge | 8.75 mm |
+| Interior between ears | 876 = **422.8 mm** | 431.8 mm |
+
+Nothing has hit this before because every other device drawn from a source has
+a body inset well clear of 30 mm. The PDS-4K does not — its chassis is 477.8 mm
+inside a 484.1 mm panel, so its connectors run to within 16 mm of the edge.
+Left alone deliberately: narrowing `EAR_L`/`EAR_R` moves the ear on all 220
+devices, changes `HALF_W` (derived from them, and already noted as 4.5 mm
+narrow per side), moves `FACE_L`/`FACE_R` and so every `auto` layout, and
+changes what `check.mjs` accepts. TODO §8e.
+
+**Still owed on these two**, all recorded in TODO §8e: the Pulse 4K's other two
+vent bands; the PDS-4K's combined rocker-and-inlet mains module, which needs a
+`rocker` primitive because `breaker` is a portrait switch and this is a
+landscape one; the PDS-4K's two front panel step lines. And the Pulse 4K's
+recorded 440 mm body width, which the photograph puts at 454 mm — §8c already
+had that figure down for a manual check.
+
+---
+
 ## v1.10.7 — 2026-08-14
 
 **Added**
