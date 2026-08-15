@@ -308,7 +308,7 @@ export const D_B_AUDIOTECHNIK = [
       // cannot say so on its own, which is exactly what `sig` is for.
       { t: 'xlrf', n: 2, sig: 'aes3', lbl: 'AES3 IN' },
       { t: 'xlrm', n: 8, sig: 'aes3', lbl: 'AES3 OUT' },
-      { t: 'ethercon', n: 2, lbl: ['DANTE PRI', 'DANTE SEC'] },
+      { t: 'ethercon', n: 2, sig: 'dante', lbl: ['DANTE PRI', 'DANTE SEC'] },
       { t: 'powercon_in', n: 1 },
     ] } },
 

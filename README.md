@@ -755,6 +755,35 @@ audio and a cable from one is an AES3 cable in the schedule. The d&b DS10 uses
 it. Note this carries the *signal*, not the channel count — AES3 is two channels
 per XLR, and nothing in the library counts channels yet.
 
+### Audio-over-IP is the same problem, and is declared the same way
+
+An etherCON is an etherCON whether it is speaking Dante or AES50, so every
+transport is a `sig` on the port too:
+
+```js
+{ t: 'ethercon', n: 2, sig: 'dante', lbl: ['DANTE PRI', 'DANTE SEC'] },
+{ t: 'ethercon', n: 2, sig: 'aes50', lbl: ['AES50 A', 'AES50 B'] },
+```
+
+`dante`, `aes50`, `slink`, `gigaace`, `dx`, `ultranet`, `soundgrid` and `madi`
+each get their own colour and their own filter chip. `network` is what is left:
+generic ethernet, control and console ports.
+
+**SLink is not a peer of the others, and that is why they are not a flat list.**
+It is a *port type*, not a protocol — Allen & Heath's guides say the port
+"automatically switches between dSnake/ME, DX and gigaACE/GX". So a port can be
+SLink *currently speaking gigaACE*, and `compatible()` in `flow.js` lets SLink
+patch to any of them without the crossing warning. It is a superset, not an
+equivalence: DX to gigaACE still warns, because only a port that can be either
+speaks to both.
+
+**Only what the manufacturer names gets a protocol.** An unnamed etherCON stays
+`network`. That is why a Yamaha Rio's Dante pair is `dante` and an Allen & Heath
+AudioRack's etherCON is not — the Rio's sockets are silkscreened and the
+AudioRack's declaration never recorded what its port speaks. Assigning one from
+the family a device appears to belong to is exactly the guess this library does
+not make; the devices owed that pass are listed in `TODO.md` §9c.
+
 Two sockets on one device must never share a label — the ids stay unique so
 patching still works, but an ambiguous patch list is a useless patch list. The
 whole library is checked for this.

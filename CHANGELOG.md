@@ -19,6 +19,70 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.11.0 — 2026-08-15
+
+**Added — audio-over-IP transports are their own signal families**
+
+Until now Dante, AES50, ULTRANET, SLink and a laptop's ethernet were all
+`network`. They drew the same colour, filtered as one thing, and the flow view
+would patch any of them to any other without a word. An SQ-Rack's `SLINK` and
+its `NETWORK` port were indistinguishable on the graph, which is the specific
+complaint TODO §9c has carried since the flow view shipped.
+
+Eight families now: **`dante`, `aes50`, `slink`, `gigaace`, `dx`, `ultranet`,
+`soundgrid`, `madi`**. `network` is what is left — generic ethernet, control and
+console. They are declared with `sig` on the port, the same mechanism that
+already carries AES3 on an XLR, because an etherCON is an etherCON whether it is
+speaking Dante or AES50:
+
+```js
+{ t: 'ethercon', n: 2, sig: 'dante', lbl: ['DANTE PRI', 'DANTE SEC'] },
+{ t: 'ethercon', n: 2, sig: 'aes50', lbl: ['AES50 A', 'AES50 B'] },
+```
+
+**SLink is a superset, and that is the whole reason this is not a flat list.**
+It is a *port type*, not a protocol: Allen & Heath's guides say it "automatically
+switches between dSnake/ME, DX and gigaACE/GX", and the SQ SLink card's own copy
+says "gigaACE, GX, DX, or dSnake connectivity". So a port can be SLink
+*currently speaking gigaACE*, and `compatible()` in `flow.js` lets SLink patch to
+any of them without the crossing warning. It stops there: **DX to gigaACE still
+warns**, because only a port that can be either speaks to both. Modelling these
+as peers in a flat list would have got that wrong in both directions.
+
+Colour: SLink, gigaACE and DX are drawn in one yellow-green-to-green band on
+purpose — they are the three that legally patch to each other, so the cable
+colours read as a family. Every pair in the palette is at least ΔE 23 apart in
+CIELAB, which is further apart than speaker/multipin (16) and aes3/network (23),
+both of which the app already shipped.
+
+**Only what the manufacturer names got a protocol.** 39 sockets across the
+library and the option cards, every one of them silkscreened: the Yamaha Rio and
+Tio Dante pairs, the d&b DS10, the Analog Way Pulse 4K, Behringer's AES50 A/B and
+ULTRANET on the X32 RACK and S16, the SQ-Rack's SLINK, and the A&H card range —
+Dante, SLink, SoundGrid, DX Link, gigaACE and both MADI cards, coax and SFP.
+
+**690 network sockets are deliberately left generic.** An unnamed etherCON stays
+`network`. In reality a DT168 is Dante and a DX168 is DX, but neither device's
+declaration records that, and assigning a protocol from the family a device
+appears to belong to is exactly the guess this library does not make. TODO §9c
+lists them, worst first; the Allen & Heath AudioRack rears are the big one and
+§5 already wanted a pass over them from source.
+
+Also left out, for the same reason rather than by oversight:
+
+- **Optocore has no family**, because nothing in the library declares a port
+  that speaks it. A family with no members is dead code.
+- **`dsnake` is in the SLink superset but is not a family**, same reason.
+- **fibreACE (M-DL-GOPT) stays `network`.** A&H's own naming treats gigaACE and
+  fibreACE as two descendants of ACE, so calling its ports `gigaace` would be a
+  guess. One line of A&H documentation settles it.
+
+**Not added: "DigiACE."** It does not exist — confirmed with the user, and
+recorded in TODO §11 so the name does not come round a third time. ACE is Allen
+& Heath's; DiGiCo's transports are Optocore and MADI.
+
+---
+
 ## v1.10.8 — 2026-08-15
 
 **Fixed**

@@ -133,7 +133,7 @@ export const ANALOG_WAY = [
       // the optional Analog & Dante audio card — see the note above
       { t: 'minijack', n: 2, lbl: ['LINE IN #1', 'LINE IN #2'] },
       { t: 'minijack', n: 2, lbl: ['LINE OUT #1', 'LINE OUT #2'] },
-      { t: 'rj45', n: 2, lbl: ['DANTE PRIMARY', 'DANTE SECONDARY'] },
+      { t: 'rj45', n: 2, sig: 'dante', lbl: ['DANTE PRIMARY', 'DANTE SECONDARY'] },
       // Inputs 6 & 7 — HDMI 2.0
       { t: 'hdmi', n: 2, lbl: ['IN #6 4K', 'IN #7 4K'] },
       // Input 8 — HDMI 2.0 with loop

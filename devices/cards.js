@@ -22,7 +22,7 @@ export const OPTION_CARDS = [
   { id: 'ah-sq-slink', brand: 'Allen & Heath', model: 'SQ SLink', fmt: 'ah-sq-io',
     note: '128x128 @ 96kHz — gigaACE / GX / DX / dSnake',
     src: 'https://www.allen-heath.com/hardware/audio-networking/sq-slink/',
-    auto: [{ t: 'ethercon', n: 1, lbl: 'SLINK' }] },
+    auto: [{ t: 'ethercon', n: 1, sig: 'slink', lbl: 'SLINK' }] },
 
   // "Two ports with redundant and switch modes ... Locking Ethercon connectors".
   //
@@ -34,17 +34,17 @@ export const OPTION_CARDS = [
   { id: 'ah-sq-dante32', brand: 'Allen & Heath', model: 'SQ Dante 32x32', fmt: 'ah-sq-io',
     note: '32x32 @ 48/96kHz, AES67',
     src: 'https://www.allen-heath.com/hardware/audio-networking/sq-dante-32/',
-    auto: [{ t: 'ethercon', n: 2, lbl: ['DANTE PRI', 'DANTE SEC'] }] },
+    auto: [{ t: 'ethercon', n: 2, sig: 'dante', lbl: ['DANTE PRI', 'DANTE SEC'] }] },
   { id: 'ah-sq-dante64', brand: 'Allen & Heath', model: 'SQ Dante 64x64', fmt: 'ah-sq-io',
     note: '64x64 @ 48/96kHz, AES67',
     src: 'https://www.allen-heath.com/hardware/audio-networking/sq-dante-64/',
-    auto: [{ t: 'ethercon', n: 2, lbl: ['DANTE PRI', 'DANTE SEC'] }] },
+    auto: [{ t: 'ethercon', n: 2, sig: 'dante', lbl: ['DANTE PRI', 'DANTE SEC'] }] },
 
   // 2 x etherCON, faceplate lettered 'SoundGrid 1' and 'SoundGrid 2'.
   { id: 'ah-sq-waves', brand: 'Allen & Heath', model: 'SQ Waves', fmt: 'ah-sq-io',
     note: '64x64 @ 48/96kHz Waves SoundGrid',
     src: 'https://www.allen-heath.com/hardware/audio-networking/sq-waves/',
-    auto: [{ t: 'ethercon', n: 2, lbl: ['SOUNDGRID 1', 'SOUNDGRID 2'] }] },
+    auto: [{ t: 'ethercon', n: 2, sig: 'soundgrid', lbl: ['SOUNDGRID 1', 'SOUNDGRID 2'] }] },
 
   // Five BNC: two out over two in, then the switchable in/out word clock.
   // The stacked pairs are how the faceplate is actually arranged.
@@ -52,7 +52,8 @@ export const OPTION_CARDS = [
     note: '64x64 @ 48kHz / 32x32 @ 96kHz per pair',
     src: 'https://www.allen-heath.com/hardware/audio-networking/sq-madi/',
     auto: [
-      { t: 'bnc', n: 4, stack: 2, lbl: ['MADI 1 OUT', 'MADI 1 IN', 'MADI 2 OUT', 'MADI 2 IN'] },
+      { t: 'bnc', n: 4, stack: 2, sig: 'madi',
+        lbl: ['MADI 1 OUT', 'MADI 1 IN', 'MADI 2 OUT', 'MADI 2 IN'] },
       { t: 'bnc', n: 1, lbl: 'SYNC' },
     ] },
 
@@ -68,22 +69,22 @@ export const OPTION_CARDS = [
   { id: 'ah-dl-dant64', brand: 'Allen & Heath', model: 'Dante 64x64 (M-DL-DANT64)',
     fmt: 'ah-dl-io', note: '64x64 Dante, Primary / Secondary, redundant or switched',
     src: 'https://support.allen-heath.com/hc/en-gb/articles/40487771409937',
-    auto: [{ t: 'ethercon', n: 2, lbl: ['DANTE PRI', 'DANTE SEC'] }] },
+    auto: [{ t: 'ethercon', n: 2, sig: 'dante', lbl: ['DANTE PRI', 'DANTE SEC'] }] },
   { id: 'ah-dl-dant128', brand: 'Allen & Heath', model: 'Dante 128x128 (M-DL-DANT128)',
     fmt: 'ah-dl-io', note: '128x128 Dante, Primary / Secondary, redundant or switched',
     src: 'https://support.allen-heath.com/hc/en-gb/articles/40487771409937',
-    auto: [{ t: 'ethercon', n: 2, lbl: ['DANTE PRI', 'DANTE SEC'] }] },
+    auto: [{ t: 'ethercon', n: 2, sig: 'dante', lbl: ['DANTE PRI', 'DANTE SEC'] }] },
 
   // 4 ports, each 32x32 @ 96kHz, parallel or redundant in pairs.
   { id: 'ah-dl-dxlink', brand: 'Allen & Heath', model: 'DX Link (M-DL-DXLINK)',
     fmt: 'ah-dl-io', note: '4 x DX Link, 32x32 @ 96kHz each',
     src: 'https://support.allen-heath.com/hc/en-gb/articles/40490513360785',
-    auto: [{ t: 'ethercon', n: 4, lbl: 'DX LINK' }] },
+    auto: [{ t: 'ethercon', n: 4, sig: 'dx', lbl: 'DX LINK' }] },
 
   { id: 'ah-dl-gace', brand: 'Allen & Heath', model: 'gigaACE (M-DL-GACE)',
     fmt: 'ah-dl-io', note: '128x128 @ 96kHz point-to-point to another dLive / Avantis',
     src: 'https://support.allen-heath.com/hc/en-gb/articles/40496737174801',
-    auto: [{ t: 'ethercon', n: 1, lbl: 'GIGAACE A' }] },
+    auto: [{ t: 'ethercon', n: 1, sig: 'gigaace', lbl: 'GIGAACE A' }] },
 
   // One logical port A on two physical connectors — fibre or copper, by mode.
   { id: 'ah-dl-gopt', brand: 'Allen & Heath', model: 'fibreACE (M-DL-GOPT)',
@@ -98,15 +99,15 @@ export const OPTION_CARDS = [
   { id: 'ah-dl-waves3', brand: 'Allen & Heath', model: 'Waves V3 (M-DL-WAVES3)',
     fmt: 'ah-dl-io', note: '128x128 @ 48/96kHz Waves SoundGrid, 3-port switch',
     src: 'https://support.allen-heath.com/hc/en-gb/articles/40488232359569',
-    auto: [{ t: 'ethercon', n: 3, lbl: 'SOUNDGRID' }] },
+    auto: [{ t: 'ethercon', n: 3, sig: 'soundgrid', lbl: 'SOUNDGRID' }] },
 
   // Links 1-4 on BNC, links 5-8 on SFP cages for fibre.
   { id: 'ah-dl-smadi', brand: 'Allen & Heath', model: 'superMADI (M-DL-SMADI)',
     fmt: 'ah-dl-io', note: '128x128 @ 48/96kHz AES10 MADI, coax and optional fibre',
     src: 'https://support.allen-heath.com/hc/en-gb/articles/40502416581905',
     auto: [
-      { t: 'bnc', n: 4, lbl: 'LINK' },
-      { t: 'sfp', n: 4, lbl: ['LINK 5', 'LINK 6', 'LINK 7', 'LINK 8'] },
+      { t: 'bnc', n: 4, sig: 'madi', lbl: 'LINK' },
+      { t: 'sfp', n: 4, sig: 'madi', lbl: ['LINK 5', 'LINK 6', 'LINK 7', 'LINK 8'] },
     ] },
 
   // Four AES3 variants on one faceplate: five XLR every time, split by model

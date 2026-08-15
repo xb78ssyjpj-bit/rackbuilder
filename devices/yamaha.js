@@ -37,7 +37,7 @@ export const YAMAHA = [
       { text: 'OUTPUT  1-16', x: 570, y: 246, size: 11, ls: .8 },
       { text: 'Rio3224-D3', x: 906, y: 34, size: 13, ls: .5, anchor: 'end' },
     ] },
-    rear: { auto: [{ t: 'ethercon', n: 2, lbl: ['DANTE PRI', 'DANTE SEC'] }, { t: 'iec_in', n: 2 }] } },
+    rear: { auto: [{ t: 'ethercon', n: 2, sig: 'dante', lbl: ['DANTE PRI', 'DANTE SEC'] }, { t: 'iec_in', n: 2 }] } },
 
   { id: 'yamaha-rio1608-d3', brand: 'Yamaha', model: 'Rio1608-D3', category: 'audio',
     ru: 3, depth: 370, weight: 9.4, power: 60,
@@ -56,7 +56,7 @@ export const YAMAHA = [
       { text: 'OUTPUT  1-8', x: 570, y: 166, size: 11, ls: .8 },
       { text: 'Rio1608-D3', x: 906, y: 42, size: 13, ls: .5, anchor: 'end' },
     ] },
-    rear: { auto: [{ t: 'ethercon', n: 2, lbl: ['DANTE PRI', 'DANTE SEC'] }, { t: 'iec_in', n: 2 }] } },
+    rear: { auto: [{ t: 'ethercon', n: 2, sig: 'dante', lbl: ['DANTE PRI', 'DANTE SEC'] }, { t: 'iec_in', n: 2 }] } },
 
   // 2U, 16 combo in / 8 out. Connector face is moderately confident rather than
   // confirmed — Yamaha's manual PDF would not extract.
@@ -74,7 +74,7 @@ export const YAMAHA = [
       { text: 'YAMAHA', x: 90, y: 30, size: 12, ls: 1 },
       { text: 'Tio1608-D2', x: 906, y: 30, size: 12, ls: .5, anchor: 'end' },
     ] },
-    rear: { auto: [{ t: 'ethercon', n: 2, lbl: ['DANTE PRI', 'DANTE SEC'] }, { t: 'iec_in', n: 1 }] } },
+    rear: { auto: [{ t: 'ethercon', n: 2, sig: 'dante', lbl: ['DANTE PRI', 'DANTE SEC'] }, { t: 'iec_in', n: 1 }] } },
 
   // --- Dante / AV network -------------------------------------------------
   // These are the switches Dante actually runs on, as opposed to the IT gear

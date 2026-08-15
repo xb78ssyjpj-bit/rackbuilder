@@ -79,7 +79,7 @@ export const ALLEN_HEATH = [
       { t: 'slot', slot: 'io' },
       { t: 'usbb', n: 1 },
       { t: 'rj45', n: 1, lbl: 'NETWORK' },
-      { t: 'ethercon', n: 1, lbl: 'SLINK' },
+      { t: 'ethercon', n: 1, sig: 'slink', lbl: 'SLINK' },
     ] } },
 
   // 4U with the AB168-RK19 rack kit. 410 x 190 x 185 mm, 4.8 kg, 35 W.

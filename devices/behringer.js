@@ -62,8 +62,9 @@ export const BEHRINGER = [
     rear: { auto: [
       { t: 'iec_in', n: 1 },
       { t: 'midi', n: 2, lbl: ['MIDI IN', 'MIDI OUT'] },
-      { t: 'rj45', n: 2, lbl: ['ULTRANET', 'REMOTE'] },
-      { t: 'ethercon', n: 2, lbl: ['AES50 A', 'AES50 B'] },
+      { t: 'rj45', n: 1, sig: 'ultranet', lbl: 'ULTRANET' },
+      { t: 'rj45', n: 1, lbl: 'REMOTE' },
+      { t: 'ethercon', n: 2, sig: 'aes50', lbl: ['AES50 A', 'AES50 B'] },
       { t: 'trs', n: 12, lbl: 'AUX' },
       { t: 'xlrm', n: 8, lbl: 'OUT' }, { t: 'xlrf', n: 16, lbl: 'IN' },
     ] } },
@@ -105,8 +106,8 @@ export const BEHRINGER = [
       { t: 'iec_in', n: 1 }, { t: 'usbb', n: 1 },
       { t: 'midi', n: 2, lbl: ['MIDI IN', 'MIDI OUT'] },
       { t: 'toslink', n: 2, lbl: ['ADAT OUT 1-8', 'ADAT OUT 9-16'] },
-      { t: 'rj45', n: 1, lbl: 'ULTRANET' },
-      { t: 'ethercon', n: 2, lbl: ['AES50 A', 'AES50 B'] },
+      { t: 'rj45', n: 1, sig: 'ultranet', lbl: 'ULTRANET' },
+      { t: 'ethercon', n: 2, sig: 'aes50', lbl: ['AES50 A', 'AES50 B'] },
     ] } },
 
   // 1U, 44 x 483 x 189 mm, 1.9 kg, 35 W. Two main-input level knobs, then

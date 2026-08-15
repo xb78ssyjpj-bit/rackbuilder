@@ -563,12 +563,35 @@ drawing, call that 0 and 1000, and place everything as a fraction of it.
 
 ## 9c. Dante
 
-- **Dante, AES50, ULTRANET and control all read as one `network` family**, so
-  the flow view colours a Dante primary the same green as an AES50 run and a
-  laptop's control port. The socket *names* now carry the distinction where the
-  manufacturer gives one, but the family does not. Splitting `network` into
-  audio-over-IP versus control is the obvious next move if the cable colours are
-  meant to mean anything on a big graph.
+- ~~**Dante, AES50, ULTRANET and control all read as one `network` family**~~ —
+  **done in v1.11.0.** `dante`, `aes50`, `slink`, `gigaace`, `dx`, `ultranet`,
+  `soundgrid` and `madi` are families of their own, declared with `sig` on the
+  port exactly as AES3 is, and SLink patches to gigaACE / DX / dSnake without a
+  crossing warning because it is a port type rather than a protocol. See the
+  README.
+
+  **What is NOT converted, and why:** 690 network sockets are still generic,
+  because only sockets the manufacturer *names* were given a protocol. The ones
+  worth chasing, in order of how much they would buy:
+
+  - **Allen & Heath AudioRacks and expanders** — AR84, AR2412, AB168, DX168,
+    DT168, DX32, GX4816 and the dLive MixRack rears. Every etherCON on them is
+    declared bare. In reality a DT168 is Dante, a DX168 is DX, an AR is dSnake
+    and a MixRack carries gigaACE and DX — but none of that is in the library
+    as a socket name, and §5 already says the A&H rears want a pass from
+    source. Do that pass and the protocols come with it.
+  - **Midas DL16 / DL32** — AES50, unnamed.
+  - **Sennheiser EW-DX EM 2 Dante / EM 4 Dante** — Dante, unnamed.
+  - **DiGiCo** — the racks' network ports, and **Optocore**, which has no
+    family yet because nothing in the library declares a port that speaks it.
+    Adding the family with no members would be dead code.
+  - **fibreACE (M-DL-GOPT)** is deliberately left as `network`. A&H's own
+    naming treats gigaACE and fibreACE as two descendants of ACE, so calling
+    the fibreACE card's ports `gigaace` would be a guess. One line of A&H
+    documentation saying whether fibreACE *is* gigaACE over fibre settles it.
+  - **`dsnake` has a place in the SLink superset but no family of its own**,
+    for the same reason as Optocore: nothing declares it yet. Add the family in
+    the same change as the A&H pass above.
 - **SWP1 and GigaCore switch-port numbering is unverified**, so those ports use
   the `F EC 1` default. If someone has one in front of them, read the silkscreen
   and set `lbl`.
@@ -655,41 +678,29 @@ so far, and it is why several entries below are L despite being simple code.
 
 ### M — a session each
 
-- **Other audio networking standards: SLink, gigaACE, AES50, Optocore** — and
-  **"DigiACE", which could not be confirmed to exist and needs clarifying before
-  it is entered.** No product or protocol of that name turns up; ACE is *Allen &
-  Heath's* ("Audio Control Ethernet", the ancestor of gigaACE and fibreACE, and
-  the M-ACE card for iLive/GLD), and DiGiCo's own transports are Optocore and
-  MADI, on DMI-OPTO and DMI-MADI-B/C cards. Most likely it is A&H's ACE
-  remembered with the wrong prefix, but that is a guess and this file does not
-  take guesses. **Ask before adding it.**
+- ~~**Other audio networking standards: SLink, gigaACE, AES50, Optocore**~~ —
+  **done in v1.11.0**, by the first of the two routes that were on the table: a
+  family per protocol, with SLink as a superset that patches to any of the
+  things it can be. Chosen on 2026-08-15 as the more honest of the two about
+  what will and will not connect, which is what the flow view is for.
 
-  The mechanism already exists — `sig` on a declaration overrides the signal
-  family, which is how AES3 rides on XLR. This is adding families to `FAMILIES`
-  in `flow.js` and then a pass through the library deciding which etherCON is
-  which protocol. Worth getting right rather than fast: **SLink and gigaACE are
-  Allen & Heath, AES50 is Midas / Klark Teknik, Optocore is its own thing on
-  fibre** — they are not interchangeable, and an SQ's port is SLink. The socket is already *named* `SLINK` on the SQ-Rack; what is wrong is
-  that its family is the generic `network`, so it draws the same colour as a
-  laptop's ethernet and the flow view will happily patch it to one.
+  **"DigiACE" is settled: it does not exist**, confirmed the same day, and
+  nothing was entered for it. For the record, since the name will come round
+  again: ACE is *Allen & Heath's* — "Audio Control Ethernet", the ancestor of
+  gigaACE and fibreACE, and the M-ACE card for iLive/GLD — and DiGiCo's own
+  transports are Optocore and MADI, on DMI-OPTO and DMI-MADI-B/C cards.
 
-  **SLink and gigaACE are not peers, and modelling them as a flat list of
-  families will get this wrong.** From A&H's own guides, already read while
-  adding the option cards: SLink is an *intelligent port* that switches between
-  protocols — "Mode automatically switches between dSnake/ME, DX and
-  gigaACE/GX", and the SQ SLink card's own copy says "gigaACE, GX, DX, or
-  dSnake connectivity". gigaACE is one of the things SLink can be, and it also
-  appears in its own right: as the dLive MixRack-to-Surface link, and as
-  M-DL-GACE, a card giving "128x128ch 96kHz gigaACE point-to-point". So a port
-  can be *SLink, currently speaking gigaACE*.
+  What shipped: eight families declared with `sig` on the port exactly as AES3
+  is, and a `compatible()` relation in `flow.js` where SLink alone is a
+  superset — "Mode automatically switches between dSnake/ME, DX and
+  gigaACE/GX", so an SLink patched to a DX expander is a correct cable and not
+  a crossing. DX to gigaACE still warns; only a port that can be either speaks
+  to both.
 
-  Two ways out, and the choice wants making before any data is entered: either
-  a family per protocol with SLink as a superset that patches to any of them,
-  or a family for the port type with the protocol as a second, informational
-  field. The first is more honest about what will and will not connect; the
-  second is less work. Either way the compatibility question — *can this cable
-  legally go here* — is the thing worth encoding, since that is what the flow
-  view is for.
+  **What is left is a documentation problem, not a code one.** 690 network
+  sockets are still generic because only sockets the manufacturer names were
+  given a protocol — the Allen & Heath AudioRack rears are the big one. Listed
+  in §9c.
 - **Devices mounted inside the rack rather than on the ears.** Power supplies,
   routers, anything that lives in the box without taking a U. An `internal: true`
   item, excluded from U occupancy and from the bay layout, still counted in

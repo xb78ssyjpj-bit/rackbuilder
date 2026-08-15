@@ -45,7 +45,26 @@ export const FAMILIES = {
   control:  { label: 'Control / USB',  color: '#9aa4b2' },
   multipin: { label: 'Multipin',       color: '#c2803f' },
   power:    { label: 'Power',          color: '#d16b8a' },
+  // --- audio-over-IP and point-to-point transports -------------------------
+  // An etherCON says nothing about what it speaks, so these are declared on the
+  // port with `sig`, exactly as AES3 is. Everything here is set only where the
+  // manufacturer names the socket; an unnamed etherCON stays `network` rather
+  // than being assigned a protocol from the family it appears to belong to.
+  dante:    { label: 'Dante',          color: '#2b8df0' },
+  aes50:    { label: 'AES50',          color: '#e86b5a' },
+  slink:    { label: 'SLink',          color: '#c2be4c' },
+  gigaace:  { label: 'gigaACE',        color: '#8f9450' },
+  dx:       { label: 'DX link',        color: '#1c9c5a' },
+  ultranet: { label: 'ULTRANET',       color: '#f089df' },
+  soundgrid: { label: 'SoundGrid',     color: '#f0a189' },
+  madi:     { label: 'MADI',           color: '#b276aa' },
 };
+
+// SLink, gigaACE and DX are all Allen & Heath and are deliberately drawn in one
+// yellow-green-to-green band, because they are the three that legally patch to
+// each other. Every pair of colours above is at least ΔE 23 apart in CIELAB —
+// further apart than speaker/multipin (16) and aes3/network (23), which the app
+// already ships.
 
 const FAM_OF = {
   xlrf: 'analogue', xlrm: 'analogue', combo: 'analogue', jack: 'analogue',
@@ -65,12 +84,31 @@ const FAM_OF = {
 // AES3 has no connector of its own — it rides on an XLR, or on a BNC as AES3id.
 // So it is a property of the *port*, declared with `sig`, not of the connector
 // type. Anything that carries a signal the connector alone cannot imply belongs
-// here rather than in FAM_OF.
-const SIGNALS = new Set(['aes3']);
+// here rather than in FAM_OF. Every audio-over-IP transport is in the same
+// position: an etherCON is an etherCON whether it is speaking Dante or AES50.
+const SIGNALS = new Set(['aes3', 'dante', 'aes50', 'slink', 'gigaace', 'dx',
+  'ultranet', 'soundgrid', 'madi']);
 
 export const familyOf = (t, sig) =>
   (sig && SIGNALS.has(sig) ? sig : FAM_OF[t]) || 'power';
 export const colorOf = (t, sig) => FAMILIES[familyOf(t, sig)].color;
+
+// --- what will legally connect to what -------------------------------------
+// Same family patches to same family. SLINK IS THE EXCEPTION, AND IT IS THE
+// REASON A FLAT LIST OF FAMILIES WOULD HAVE GOT THIS WRONG: SLink is a port
+// type, not a protocol. Allen & Heath's own guides say the port "automatically
+// switches between dSnake/ME, DX and gigaACE/GX", and the SQ SLink card's copy
+// says "gigaACE, GX, DX, or dSnake connectivity". So a port can be SLink
+// *currently speaking gigaACE*, and an SLink patched to a DX expander is a
+// correct cable, not a crossing.
+//
+// This is a superset, not an equivalence: DX to gigaACE is still a crossing and
+// still warns, because a DX expander and a gigaACE link are not the same thing
+// — only a port that can be either speaks to both.
+const SPEAKS = { slink: ['dsnake', 'dx', 'gigaace'] };
+
+export const compatible = (a, b) => a === b
+  || (SPEAKS[a] || []).includes(b) || (SPEAKS[b] || []).includes(a);
 
 // Where the connector itself settles the question. Everything else is unknown
 // and stays unknown — the arrow you drew is the only claim being made.
@@ -942,7 +980,7 @@ export function createFlow(ctx) {
     // Dragging from a left anchor means you grabbed the destination first.
     const [src, dst, ps] = from.side === 'l' ? [to, from, pb] : [from, to, pa];
 
-    const mismatch = familyOf(pa.t, pa.sig) !== familyOf(pb.t, pb.sig);
+    const mismatch = !compatible(familyOf(pa.t, pa.sig), familyOf(pb.t, pb.sig));
     if (mismatch && !quiet) {
       toast(`Patched ${FAMILIES[familyOf(pa.t, pa.sig)].label.toLowerCase()} to `
           + `${FAMILIES[familyOf(pb.t, pb.sig)].label.toLowerCase()} — check that.`, true);
