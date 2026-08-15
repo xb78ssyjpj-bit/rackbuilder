@@ -66,6 +66,26 @@ commit subjects produces something nobody reads; the point of a changelog is the
 
 `--dry-run` shows what would happen without touching anything.
 
+**Then it opens the published Pages URL and proves the site is serving the new
+version.** Two different Pages failures have shipped unnoticed: v1.10.4, where
+the site loaded but `devices/_lib.js` 404'd for four releases, and v1.11.0,
+where the site was not served at all. Every deployment reported success both
+times, because the deploy genuinely did succeed — **a green tick is a claim
+about the upload, not about whether the page loads.**
+
+So it asks two questions, because neither implies the other:
+
+- **Is it the new version?** It waits up to three minutes for the published
+  `version.js` to carry the new number. A stale deploy answers 200 all day.
+- **Does every module load?** It fetches each one, discovered from `devices/`
+  the same way the dev server discovers them, so a new brand file cannot
+  quietly escape the check. A 404 on an `_`-prefixed name means something is
+  running the tree through Jekyll again.
+
+It cannot fail the release — by then the release has happened — so it prints a
+warning rather than exiting. `--no-pages` skips it, and it skips itself if the
+repo has no Pages site.
+
 ### Adding a device
 
 1. Open **`devices/<brand>.js`** and add the entry. That is the whole of it —
