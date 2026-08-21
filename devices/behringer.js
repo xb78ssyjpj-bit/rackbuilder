@@ -216,8 +216,16 @@ export const BEHRINGER = [
 
   // 3U, 483 x 137 x 210 mm, 4.9 kg. 32 Midas preamps in, 16 out.
   //
-  // DELIBERATELY A LABELLED BLOCK, with no front or rear drawn. Behringer's
-  // own documentation could not be reached — behringer.com renders its
+  // THE FACE ASSIGNMENT IS THE USER'S, NOT BEHRINGER'S. Asked directly, they
+  // said the S32 matches the S16: XLR I/O on the front, digital and network on
+  // the rear. That is the one thing retailer listings never give and the one
+  // thing this entry was blocked on, so it is drawn on their word and marked
+  // as theirs. The RJ45 is labelled ULTRANET on the same authority.
+  //
+  // BOTH FACES ARE `auto`, because what was confirmed is which face carries
+  // what, NOT where anything sits on it. No panel figure has been seen.
+  //
+  // Behringer's own documentation could not be reached — behringer.com renders its
   // Downloads tab client-side, so the cdn-media.empowertribe.com PDF links are
   // not fetchable without a browser, and two research passes failed on it. The
   // dimensions and weight above are from Thomann and are flagged `approx`, the
@@ -233,5 +241,16 @@ export const BEHRINGER = [
   // TODO §8f.
   { id: 'behringer-s32', brand: 'Behringer', model: 'S32', category: 'audio',
     ru: 3, depth: 210, weight: 4.9, approx: true,
-    src: 'https://www.thomannmusic.com/behringer_s32.htm' },
+    src: 'https://www.thomannmusic.com/behringer_s32.htm',
+    front: { auto: [
+      { t: 'xlrf', n: 32, lbl: 'IN' },
+      { t: 'xlrm', n: 16, lbl: 'OUT' },
+    ] },
+    rear: { auto: [
+      { t: 'iec_in', n: 1 }, { t: 'usbb', n: 1 },
+      { t: 'midi', n: 2, lbl: ['MIDI IN', 'MIDI OUT'] },
+      { t: 'toslink', n: 2, lbl: ['ADAT OUT 1-8', 'ADAT OUT 9-16'] },
+      { t: 'rj45', n: 1, sig: 'ultranet', lbl: 'ULTRANET' },
+      { t: 'ethercon', n: 2, sig: 'aes50', lbl: ['AES50 A', 'AES50 B'] },
+    ] } },
 ];

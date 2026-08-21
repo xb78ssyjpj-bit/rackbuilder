@@ -76,7 +76,7 @@ const FAM_OF = {
   sfp: 'network', qsfp: 'network',
   bnc: 'video', hdmi: 'video', displayport: 'video',
   midi: 'control', usba: 'control', usbb: 'control', usbc: 'control',
-  dcjack: 'control',
+  dcjack: 'power',
   socapex_in: 'multipin', socapex_thru: 'multipin',
   veam_in: 'multipin', veam_thru: 'multipin',
 };
