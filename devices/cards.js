@@ -110,6 +110,62 @@ export const OPTION_CARDS = [
       { t: 'sfp', n: 4, sig: 'madi', lbl: ['LINK 5', 'LINK 6', 'LINK 7', 'LINK 8'] },
     ] },
 
+  // --- Apple Mac mini, as a bay in the Sonnet RackMac mini ------------------
+  // The tray is a carrier and only ever holds Mac minis, so the machine is
+  // modelled as the card. Ports are from Apple's own tech specs.
+  //
+  // REAR PORTS ONLY, because that is what a racked one gives you: Sonnet state
+  // the tray exposes the machines' ports at the rear. The M2's front USB-C, and
+  // the front headphone jack on later models, face into the rack and are not
+  // modelled.
+  //
+  // NO MAINS INLET, deliberately. A Mac mini takes an IEC C7 — the two-pin
+  // figure-of-eight — and this library has no C7 primitive. Drawing the C14
+  // that `iec_in` gives would be a lie about what you can plug in, which is the
+  // same call the Penn Elcom universal sockets got. Each machine still needs
+  // its own mains lead. TODO §9b.
+  //
+  // ONE FIGURE IS IN DOUBT: the research pass put the headphone jack on the
+  // FRONT of the M1 and M2. Apple moved the jack to the front with the M4, so
+  // a rear jack on the M1/M2 is the likelier reading, and it is left out of
+  // both rather than drawn on a face that may be wrong. TODO §9b.
+  { id: 'apple-macmini-2018', brand: 'Apple', model: 'Mac mini (2018, Intel)',
+    fmt: 'sonnet-macmini', note: 'Intel, 4 x Thunderbolt 3',
+    src: 'https://support.apple.com/en-us/111912',
+    auto: [
+      { t: 'rj45', n: 1, lbl: 'ETHERNET' },
+      { t: 'usbc', n: 4, lbl: 'TB3' },
+      { t: 'hdmi', n: 1, lbl: 'HDMI' },
+      { t: 'usba', n: 2, lbl: 'USB-A' },
+    ] },
+  { id: 'apple-macmini-m1', brand: 'Apple', model: 'Mac mini (M1, 2020)',
+    fmt: 'sonnet-macmini', note: '2 x Thunderbolt / USB 4',
+    src: 'https://support.apple.com/en-us/111894',
+    auto: [
+      { t: 'usbc', n: 2, lbl: 'TB4' },
+      { t: 'hdmi', n: 1, lbl: 'HDMI' },
+      { t: 'rj45', n: 1, lbl: 'ETHERNET' },
+      { t: 'usba', n: 2, lbl: 'USB-A' },
+    ] },
+  { id: 'apple-macmini-m2', brand: 'Apple', model: 'Mac mini (M2, 2023)',
+    fmt: 'sonnet-macmini', note: '2 x Thunderbolt 4',
+    src: 'https://support.apple.com/en-us/111837',
+    auto: [
+      { t: 'usbc', n: 2, lbl: 'TB4' },
+      { t: 'hdmi', n: 1, lbl: 'HDMI' },
+      { t: 'rj45', n: 1, lbl: 'ETHERNET' },
+      { t: 'usba', n: 2, lbl: 'USB-A' },
+    ] },
+  { id: 'apple-macmini-m2pro', brand: 'Apple', model: 'Mac mini (M2 Pro, 2023)',
+    fmt: 'sonnet-macmini', note: '4 x Thunderbolt 4',
+    src: 'https://support.apple.com/en-us/111837',
+    auto: [
+      { t: 'usbc', n: 4, lbl: 'TB4' },
+      { t: 'hdmi', n: 1, lbl: 'HDMI' },
+      { t: 'rj45', n: 1, lbl: 'ETHERNET' },
+      { t: 'usba', n: 2, lbl: 'USB-A' },
+    ] },
+
   // Four AES3 variants on one faceplate: five XLR every time, split by model
   // name. The numbers in the name are CHANNELS and each XLR carries a stereo
   // pair, so 6I4O is three in and two out — confirmed against A&H's faceplate

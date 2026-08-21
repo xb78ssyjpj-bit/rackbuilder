@@ -19,6 +19,57 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.16.0 — 2026-08-15
+
+**Added — the RackMac mini's bays take a Mac mini, chosen from a dropdown**
+
+The tray was the one device in the library that carries signal and had no
+ports, so it never appeared on the signal-flow canvas. That is right for a
+shelf and wrong for this: a racked Mac mini is something you patch.
+
+It only ever holds Mac minis, so **the machine is modelled as the card**. The
+two bays are option-card slots on the existing mechanism — pick the generation
+in the inspector exactly as you fit an I/O card to an SQ-Rack, and that
+machine's rear ports become the tray's, namespaced per bay so two identical
+minis cannot collide on socket names (`B1 HDMI`, `B2 HDMI`).
+
+2018 Intel, M1, M2 and M2 Pro, from Apple's own tech specs. **No M4**: it is a
+smaller chassis needing Sonnet's 2U tray, which is not in this library, so
+offering the card would mean offering one that cannot physically fit.
+
+Three deliberate omissions, all in TODO §9b:
+
+- **No mains inlet.** A Mac mini takes an IEC **C7**, the two-pin
+  figure-of-eight, and there is no C7 primitive — `iec_in` draws a C14, which
+  would be a lie about what you can plug in. Same call the Penn Elcom universal
+  sockets got.
+- **Rear ports only**, because that is the face Sonnet expose. The M2's front
+  USB-C faces into the rack.
+- **No headphone jack.** The research pass put it on the front of the M1 and
+  M2; Apple moved that jack to the front with the M4, so a rear jack is the
+  likelier reading on those two. Left off both rather than drawn on a face that
+  may be wrong.
+
+The bay aperture is **197 x 36 mm derived** from Apple's chassis, since Sonnet
+publish no opening. `check.mjs` now flags it on every run beside `ah-dl-io`.
+The check that it is the right order of size: two of them is 394 mm of a 407 mm
+face, which is exactly why a 1U tray takes two and no more.
+
+**Fixed — the 48-port Catalyst keeps its management port**
+
+`switchFront` declared `mgmt: 1` and then discarded it whenever the face had no
+lettering gutter. That removed the socket from the flow graph too, so a
+9200-48P had no MGMT port to patch at all — a port that exists and is not drawn
+is worse than one drawn somewhere less ideal. It now sits at the right-hand end
+in the slack past the last port; 48 RJ45 sockets became 49.
+
+Its **face is still an import assumption**. NetBox does not record which face a
+port is on, so front is assumed for every imported switch. TODO previously
+asserted the real Catalyst has it on the rear — that was this project's belief
+rather than a cited source, so it is recorded as open rather than acted on.
+
+---
+
 ## v1.15.0 — 2026-08-15
 
 **Added — the flow view reflows when you expand a card**

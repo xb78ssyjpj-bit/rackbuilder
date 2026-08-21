@@ -465,6 +465,15 @@ export const SLOT_FORMATS = {
   // which is the check that the scale itself is right.
   'ah-sq-io': { name: 'I/O Port', mm: 88, mmH: 41 },
 
+  // Sonnet RackMac mini bay. SIZE DERIVED FROM THE MACHINE, NOT THE TRAY:
+  // Sonnet publish no bay opening (only the SSD space, 102 x 102 x 13 mm), but
+  // the bay must clear the Mac mini it holds, and Apple publish that chassis as
+  // 197 x 197 x 36 mm. So the aperture is at least 197 x 36 and is recorded as
+  // exactly that. Two of them is 394 mm of a 407 mm face, which is the check
+  // that it is the right order of size — a 1U tray really does take two and
+  // no more.
+  'sonnet-macmini': { name: 'Mac mini bay', mm: 197, mmH: 36, approx: true },
+
   // Allen & Heath dLive / Avantis 'I/O Port'. A larger, separate aperture from
   // the SQ's, which the cards themselves prove: M-DL-DXLINK alone puts four
   // etherCON in one row — 96 mm of flange before any spacing — against an 88 mm

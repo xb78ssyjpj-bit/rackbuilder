@@ -452,7 +452,15 @@ vendors are. Those need adding by hand.
 ## Computing
 
 Sonnet RackMac mini, ATEN CL1308 KVM console drawer and CS1308 KVM switch, Dell
-PowerEdge R650. Physical specs from the NetBox library; panel layouts are drawn
+PowerEdge R650.
+
+**The RackMac mini's ports are the Mac minis' ports.** It is a carrier tray, so
+it has none of its own — which meant it never appeared on the signal-flow
+canvas, correct for a shelf but wrong for something you patch. Its two bays are
+now option-card slots: pick the generation from the inspector the same way you
+fit an I/O card to an SQ-Rack, and that machine's rear ports become the tray's.
+2018 Intel, M1, M2 and M2 Pro. This is the 1U tray, so it takes the 197 mm
+chassis; the M4 is smaller and needs Sonnet's 2U tray, which is not here. Physical specs from the NetBox library; panel layouts are drawn
 from what these classes of device look like, since the YAML says nothing about
 faces.
 

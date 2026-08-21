@@ -608,6 +608,24 @@ you have them.
 
 ## 9b. Connector detail still owed
 
+- **No IEC C7 primitive**, the two-pin figure-of-eight. It is what a Mac mini
+  takes, so the Mac mini cards added in v1.16.0 carry NO mains inlet at all:
+  `iec_in` draws a C14, and a C14 is a lie about what you can plug in. Same
+  call as the Penn Elcom universal sockets in §5b. A C7 is about 20 mm against
+  the C14's 27, so it is a real visual difference too. Each machine still needs
+  its own lead in reality.
+
+- **The Mac mini headphone jack's face is unresolved.** The research pass put
+  it on the FRONT of the M1 and M2. Apple moved that jack to the front with the
+  M4, so a REAR jack on the M1/M2 is the likelier reading — and rather than
+  draw it on a face that may be wrong it is left off both. One look at Apple's
+  own tech-spec photograph settles it.
+
+- **The Mac mini bay aperture is 197 x 36 mm DERIVED**, from Apple's published
+  chassis rather than from Sonnet, who publish no bay opening. `check.mjs`
+  flags it on every run alongside `ah-dl-io`. The sanity check is that two of
+  them is 394 mm of a 407 mm face, which is why a 1U tray takes two and no more.
+
 - **The six VEAM sizes are ESTIMATES, and the only sized connectors here that
   are.** Added in v1.13.0 at the user's instruction: they regularly rack 8, 12,
   16, 24, 32 and 48 pin, and brands differ enough that no one published figure
@@ -737,10 +755,17 @@ you have them.
   and once open `hidden` is 0 by definition. Pre-existing since the baseline
   commit, and contrary to the README, which has always documented "Hide unused
   folds it back to what's patched".
-- **`sonnet-rackmac-mini` is the one device that carries signal but has no
-  ports**, so it never appears on the canvas. It is modelled as a carrier tray —
-  two bays and a vent — and the Mac minis that would hold the I/O are not in the
-  library. Either give the tray the machines' ports or add a Mac mini node.
+- ~~**`sonnet-rackmac-mini` is the one device that carries signal but has no
+  ports**~~ — **done in v1.16.0**, by the first of the two routes: the machine
+  IS the card. The tray declares two `sonnet-macmini` bays and you pick the
+  generation from the inspector, exactly as you fit an I/O card to an SQ-Rack.
+  2018 Intel, M1, M2 and M2 Pro.
+
+  Soft spots, all recorded in §9b: the bay size is derived from Apple's chassis
+  because Sonnet publish no opening; there is no mains inlet because a Mac mini
+  takes an IEC C7 and there is no C7 primitive; and only rear ports are
+  modelled, because that is the face Sonnet expose. **No M4 card** — the M4 is
+  a smaller chassis needing Sonnet's 2U tray, which is not in the library.
 - **Riedel NSA-002A rear is over-specified.** It is a half-rack unit, so the face
   is ~200 mm, but the rear declares 2 XLRf + 2 XLRm + 2 RJ45 + 2 DB25 + IEC =
   ~311 mm of connector. It cannot be drawn honestly and currently shrinks by a
