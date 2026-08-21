@@ -1,4 +1,4 @@
-// Behringer — 3 devices
+// Behringer — 5 devices
 
 export const BEHRINGER = [
   // 3U, 483 x 132 x 287 mm, 6.5 kg. 5" TFT flanked by button columns, six
@@ -145,4 +145,93 @@ export const BEHRINGER = [
       { t: 'trs', n: 8, lbl: 'DIRECT IN' },
       { t: 'trs', n: 8, lbl: 'PHONES OUT' },
     ] } },
+
+  // 4U 48-channel rackmount mixing engine. 9.5 kg, 130 W typical, IEC inlet.
+  //
+  // PROVENANCE. Haiku research pass over Behringer's own Quick Start Guide
+  // (QSG_BE_0604-AAE). Figures NOT re-checked before entry, by instruction —
+  // TODO §8f. Two things in that QSG needed resolving before this could be
+  // entered at all, and both are recorded here because neither is settled by
+  // the document:
+  //
+  // 1. THE DIMENSION TABLE CONTRADICTS THE PRODUCT ITSELF. It reads
+  //    "Dimensions (H x W x D) 183 x 326 x 486 mm (7.2 x 12.8 x 19.1")", which
+  //    makes the unit 326 mm wide — not a 19" panel, on a product whose own
+  //    title is "Rackmount 48 Channel ... Mixing Engine". The QSG contains no
+  //    occurrence of "19 inch", "rack unit", "rack ear" or "RU", has no
+  //    mounting section, and shows no figure of it in a rack. The only
+  //    self-consistent reading is that the header is transposed and it is
+  //    H x D x W: 486 mm being the 19.1" panel and 326 mm the depth. THE 4U
+  //    HEIGHT IS THE USER'S, NOT BEHRINGER'S — 183 mm is 4.12 U, so their
+  //    figure includes feet. Marked `approx` for that reason.
+  //
+  // 2. THE PHONES COUNT IS CONTRADICTORY IN THE SAME DOCUMENT. The spec table
+  //    says "Phones output (1/4" TRS, stereo) 5"; the rear-panel text says
+  //    "Four stereo headphones can be used for monitoring" and names them as
+  //    outputs 1/2, 3/4, 5/6 and 7/8. Four is drawn, because the prose says
+  //    which four they are and the table gives a bare number. If a fifth
+  //    socket exists it is not described anywhere in the QSG.
+  //
+  // THE MIC INPUTS ARE COMBO, NOT XLR. The spec table lists them as "(XLR) 24"
+  // but the prose says "24 Midas PRO series microphone preamps with combo jack
+  // connectors". The prose describes the socket, so combo is what is drawn.
+  //
+  // GENDERS ARE THIS LIBRARY'S CONVENTION, NOT BEHRINGER'S. The QSG states no
+  // gender for any XLR. Inputs are drawn female and outputs male, as every
+  // other unit here is, including the X32 RACK above. The StageConnect port is
+  // the weakest of them: the QSG gives "StageConnect HOST (Master) I/O (12 V /
+  // 18 W power supplied, XLR, 32 channels) 1" and nothing about which way round
+  // it is. Drawn male on the grounds that it is named an output-side host.
+  //
+  // BOTH FACES ARE `auto`. The QSG carries no numbered or captioned panel
+  // figure, so the inventory and the connector sizes are real and the
+  // left-to-right order is the layout engine's. The front is a confirmed
+  // element inventory at unconfirmed positions.
+  { id: 'behringer-wing-rack', brand: 'Behringer', model: 'WING Rack',
+    category: 'audio', ru: 4, depth: 326, weight: 9.5, power: 130, approx: true,
+    src: 'https://www.behringer.com/products/wing-rack',
+    front: { elements: [
+      { t: 'display', x: 330, y: 200, w: 380, h: 230 },
+      { t: 'encoder', x: 580, y: 150, n: 4, gap: 62, r: 20 },
+      { t: 'button', x: 580, y: 240, n: 4, gap: 62, w: 40, h: 26 },
+      { t: 'knob', x: 800, y: 180, r: 30 },
+      { t: 'usba', x: 800, y: 280, lbl: 'USB' },
+    ], labels: [
+      { text: 'WING RACK', x: 90, y: 120, size: 22, ls: 2 },
+    ] },
+    rear: { auto: [
+      { t: 'iec_in', n: 1 },
+      { t: 'combo', n: 24, lbl: 'MIC' },
+      { t: 'xlrm', n: 8, lbl: 'OUT' },
+      { t: 'xlrf', n: 1, sig: 'aes3', lbl: 'AES3 IN' },
+      { t: 'xlrm', n: 1, sig: 'aes3', lbl: 'AES3 OUT' },
+      { t: 'xlrm', n: 1, lbl: 'STAGECONNECT' },
+      { t: 'ethercon', n: 3, sig: 'aes50', lbl: ['AES50 A', 'AES50 B', 'AES50 C'] },
+      { t: 'rj45', n: 2, lbl: 'ETHERNET' },
+      { t: 'trs', n: 4, lbl: 'PHONES' },
+      { t: 'trs', n: 2, lbl: 'GPIO' },
+      { t: 'midi', n: 2, lbl: ['MIDI IN', 'MIDI OUT'] },
+      { t: 'usbb', n: 1 },
+    ] } },
+
+  // 3U, 483 x 137 x 210 mm, 4.9 kg. 32 Midas preamps in, 16 out.
+  //
+  // DELIBERATELY A LABELLED BLOCK, with no front or rear drawn. Behringer's
+  // own documentation could not be reached — behringer.com renders its
+  // Downloads tab client-side, so the cdn-media.empowertribe.com PDF links are
+  // not fetchable without a browser, and two research passes failed on it. The
+  // dimensions and weight above are from Thomann and are flagged `approx`, the
+  // same standing as the X32 RACK and S16 entries above.
+  //
+  // WHAT IS MISSING IS THE FACE, AND THAT IS WHY NOTHING IS DRAWN. Retailer
+  // listings give an inventory — 2 x AES50, 2 x ADAT out, MIDI in/out, USB,
+  // one RJ45 — but not which face carries what, nor the XLR counts and
+  // genders. The S16 two entries above puts ALL of its I/O on the front, which
+  // is unusual, and assuming the S32 copies it would be fitting the family
+  // grammar and calling it a spec. It gets rack space, weight and depth, which
+  // is most of what a rack drawing needs; the panel waits for the manual.
+  // TODO §8f.
+  { id: 'behringer-s32', brand: 'Behringer', model: 'S32', category: 'audio',
+    ru: 3, depth: 210, weight: 4.9, approx: true,
+    src: 'https://www.thomannmusic.com/behringer_s32.htm' },
 ];
