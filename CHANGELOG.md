@@ -19,6 +19,35 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.15.0 — 2026-08-15
+
+**Added — the flow view reflows when you expand a card**
+
+Opening a 48-port switch used to bury whatever sat below it, and the only cure
+was **Arrange** — which throws away every deliberate position on the canvas to
+fix one card.
+
+Expanding now pushes the neighbours it overlaps downward by exactly the height
+the card gained, cascading so a pushed node does not simply land on the next
+one. Three rules make it feel like a nudge rather than a re-layout:
+
+- **only downward, and only by the overlap** — nothing moves that did not have
+  to;
+- **only in the same column** — a node off to the side is untouched;
+- **collapsing pulls nothing back up.** Closing a card would otherwise drag
+  unrelated nodes around under the cursor, and the gap it leaves is honest
+  empty canvas.
+
+**Fixed — a fully expanded card could never be collapsed again**
+
+The button rendered on `hidden > 0 || !open`, and once a card is open `hidden`
+is 0 by definition — so the control vanished at exactly the point you wanted
+it. Pre-existing since the baseline commit, and contrary to the README, which
+has always said "**Hide unused** folds it back to what's patched". It now shows
+whenever collapsing would actually fold something away.
+
+---
+
 ## v1.14.0 — 2026-08-15
 
 **Added — undo**

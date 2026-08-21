@@ -654,6 +654,12 @@ export function createFlow(ctx) {
       d.dataset.node = n.key;
 
       const hidden = n.ports.length - vis.length;
+      // What collapsing would actually fold away. The button used to render on
+      // `hidden > 0 || !open`, which meant a fully expanded node — where
+      // hidden is 0 by definition — lost its button and could never be
+      // collapsed again. Pre-existing since the baseline; the README has
+      // always said "Hide unused folds it back to what's patched".
+      const foldable = n.ports.length - connectedIds(n.key).size;
       d.innerHTML =
         `<header class="fhead" title="${esc(n.sub)} ${esc(n.name)} — drag to move">`
         + `<b>${esc(n.name)}</b>`
@@ -669,7 +675,7 @@ export function createFlow(ctx) {
         // A big device opens collapsed, and with nothing patched yet that means
         // no rows at all — so the button has to say what it is hiding, not just
         // "more".
-        + (hidden > 0 || !open
+        + ((open ? foldable > 0 : hidden > 0)
             ? `<button type="button" class="fmore">${
                 open ? 'Hide unused'
                 : vis.length ? `${hidden} more socket${hidden === 1 ? '' : 's'}`
@@ -719,7 +725,13 @@ export function createFlow(ctx) {
       const more = d.querySelector('.fmore');
       if (more) more.onclick = (e) => {
         e.stopPropagation();
+        const wasH = nodeHeight(visiblePorts(n).length);
         f.open[n.key] = !isOpen(n);
+        // Opening a 48-port switch used to bury whatever sat below it, and
+        // only Arrange put it right — which throws away every deliberate
+        // position on the canvas to fix one node. This pushes the overlapped
+        // neighbours down by exactly the amount that was added instead.
+        pushDown(n, nodeHeight(visiblePorts(n).length) - wasH);
         save(); render();
       };
       world.appendChild(d);
@@ -779,6 +791,49 @@ export function createFlow(ctx) {
 
   // Lay the graph out by rack, one column per rack in rack order, so the
   // canvas opens looking like the project rather than a pile.
+  // Grow a node and shove what it now overlaps out of the way, cascading, so a
+  // node pushed down does not simply land on the next one. Only ever downward
+  // and only by the overlap: nothing moves that did not have to, which is what
+  // separates this from a re-arrange.
+  //
+  // Collapsing (delta < 0) deliberately pulls nothing back up. Closing a card
+  // would otherwise drag unrelated nodes around under the cursor, and the gap
+  // it leaves is honest empty canvas.
+  function pushDown(grown, delta) {
+    if (delta <= 0) return;
+    const f = flow();
+    const box = (n) => ({
+      x0: n.pos.x, x1: n.pos.x + NODE_W,
+      y0: n.pos.y, y1: n.pos.y + nodeHeight(visiblePorts(n).length),
+    });
+    const GAP = 16;
+    const settled = new Set([grown.key]);
+    let front = [grown];
+    // Cascade depth is bounded by the node count; the guard is belt and braces
+    // against a cycle if two nodes ever share a position exactly.
+    for (let pass = 0; pass < nodes.length + 1 && front.length; pass++) {
+      const next = [];
+      for (const a of front) {
+        const A = box(a);
+        for (const b of nodes) {
+          if (settled.has(b.key)) continue;
+          const B = box(b);
+          const overlapsX = B.x0 < A.x1 && A.x0 < B.x1;
+          if (!overlapsX) continue;
+          if (B.y0 >= A.y1 + GAP) continue;     // already clear below
+          if (B.y1 <= A.y0) continue;           // sits above; leave it
+          const shift = A.y1 + GAP - B.y0;
+          if (shift <= 0) continue;
+          f.pos[b.key] = { x: B.x0, y: B.y0 + shift };
+          b.pos = f.pos[b.key];
+          settled.add(b.key);
+          next.push(b);
+        }
+      }
+      front = next;
+    }
+  }
+
   function arrange() {
     const f = flow();
     let col = 0;

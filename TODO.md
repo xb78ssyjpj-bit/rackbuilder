@@ -717,8 +717,20 @@ you have them.
   row, shown in the wire's tooltip and second column of the CSV. Still not
   settable *from the canvas* — you go through the matrix — and there is no
   bulk/auto numbering, which is the other half of the same job.
-- **Nodes do not reflow when expanded**, so opening a 48-port switch will
-  overlap whatever is below it. **Arrange** fixes it; nothing does automatically.
+- ~~**Nodes do not reflow when expanded**~~ — **done in v1.15.0.** Expanding a
+  card pushes the neighbours it now overlaps downward by exactly the height it
+  gained, cascading so a pushed node does not land on the next one. Only
+  downward, only what actually collides, and only in the same column — a node
+  off to the side is left alone, which is the whole difference from **Arrange**,
+  which throws away every deliberate position to fix one card. Collapsing
+  deliberately pulls nothing back up: closing a card would otherwise drag
+  unrelated nodes around under the cursor.
+
+  Found while doing it: **a fully expanded node lost its collapse button and
+  could never be folded back.** The button rendered on `hidden > 0 || !open`,
+  and once open `hidden` is 0 by definition. Pre-existing since the baseline
+  commit, and contrary to the README, which has always documented "Hide unused
+  folds it back to what's patched".
 - **`sonnet-rackmac-mini` is the one device that carries signal but has no
   ports**, so it never appears on the canvas. It is modelled as a carrier tray —
   two bays and a vent — and the Mac minis that would hold the I/O are not in the
