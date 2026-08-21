@@ -605,6 +605,28 @@ you have them.
 
 ## 9b. Connector detail still owed
 
+- **The six VEAM sizes are ESTIMATES, and the only sized connectors here that
+  are.** Added in v1.13.0 at the user's instruction: they regularly rack 8, 12,
+  16, 24, 32 and 48 pin, and brands differ enough that no one published figure
+  is correct, so these are a deliberate average rather than a spec.
+
+  Derived as `cutout = 49.2 mm x sqrt(pins / 19)` and `flange = cutout x 1.22`.
+  49.2 mm is the one hard datapoint obtained — the panel cutout of a VEAM VSC
+  19-pin — and contacts pack into the shell's area, so the diameter goes as the
+  square root of the count. The 1.22 is this library's existing 60 mm VEAM face
+  over that cutout. The model returns 60.0 mm at 19 pins, which is exactly the
+  number already in the library: **self-consistent, not verified.**
+
+  This is now the third soft figure in the library after `ah-dl-io` and
+  `displayport`, and by far the largest — twelve primitives rather than one.
+  Unlike `ah-dl-io` it is NOT flagged by `check.mjs`, because that gate only
+  inspects slot formats. **What replaces it: one dimensioned panel-cutout
+  drawing per shell size, plus the pin-count-to-shell mapping** — the research
+  pass got Amphenol's CIR catalogue but the insert-by-shell tables (pp. 26-34)
+  extract too poorly to read, and one shell takes several pin arrangements.
+  The contact ring layouts are drawing rather than data and a real insert may
+  group its pins differently.
+
 - **`displayport` is 24 mm DERIVED, not measured.** Added in v1.10.5 for the
   Analog Way Pulse 4K. The DP receptacles in Analog Way's own rear-panel
   photograph measure 1.15x the HDMI ones beside them in the same shot, and this

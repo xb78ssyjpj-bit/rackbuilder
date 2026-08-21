@@ -79,6 +79,7 @@ const FAM_OF = {
   dcjack: 'power',
   socapex_in: 'multipin', socapex_thru: 'multipin',
   veam_in: 'multipin', veam_thru: 'multipin',
+  veam8_in: 'multipin', veam8_thru: 'multipin', veam12_in: 'multipin', veam12_thru: 'multipin', veam16_in: 'multipin', veam16_thru: 'multipin', veam24_in: 'multipin', veam24_thru: 'multipin', veam32_in: 'multipin', veam32_thru: 'multipin', veam48_in: 'multipin', veam48_thru: 'multipin',
 };
 
 // AES3 has no connector of its own — it rides on an XLR, or on a BNC as AES3id.
@@ -117,10 +118,12 @@ const GENDER = {
   socket_in: 'in', iec_in: 'in', powercon_in: 'in', true1_in: 'in',
   cee16_in: 'in', cee32_1_in: 'in', cee32_3_in: 'in', cee63_1_in: 'in',
   cee125_3_in: 'in', powerlock_in: 'in', socapex_in: 'in', veam_in: 'in',
+  veam8_in: 'in', veam12_in: 'in', veam16_in: 'in', veam24_in: 'in', veam32_in: 'in', veam48_in: 'in',
   bs13a_thru: 'out', socket_thru: 'out', iec_thru: 'out', powercon_thru: 'out',
   true1_thru: 'out', cee16_thru: 'out', cee32_1_thru: 'out',
   cee32_3_thru: 'out', cee63_1_thru: 'out', cee125_3_thru: 'out',
   powerlock_thru: 'out', socapex_thru: 'out', veam_thru: 'out',
+  veam8_thru: 'out', veam12_thru: 'out', veam16_thru: 'out', veam24_thru: 'out', veam32_thru: 'out', veam48_thru: 'out',
 };
 
 // --- port enumeration ------------------------------------------------------

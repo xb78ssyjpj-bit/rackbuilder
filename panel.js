@@ -342,8 +342,41 @@ const P = {
   // --- multipin ------------------------------------------------------------
   socapex_in:   { mm: 50, nat: 68, d(g, x, y) { drawMultipin(g, x, y, 34, [[6, 0.34], [12, 0.62]], true); } },
   socapex_thru: { mm: 50, nat: 68, d(g, x, y) { drawMultipin(g, x, y, 34, [[6, 0.34], [12, 0.62]], false); } },
-  veam_in:      { mm: 60, nat: 80, d(g, x, y) { drawMultipin(g, x, y, 40, [[8, 0.36], [16, 0.66]], true); } },
-  veam_thru:    { mm: 60, nat: 80, d(g, x, y) { drawMultipin(g, x, y, 40, [[8, 0.36], [16, 0.66]], false); } },
+  // --- VEAM, by pin count ---------------------------------------------------
+  // THESE WIDTHS ARE ESTIMATES, NOT MANUFACTURER FIGURES, and are the only
+  // sized connectors here that are. Recorded at the user's instruction: they
+  // regularly rack 8, 12, 16, 24, 32 and 48 pin, and shell sizes differ enough
+  // between brands that no single published number is the right one — so these
+  // are a deliberate average rather than a spec.
+  //
+  // The method, so anyone can improve or replace it:
+  //   cutout = 49.2 mm * sqrt(pins / 19)      flange = cutout * 1.22
+  // 49.2 mm is the one hard datapoint found — the panel cutout of a VEAM VSC
+  // 19-pin — and contacts pack into the shell's AREA, so the diameter goes as
+  // the square root of the count. The 1.22 comes from this library's existing
+  // 60 mm VEAM face over that 49.2 mm cutout.
+  //
+  // The check on it: the model returns 60.0 mm for 19 pins, which is exactly
+  // the figure already in the library. That makes it self-consistent, not
+  // verified. A dimensioned panel-cutout drawing per shell size replaces all
+  // of it. See TODO §9b.
+  //
+  // Contact ring arrangements are drawing, not data — a real insert may group
+  // its pins differently.
+  veam_in:      { mm: 60, mmH: 60, nat: 80, d(g, x, y) { drawMultipin(g, x, y, 40, [[8, 0.36], [16, 0.66]], true); } },
+  veam_thru:    { mm: 60, mmH: 60, nat: 80, d(g, x, y) { drawMultipin(g, x, y, 40, [[8, 0.36], [16, 0.66]], false); } },
+  veam8_in:    { mm: 39, mmH: 39, nat: 52, d(g, x, y) { drawMultipin(g, x, y, 26, [[8, 0.55]], true); } },
+  veam8_thru:  { mm: 39, mmH: 39, nat: 52, d(g, x, y) { drawMultipin(g, x, y, 26, [[8, 0.55]], false); } },
+  veam12_in:    { mm: 48, mmH: 48, nat: 64, d(g, x, y) { drawMultipin(g, x, y, 32, [[4, 0.32], [8, 0.62]], true); } },
+  veam12_thru:  { mm: 48, mmH: 48, nat: 64, d(g, x, y) { drawMultipin(g, x, y, 32, [[4, 0.32], [8, 0.62]], false); } },
+  veam16_in:    { mm: 55, mmH: 55, nat: 73, d(g, x, y) { drawMultipin(g, x, y, 36, [[5, 0.32], [11, 0.64]], true); } },
+  veam16_thru:  { mm: 55, mmH: 55, nat: 73, d(g, x, y) { drawMultipin(g, x, y, 36, [[5, 0.32], [11, 0.64]], false); } },
+  veam24_in:    { mm: 67, mmH: 67, nat: 90, d(g, x, y) { drawMultipin(g, x, y, 45, [[6, 0.30], [18, 0.63]], true); } },
+  veam24_thru:  { mm: 67, mmH: 67, nat: 90, d(g, x, y) { drawMultipin(g, x, y, 45, [[6, 0.30], [18, 0.63]], false); } },
+  veam32_in:    { mm: 78, mmH: 78, nat: 104, d(g, x, y) { drawMultipin(g, x, y, 52, [[8, 0.30], [24, 0.63]], true); } },
+  veam32_thru:  { mm: 78, mmH: 78, nat: 104, d(g, x, y) { drawMultipin(g, x, y, 52, [[8, 0.30], [24, 0.63]], false); } },
+  veam48_in:    { mm: 95, mmH: 95, nat: 127, d(g, x, y) { drawMultipin(g, x, y, 63, [[6, 0.22], [16, 0.46], [26, 0.70]], true); } },
+  veam48_thru:  { mm: 95, mmH: 95, nat: 127, d(g, x, y) { drawMultipin(g, x, y, 63, [[6, 0.22], [16, 0.46], [26, 0.70]], false); } },
 
   // --- controls ------------------------------------------------------------
   knob: { d(g, x, y, o = {}) {
@@ -637,7 +670,13 @@ export const CONNECTOR_GROUPS = [
   ]],
   ['Multipin', [
     ['socapex_in', 'Socapex 19p in'], ['socapex_thru', 'Socapex 19p thru'],
-    ['veam_in', 'VEAM in'], ['veam_thru', 'VEAM thru'],
+    ['veam_in', 'VEAM 19p in'], ['veam_thru', 'VEAM 19p thru'],
+    ['veam8_in', 'VEAM 8p in'], ['veam8_thru', 'VEAM 8p thru'],
+    ['veam12_in', 'VEAM 12p in'], ['veam12_thru', 'VEAM 12p thru'],
+    ['veam16_in', 'VEAM 16p in'], ['veam16_thru', 'VEAM 16p thru'],
+    ['veam24_in', 'VEAM 24p in'], ['veam24_thru', 'VEAM 24p thru'],
+    ['veam32_in', 'VEAM 32p in'], ['veam32_thru', 'VEAM 32p thru'],
+    ['veam48_in', 'VEAM 48p in'], ['veam48_thru', 'VEAM 48p thru'],
   ]],
   // A breaker lives here, not under Power, because it is a switch: you cannot
   // plug anything into it. Left in the power group it became a patchable port
@@ -678,6 +717,7 @@ export const SHORT = {
   cee63_1_in: '63/1i', cee63_1_thru: '63/1', cee125_3_in: '125i', cee125_3_thru: '125',
   powerlock_in: 'PLi', powerlock_thru: 'PLo', breaker: 'MCB',
   socapex_in: 'SOCi', socapex_thru: 'SOCo', veam_in: 'VMi', veam_thru: 'VMo',
+  veam8_in: 'VM8i', veam8_thru: 'VM8o', veam12_in: 'VM12i', veam12_thru: 'VM12o', veam16_in: 'VM16i', veam16_thru: 'VM16o', veam24_in: 'VM24i', veam24_thru: 'VM24o', veam32_in: 'VM32i', veam32_thru: 'VM32o', veam48_in: 'VM48i', veam48_thru: 'VM48o',
 };
 export const shortCode = (t) => SHORT[t] || (t || '').slice(0, 4);
 

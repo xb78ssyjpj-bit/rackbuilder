@@ -965,7 +965,18 @@ stops a row of 16 A CEE fitting where a row of XLR would.
 | DisplayPort | 24 mm | 16 |
 | 13 A / Schuko (rack modules) | 46 / 45 mm | 8 |
 | Socapex 19-pin, Powerlock | 50 mm | needs 2U — taller than a 1U row |
+| VEAM 8 / 12 / 16 / 24 / 32 / 48-pin | 39 / 48 / 55 / 67 / 78 / 95 mm | 10 / 8 / 7 / 6 / 5 / 4 — only the 8-pin fits 1U |
 | CEE 16 A / 32 A / 63 A / 125 A | 65 / 75-80 / 95 / 125 mm | needs 2–3U |
+
+**The VEAM widths are estimates and are the only sized connectors here that
+are.** Shell sizes differ enough between brands that no single published figure
+is right, so these are a deliberate average, set at the user's instruction. The
+method is `cutout = 49.2 mm x sqrt(pins / 19)`, `flange = cutout x 1.22` —
+49.2 mm being the one hard datapoint available (a VEAM VSC 19-pin panel cutout)
+and contacts packing into the shell's *area*, so diameter goes as the square
+root of the count. It returns exactly 60 mm for 19 pins, which is the figure
+already in the library, so it is self-consistent — not verified. A dimensioned
+cutout drawing per shell size replaces all of it. See `TODO.md` §9b.
 
 **In vs thru.** Every power connector has an `_in` and a `_thru` variant. In =
 solid pins (an inlet), thru = open holes (an outlet). There is no 13 A inlet,

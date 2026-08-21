@@ -19,6 +19,49 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.13.0 — 2026-08-15
+
+**Added — VEAM by pin count: 8, 12, 16, 24, 32 and 48**
+
+Twelve primitives, `_in` and `_thru` for each, drawn at true relative size:
+
+| pins | 8 | 12 | 16 | 19 | 24 | 32 | 48 |
+|---|---|---|---|---|---|---|---|
+| mm | 39 | 48 | 55 | 60 | 67 | 78 | 95 |
+| per 1U row | 10 | 8 | 7 | 6 | 6 | 5 | 4 |
+
+Only the 8-pin fits a 1U row at all; a 48-pin needs 3U and four across is the
+most a face will take. That is the point of sizing connectors honestly.
+
+**These widths are estimates, and they are the only sized connectors here that
+are.** Recorded at the user's instruction: they rack all six regularly, and
+shell sizes differ enough between brands that no single published figure is the
+right one, so an average is the truthful representation rather than a lazy one.
+
+The method is written into `panel.js` so it can be checked or replaced:
+
+```
+cutout = 49.2 mm x sqrt(pins / 19)      flange = cutout x 1.22
+```
+
+49.2 mm is the one hard datapoint the research produced — the panel cutout of a
+VEAM VSC 19-pin. Contacts pack into the shell's *area*, so shell diameter goes
+as the square root of the contact count. The 1.22 is this library's existing
+60 mm VEAM face over that cutout.
+
+**The check on it is that the model returns 60.0 mm at 19 pins — exactly the
+figure already in the library.** That makes it self-consistent, not verified,
+and the difference matters: it is now the third soft figure here after
+`ah-dl-io` and `displayport`, and much the largest. TODO §9b records what
+replaces it — one dimensioned cutout drawing per shell size, plus the
+pin-count-to-shell mapping, which Amphenol's CIR catalogue has but in tables
+that will not extract.
+
+The generic `veam_in` / `veam_thru` stay, relabelled **VEAM 19p**, so any
+project that already punched one keeps working.
+
+---
+
 ## v1.12.0 — 2026-08-15
 
 **Added — devices narrower than 19", mounted centrally with filler either side**
