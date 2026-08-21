@@ -7,4 +7,4 @@
 // Major   a change that breaks saved projects, or a rewrite of a whole view.
 // Minor   new capability.
 // Patch   fixes and data corrections only.
-export const VERSION = '1.13.0';
+export const VERSION = '1.14.0';
