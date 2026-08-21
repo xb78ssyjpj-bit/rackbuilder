@@ -37,13 +37,83 @@ function load() {
   return blankProject();
 }
 
+// --- undo -------------------------------------------------------------------
+// Drag-to-remove, right-click-remove and Delete are all instant, and
+// right-click is easy to hit by accident. The toast naming what went is a
+// consolation; this is the fix.
+//
+// It snapshots the whole project rather than recording per-action diffs. That
+// is coarse, but every mutation in this app already funnels through save(), so
+// it cannot miss one — an undo that silently does not cover some path is worse
+// than no undo, because you find out after the thing you wanted back is gone.
+// A project is a few hundred KB of JSON at worst and the stack is capped.
+const UNDO_MAX = 60;
+const undoStack = [];
+const redoStack = [];
+let lastSnap = null;
+
 function save() {
-  try { localStorage.setItem(STORE, JSON.stringify(state.project)); } catch { /* quota */ }
+  const now = JSON.stringify(state.project);
+  // The PREVIOUS serialisation is the pre-mutation state, because save() runs
+  // after the change. Identical strings mean nothing actually moved — typing
+  // in a name field fires save() on every keystroke.
+  if (lastSnap !== null && now !== lastSnap) {
+    undoStack.push(lastSnap);
+    if (undoStack.length > UNDO_MAX) undoStack.shift();
+    redoStack.length = 0;
+  }
+  lastSnap = now;
+  try { localStorage.setItem(STORE, now); } catch { /* quota */ }
 }
+
+function restoreSnap(json) {
+  state.project = JSON.parse(json);
+  state.sel = null;
+  if (!state.project.racks || !state.project.racks.length) state.project = blankProject();
+  if (state.rack >= state.project.racks.length) state.rack = 0;
+  lastSnap = json;                       // so the next save() does not re-push
+  try { localStorage.setItem(STORE, json); } catch { /* quota */ }
+  disarmRemove(false);
+  renderAll();
+}
+
+function undo() {
+  if (!undoStack.length) { toast('Nothing to undo.'); return; }
+  redoStack.push(JSON.stringify(state.project));
+  restoreSnap(undoStack.pop());
+  toast('Undone.');
+}
+
+function redo() {
+  if (!redoStack.length) { toast('Nothing to redo.'); return; }
+  undoStack.push(JSON.stringify(state.project));
+  restoreSnap(redoStack.pop());
+  toast('Redone.');
+}
+
+// Typing in a field is not a shortcut. Without this, ctrl+Z in the project
+// name box would throw the whole rack back a step instead of fixing a typo.
+const typingInto = (t) => !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA'
+  || t.tagName === 'SELECT' || t.isContentEditable);
+
+addEventListener('keydown', (ev) => {
+  if ((ev.key === 'z' || ev.key === 'Z') && (ev.metaKey || ev.ctrlKey)) {
+    if (typingInto(ev.target)) return;
+    ev.preventDefault();
+    if (ev.shiftKey) redo(); else undo();
+  } else if ((ev.key === 'y' || ev.key === 'Y') && (ev.metaKey || ev.ctrlKey)) {
+    if (typingInto(ev.target)) return;
+    ev.preventDefault();
+    redo();
+  }
+});
 
 state = { project: load(), rack: 0, view: 'front', sel: null,
           libCat: 'all', libQ: '', zoom: 1, sideZoom: 1 };
 if (!state.project.custom) state.project.custom = [];
+// Seed the undo baseline, or the very first thing you do in a session would be
+// the one action you could not take back.
+lastSnap = JSON.stringify(state.project);
 
 // A library device can be corrected without touching devices.js. The fix is
 // stored against the device's id and applied on the way out, so it reaches
@@ -632,7 +702,14 @@ function renderSide() {
     const dev = devById(it.devId);
     if (!dev) return;
     const ru = itemRU(it);
-    const d = itemDepth(it);
+    // A device whose manufacturer publishes no depth used to draw NOTHING here:
+    // itemDepth() returns 0, the rect got width="0", and the device silently
+    // vanished from the one view that exists to show depth. Every device had a
+    // depth until the ATEM, so it had never bitten. It now draws a short
+    // dashed stub instead — visible, obviously not a measurement, and it says
+    // so on hover.
+    const known = itemDepth(it) > 0;
+    const d = known ? itemDepth(it) : 60;
     const rear = itemPlane(it) === 'rear';
     const y = y0 + (it.u - 1) * U_MM_H;
     const x = rear ? x0 + W - d : x0;
@@ -640,7 +717,7 @@ function renderSide() {
     const half = dev.half ? ' half' : '';
     const moving = sideDrag && sideDrag.uid === it.uid;
     const selected = state.sel === it.uid;
-    p.push(`<g class="sitem${bad ? ' bad' : ''}${half}`
+    p.push(`<g class="sitem${bad ? ' bad' : ''}${half}${known ? '' : ' nodepth'}`
       + `${moving ? ' moving' : ''}${selected ? ' sel' : ''}" data-uid="${it.uid}">`);
     p.push(`<rect x="${x.toFixed(1)}" y="${(y + 1.2).toFixed(1)}" width="${d}" `
       + `height="${(ru * U_MM_H - 2.4).toFixed(1)}" rx="2"/>`);
@@ -662,7 +739,8 @@ function renderSide() {
     // Trim to what the box can hold rather than letting the name run out over
     // the neighbouring gear — a shallow device is exactly where a long model
     // name would otherwise sit on top of whatever is behind it.
-    const full = `${it.label || dev.model}${d ? `  ${d} mm` : ''}`;
+    const full = `${it.label || dev.model}`
+      + (known ? `  ${d} mm` : '  — depth not published');
     const room = Math.floor((d - 9) / 4.5);
     const label = room < 3 ? '' : full.length <= room ? full
       : `${full.slice(0, Math.max(1, room - 1))}…`;

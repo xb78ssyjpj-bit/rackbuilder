@@ -165,12 +165,12 @@ export const BEHRINGER = [
   //    HEIGHT IS THE USER'S, NOT BEHRINGER'S — 183 mm is 4.12 U, so their
   //    figure includes feet. Marked `approx` for that reason.
   //
-  // 2. THE PHONES COUNT IS CONTRADICTORY IN THE SAME DOCUMENT. The spec table
-  //    says "Phones output (1/4" TRS, stereo) 5"; the rear-panel text says
-  //    "Four stereo headphones can be used for monitoring" and names them as
-  //    outputs 1/2, 3/4, 5/6 and 7/8. Four is drawn, because the prose says
-  //    which four they are and the table gives a bare number. If a fifth
-  //    socket exists it is not described anywhere in the QSG.
+  // 2. THE PHONES COUNT IS 5, AND BOTH OF BEHRINGER'S NUMBERS WERE RIGHT. The
+  //    spec table says "Phones output (1/4" TRS, stereo) 5"; the rear-panel
+  //    text says "Four stereo headphones can be used for monitoring". Per the
+  //    user, who has one: the four on the REAR are stereo IEM sends, and the
+  //    fifth is a headphone output on the FRONT. The QSG never mentions the
+  //    front socket, which is why the two figures looked like a contradiction.
   //
   // THE MIC INPUTS ARE COMBO, NOT XLR. The spec table lists them as "(XLR) 24"
   // but the prose says "24 Midas PRO series microphone preamps with combo jack
@@ -196,6 +196,7 @@ export const BEHRINGER = [
       { t: 'button', x: 580, y: 240, n: 4, gap: 62, w: 40, h: 26 },
       { t: 'knob', x: 800, y: 180, r: 30 },
       { t: 'usba', x: 800, y: 280, lbl: 'USB' },
+      { t: 'trs', x: 880, y: 280, lbl: 'PHONES' },
     ], labels: [
       { text: 'WING RACK', x: 90, y: 120, size: 22, ls: 2 },
     ] },
@@ -208,7 +209,7 @@ export const BEHRINGER = [
       { t: 'xlrm', n: 1, lbl: 'STAGECONNECT' },
       { t: 'ethercon', n: 3, sig: 'aes50', lbl: ['AES50 A', 'AES50 B', 'AES50 C'] },
       { t: 'rj45', n: 2, lbl: 'ETHERNET' },
-      { t: 'trs', n: 4, lbl: 'PHONES' },
+      { t: 'trs', n: 4, lbl: 'IEM' },
       { t: 'trs', n: 2, lbl: 'GPIO' },
       { t: 'midi', n: 2, lbl: ['MIDI IN', 'MIDI OUT'] },
       { t: 'usbb', n: 1 },

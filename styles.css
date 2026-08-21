@@ -1065,3 +1065,8 @@ body.lib-off .lib, body.insp-off .insp {
 }
 body.lib-off .lib > *, body.insp-off .insp > * { display: none; }
 main { position: relative; }
+
+/* A device whose depth the manufacturer does not publish. It draws a short
+   dashed stub rather than nothing at all — see renderSide(). The dash is the
+   whole point: it must not be mistaken for a measured depth. */
+.sitem.nodepth rect { stroke-dasharray: 4 3; opacity: .55; }

@@ -501,11 +501,10 @@ drawing, call that 0 and 1000, and place everything as a fraction of it.
 - **Blackmagic publish no depth and no weight for any Constellation.** The tech
   specs say "Physical Installation: 1 Rack Unit Size" and stop. Both fields are
   absent rather than estimated.
-- **A device with no depth draws NOTHING in the side elevation.** `itemDepth()`
-  returns 0, the box gets `width="0"`, and the device silently vanishes from
-  the one view that exists to show depth. Every one of the other 219 devices
-  has a depth, so this has never bitten before. It needs a decision: a hatched
-  "depth not published" box, a minimum sliver, or a note in the side view.
+- ~~**A device with no depth draws NOTHING in the side elevation.**~~ —
+  **fixed in v1.14.0.** It draws a short dashed stub at reduced opacity, and
+  says "depth not published" on hover. Dashed on purpose: the one thing it must
+  not be mistaken for is a measured depth.
 - **The 1 M/E Constellation HD is 2/3 rack width** — not full, not half. Same
   class of problem as the 1/3-rack Shure ANI4IN in §9c, and it is why only the
   2 M/E is in. It mounts in a Blackmagic Universal Rack Shelf.
@@ -593,9 +592,13 @@ you have them.
 - Individual connector numbering on high-density panels (DX168 etc.) is dropped
   because it turns to mush at normal render size. Could re-add it and only show
   it above a zoom threshold.
-- **No undo.** Drag-to-remove, right-click-remove and Delete are all instant.
-  Right-click is the easiest of the three to hit by accident, so it toasts what
-  it removed — but that is a consolation, not a fix. Undo is the real answer.
+- ~~**No undo.**~~ — **done in v1.14.0.** Ctrl/Cmd+Z, with Shift or Ctrl+Y to
+  redo, 60 steps deep. It snapshots the whole project rather than recording
+  per-action diffs: coarse, but every mutation already funnels through `save()`
+  so it cannot miss one, and an undo that silently fails to cover some path is
+  worse than none — you find out after the thing you wanted back is gone.
+  Identical serialisations are not pushed, so typing in a name field does not
+  fill the stack, and Ctrl+Z inside a text field is left to the browser.
 - **Rack lights.** Nothing in the library lights a rack. Wanted: the 1U
   gooseneck/LED bar types that take a U of their own, and the clip-on lamps that
   do not. Note the Furman PL-8C and PL-PRO DMC already have retractable lamps

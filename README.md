@@ -207,6 +207,23 @@ runtime; the manufacturer `src:` URLs in the library are data, never requested.
 Projects autosave to `localStorage`. **File → Save .json** for a real backup —
 clearing site data wipes the autosave.
 
+### Undo
+
+<kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>Z</kbd>, and <kbd>Shift</kbd> with it (or
+<kbd>Ctrl</kbd>+<kbd>Y</kbd>) to redo. 60 steps.
+
+Drag-to-remove, right-click-remove and <kbd>Delete</kbd> are all instant, and
+right-click is easy to hit by accident. The toast naming what went was a
+consolation; this is the fix.
+
+It snapshots the whole project rather than recording per-action diffs. That is
+coarse, but **every mutation in this app already funnels through `save()`**, so
+it cannot miss one — and an undo that silently does not cover some path is
+worse than no undo at all, because you find out after the thing you wanted back
+is gone. Identical serialisations are not pushed, so typing in a name field
+does not fill the stack with 30 entries, and <kbd>Ctrl</kbd>+<kbd>Z</kbd>
+inside a text field is left to the browser where it belongs.
+
 ### No native dialogs
 
 Some embedded browsers suppress `window.alert` / `window.confirm` — `confirm()`

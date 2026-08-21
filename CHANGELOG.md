@@ -19,6 +19,47 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.14.0 — 2026-08-15
+
+**Added — undo**
+
+<kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>Z</kbd>, Shift to redo, 60 steps deep. The
+oldest item in TODO §9 and the one that mattered most: drag-to-remove,
+right-click-remove and <kbd>Delete</kbd> are all instant, and right-click is
+easy to hit by accident. Toasting what went was a consolation, not a fix.
+
+It snapshots the whole project rather than recording per-action diffs. That is
+deliberately coarse. **Every mutation in this app already funnels through
+`save()`**, so a snapshot there cannot miss one — where a diff-based scheme
+would need every code path to remember to record itself, and an undo that
+silently fails to cover some path is worse than no undo, because you only find
+out after the thing you wanted back is gone.
+
+Two details that make it usable rather than annoying: identical serialisations
+are not pushed, so typing in a name field does not bury the stack under 30
+entries; and <kbd>Ctrl</kbd>+<kbd>Z</kbd> inside a text field is left to the
+browser, so fixing a typo does not throw the whole rack back a step.
+
+**Fixed — a device with no depth vanished from the side elevation**
+
+`itemDepth()` returned 0, the rect got `width="0"`, and the device disappeared
+from the one view that exists to show depth. Every device had a depth until the
+ATEM 2 M/E, for which Blackmagic publish none, so it had never bitten.
+
+It now draws a short **dashed** stub at reduced opacity and says "depth not
+published" on hover. Dashed on purpose: the one thing it must not be mistaken
+for is a measured depth.
+
+**Fixed — the WING Rack has five phones sockets, and Behringer were right twice**
+
+Their spec table says 5, their rear-panel text says four stereo headphones, and
+that looked like a contradiction. Per the user, who has one: the four on the
+rear are **stereo IEM sends**, and the fifth is a **headphone output on the
+front**. The QSG never mentions the front socket. The rear four are relabelled
+`IEM` and the front jack is drawn.
+
+---
+
 ## v1.13.0 — 2026-08-15
 
 **Added — VEAM by pin count: 8, 12, 16, 24, 32 and 48**
