@@ -649,12 +649,18 @@ you have them.
 - **The S16's mains inlet is inferred.** Behringer's connector table lists AES50,
   ULTRANET, ADAT, MIDI and USB but never names the inlet; C14 is what is on the
   unit and what every comparable box here uses. Worth a photo check.
-- **`cisco-catalyst-9200-48p` loses its management port.** `switchFront` only
-  draws a MGMT port when the face has a lettering gutter, and a 48-port face has
-  none — at `x0 - 46` it would sit on the rack ear. On the real Catalyst the
-  out-of-band port is on the rear anyway, so the fix is probably a rear entry
-  rather than squeezing the front. Now visible in the flow view, which is why it
-  is worth doing: the switch has no MGMT socket on the graph.
+- ~~**`cisco-catalyst-9200-48p` loses its management port**~~ — **fixed in
+  v1.16.0.** A declared port that is silently discarded is the wrong trade: it
+  also vanished from the signal-flow graph, so the switch had no MGMT socket to
+  patch at all. It now goes at the right-hand end, in the slack past the last
+  port — a 48-port block is 746 of 844 units, leaving ~49 either side, which
+  takes one 15 mm RJ45 with clearance. The 48P went from 48 RJ45 sockets to 49.
+
+  **Its FACE is still an import assumption.** NetBox does not record which face
+  a port is on, so front is assumed for every imported switch (§6), this one
+  included. Cisco's own documentation would settle whether the out-of-band port
+  is really on the front of a 9200-48P; the previous note here asserted the
+  rear, but that was this file's belief rather than a cited source.
 
 ## 9c. Dante
 
