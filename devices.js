@@ -54,6 +54,7 @@ import { SENNHEISER } from './devices/sennheiser.js';
 import { SHURE } from './devices/shure.js';
 import { SONNET } from './devices/sonnet.js';
 import { UBIQUITI } from './devices/ubiquiti.js';
+import { WAVES } from './devices/waves.js';
 import { YAMAHA } from './devices/yamaha.js';
 import './devices/cards.js';
 
@@ -91,5 +92,6 @@ export const SEED_DEVICES = [
   ...SHURE,
   ...SONNET,
   ...UBIQUITI,
+  ...WAVES,
   ...YAMAHA,
 ];
