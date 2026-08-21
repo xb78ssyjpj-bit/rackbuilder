@@ -19,6 +19,82 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.12.0 — 2026-08-15
+
+**Added — devices narrower than 19", mounted centrally with filler either side**
+
+Plenty of real gear is neither full width nor half: the Behringer XR18 is
+333 mm, the ATEM 1 M/E is two-thirds rack, the Shure ANI4IN is a third, the
+Green-GO RDX is 95 mm. The layout model had only full and half, so all of them
+were either left out or would have had to be lied about.
+
+A device can now declare **`widthMM`**. It draws its body at true width in the
+centre of the U with blanking plate either side — which is how the
+manufacturer's own rack hardware actually mounts it. Occupancy is deliberately
+unchanged: a narrow device still claims the whole row, because the filler is
+physically there and nothing can go beside it. That is the difference from
+`half`, where two boxes genuinely do share a U.
+
+`check.mjs` measures against the same narrowed bounds, so its fit check stays
+meaningful instead of passing everything because the face got smaller.
+
+**Behringer XR18** is the first one in, from Behringer's own X AIR X18/XR18
+Quick Start Guide. TODO §8f records what that document does not settle.
+
+**Changed — nothing refuses a placement any more**
+
+A drop that did not fit used to be silently rejected: the drag just did not
+commit, which left you dragging the same box again with no explanation. **Every
+placement is now accepted and the problem is reported instead.** Two devices in
+one slot, or a device running past the top of the rack, are listed under the
+summary exactly the way a depth clash always has been. The drag ghost still
+goes red, so you know before you let go — it just no longer decides for you.
+
+This covers the drag, the side elevation, the inspector's U field, and the
+Left/Right and Front/Rear toggles, which used to refuse with a toast and now
+move and say what happened.
+
+The two legal sharings are still not flagged, because they are not clashes:
+gear sitting on a shelf, and two half-width boxes on opposite sides of a U.
+
+**Changed — moving a shelf takes its load with it**
+
+The half-width gear sharing a shelf's U now moves when the shelf moves. Gear on
+a shelf *directly below* does not: that box is standing on its own furniture,
+not on this one. Anything that would end up outside the rack is left behind
+rather than clamped, because silently stacking two boxes into one U is worse
+than visibly leaving one.
+
+**Fixed — a DC jack is power**
+
+`dcjack` was in the `control` family, so the flow view drew every DC inlet the
+same grey as a MIDI or USB port and would patch one into the other without a
+word. **34 devices** were affected — every Sennheiser and Shure receiver, the
+RF Venue distros, Green-GO and Clear-Com.
+
+**Fixed — the S32 front was drawing connectors below true size**
+
+`auto` balanced its 48 XLRs as 12/12/24 and drew the last row overlapping. A
+3U face genuinely takes three rows of 16 (16 x 24 mm = 384 mm per row), so it
+is hand-placed at that pitch — which is also the S16's grammar scaled, and the
+user confirmed the two match. Worth noting that **`check.mjs` passed it**: the
+fit check tests whether elements stay inside the panel, not whether they
+overlap each other.
+
+**Fixed — nothing ever parsed app.js, and it cost us**
+
+While making the changes above, a duplicate `const` shipped. `app.js` threw on
+load, the entire application rendered as a blank page — and `node
+tools/check.mjs` said "all checks pass", because the gate only ever loaded the
+device modules. `node --check` would not have helped either: it parses as
+CommonJS and passes files that cannot import.
+
+The gate now parses **app.js, panel.js, flow.js, devices.js and version.js**
+with `--input-type=module`. Verified by reintroducing the duplicate `const` on
+purpose and watching it fail.
+
+---
+
 ## v1.11.1 — 2026-08-15
 
 **Added — five devices from three research passes, and one deliberately left out**

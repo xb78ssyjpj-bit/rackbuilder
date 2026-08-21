@@ -190,7 +190,7 @@ runtime; the manufacturer `src:` URLs in the library are data, never requested.
 | Find a device | Type in the search box — it matches brand, model **and** category, and cuts straight through collapsed groups |
 | Browse the library | Brands are collapsed with a count; click one to open it. What's open is remembered |
 | Add a device | Drag from the library, or double-click to drop in the first free slot |
-| Move a device | Drag it. Green = will fit, red = blocked |
+| Move a device | Drag it. Green = will fit, red = will clash — the drop is still allowed, and the clash is listed under the summary |
 | Rename / colour | Click it, use the inspector |
 | Delete | Select and press <kbd>Delete</kbd>, or use Remove |
 | Multiple racks | Add rack, then use the tabs |
@@ -599,6 +599,24 @@ sides. An empty shelf draws in full. Same in the SVG export.
   fan tray, drawers, shelf, lacing bar, fixed XLR/etherCON/BNC/jack patch
   panels, and blank patch panels you punch yourself.
 - **Power** — UK 13 A (6 and 8 way, plus 2U 12-way), IEC C13, Schuko.
+
+### Nothing refuses a placement any more
+
+A drop that does not fit used to be rejected: the drag simply did not commit,
+which left you dragging the same box repeatedly with no explanation. **Every
+placement is now accepted and the problem is reported instead** — two devices
+in one slot, or a device running past the top of the rack, are listed under the
+summary the same way a depth clash always has been. The drag ghost still goes
+red, so you know before you let go; it just no longer decides for you.
+
+The two legal sharings are still not flagged, because they are not clashes:
+gear sitting on a shelf, and two half-width boxes on opposite sides of a U.
+
+**Moving a shelf takes its load with it.** The half-width gear sharing a
+shelf's U moves when the shelf moves. Gear on a shelf *directly below* does not
+— that box is standing on its own furniture, not on this one. Anything that
+would end up outside the rack is left behind rather than clamped, because
+silently stacking two boxes into one U is worse than visibly leaving one.
 
 Rack weight is an optional field beside name and height. Leave it blank and the
 summary shows kit weight only; set it and you get kit / case / total.

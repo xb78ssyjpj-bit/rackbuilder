@@ -669,9 +669,11 @@ you have them.
   Those brands were excluded during the stagebox pass; RedNet in particular is
   the canonical Dante interface range, so it is worth deciding whether that
   exclusion still stands.
-- **Shure ANI4IN / ANI4OUT are 1/3-rack width**, which the layout model has no
-  concept of — it does full and half only. They were skipped rather than
-  modelled as half-width, which would be a lie about the panel.
+- ~~**Shure ANI4IN / ANI4OUT are 1/3-rack width**, which the layout model has no
+  concept of~~ — **the model exists now.** v1.12.0 added `widthMM`: a device
+  declares its true width and draws centred with blanking plate either side.
+  These are now a data job rather than a code one, as are the 2/3-rack ATEM
+  1 M/E (§8e) and the Green-GO RDX and SI2WR (§4).
 
 ## 10. Signal flow — what it does not do yet
 

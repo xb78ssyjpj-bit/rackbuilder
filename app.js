@@ -723,9 +723,9 @@ $('#sideWrap').addEventListener('pointerdown', (ev) => {
     const u = Math.max(1, Math.min(sideGeom.ru - ru + 1, hit.row + 1));
     if (u === it.u && hit.plane === itemPlane(it)) return;
     const dev = devById(it.devId);
-    // Same rule the front and rear bays use, so the side view cannot put a
-    // device somewhere the other views would refuse.
-    if (occupied(u, ru, it.uid, it.side, isShelfDev(dev), hit.plane, dev.depth || 0)) return;
+    // A clash no longer refuses the move — it is reported afterwards by
+    // slotClashes() instead. Same rule as the bays, so the views still agree.
+    if (isShelfDev(dev)) moveShelfLoad(it, u);
     it.u = u;
     if (hit.plane === 'rear') it.plane = 'rear'; else delete it.plane;
     renderSide();
@@ -837,12 +837,64 @@ function visibleFrom(items, view) {
 // selected rack for on-screen use, but the export walks every rack, so it has to
 // pass its own — reading rack() there judged each rack by whichever tab was open.
 function shelfIsCarrying(shelfItem, items = rack().items) {
+  return itemsOnShelf(shelfItem, items).length > 0;
+}
+
+// The half-width gear actually SITTING ON a shelf — sharing its U span, not
+// merely near it. `needsShelf` also accepts a shelf directly below, but that
+// gear is standing on the rails' own furniture rather than on this shelf, so
+// it is not picked up when the shelf moves.
+function itemsOnShelf(shelfItem, items = rack().items) {
   const sru = itemRU(shelfItem);
-  return items.some((o) => {
+  return items.filter((o) => {
     const od = devById(o.devId);
-    return od && od.half
+    return od && od.half && o.uid !== shelfItem.uid
       && o.u < shelfItem.u + sru && shelfItem.u < o.u + itemRU(o);
   });
+}
+
+// Move a shelf and take its load with it. Gear that would fall outside the
+// rack is left where it is rather than clamped, because silently stacking two
+// boxes into one U is worse than leaving one behind visibly.
+function moveShelfLoad(shelfItem, newU) {
+  const delta = newU - shelfItem.u;
+  if (!delta) return;
+  for (const o of itemsOnShelf(shelfItem)) {
+    const nu = o.u + delta;
+    if (nu >= 1 && nu + itemRU(o) - 1 <= rack().ru) o.u = nu;
+  }
+}
+
+// Every pair of devices that overlap in the same U on the same face. Dropping
+// on top of something is allowed — see `occupied`'s callers — so this is what
+// reports it afterwards.
+function slotClashes() {
+  const r = rack();
+  const out = [];
+  r.items.forEach((a, i) => {
+    const da = devById(a.devId);
+    if (!da) return;
+    r.items.slice(i + 1).forEach((b) => {
+      const db = devById(b.devId);
+      if (!db) return;
+      if (itemPlane(a) !== itemPlane(b)) return;
+      if (!(a.u < b.u + itemRU(b) && b.u < a.u + itemRU(a))) return;
+      // The legal sharings: gear on a shelf, and two half-width boxes on
+      // opposite sides of the same U.
+      if ((isShelfDev(da) && db.half) || (isShelfDev(db) && da.half)) return;
+      if (da.half && db.half && (a.side || 'left') !== (b.side || 'left')) return;
+      out.push({ u: Math.max(a.u, b.u), a: da.model, b: db.model,
+                 plane: itemPlane(a) });
+    });
+  });
+  return out;
+}
+
+// Items sticking out past the top of the rack.
+function overhangs() {
+  const r = rack();
+  return r.items.filter((it) => it.u + itemRU(it) - 1 > r.ru)
+    .map((it) => ({ u: it.u, model: (devById(it.devId) || {}).model || '?' }));
 }
 
 function firstFree(ru, side, isShelf, plane, depth) {
@@ -987,10 +1039,13 @@ function onDragEnd(ev) {
   const u = targetU(ev);
   const ru = drag.ru;
   const side = drag.dev.half ? targetSide(ev) : null;
-  if (u != null && !occupied(u, ru, drag.uid, side, drag.shelf, drag.plane, drag.depth)) {
+  if (u != null) {
     if (drag.uid) {
       const it = rack().items.find((i) => i.uid === drag.uid);
-      if (it) { it.u = u; if (side) it.side = side; }
+      if (it) {
+        if (drag.shelf) moveShelfLoad(it, u);
+        it.u = u; if (side) it.side = side;
+      }
     } else if (drag.copyOf) {
       // A fresh uid, and the punched slots copied rather than shared — the same
       // rule rack duplication follows, and for the same reason.
@@ -1142,10 +1197,8 @@ function renderInspector() {
   };
   $('#iU').onchange = (e) => {
     const u = Math.max(1, Math.min(rack().ru, +e.target.value || 1));
-    if (!occupied(u, dev.ru, it.uid, dev.half ? (it.side || 'left') : null,
-                  isShelfDev(dev), itemPlane(it), dev.depth || 0)) {
-      it.u = u; save();
-    }
+    if (isShelfDev(dev)) moveShelfLoad(it, u);
+    it.u = u; save();
     renderAll();
   };
   // RF gear ships as one product in many band SKUs. Rather than a library entry
@@ -1212,8 +1265,8 @@ function renderInspector() {
         if (side === (it.side || 'left')) return;
         if (occupied(it.u, itemRU(it), it.uid, side, false,
                      itemPlane(it), dev.depth || 0)) {
-          toast(`Something is already on the ${side} at U${it.u}.`, true);
-          return;
+          // Allowed, not refused — the summary carries the clash from here.
+          toast(`Something else is already on the ${side} at U${it.u}.`, true);
         }
         it.side = side; save(); renderAll();
       };
@@ -1261,8 +1314,8 @@ function renderInspector() {
       if (occupied(it.u, itemRU(it), it.uid,
                    dev.half ? (it.side || 'left') : null,
                    isShelfDev(dev), p, dev.depth || 0)) {
-        toast(`Won't fit on the ${p} at U${it.u}.`, true);
-        return;
+        // Allowed, not refused — the summary carries the clash from here.
+        toast(`Doesn't fit on the ${p} at U${it.u} — moved anyway.`, true);
       }
       if (p === 'front') delete it.plane; else it.plane = 'rear';
       save(); renderAll();
@@ -1534,6 +1587,21 @@ function renderSummary() {
     dw.className = 'warn';
     $('#summary').after(dw);
   }
+  const slots = slotClashes();
+  const past = overhangs();
+  let sw = $('#slotWarn');
+  if (!sw) {
+    sw = document.createElement('p');
+    sw.id = 'slotWarn';
+    sw.className = 'warn';
+    $('#summary').after(sw);
+  }
+  sw.hidden = !slots.length && !past.length;
+  sw.textContent = [
+    ...slots.map((c) => `U${c.u} ${c.plane}: ${c.a} and ${c.b} are in the same slot.`),
+    ...past.map((o) => `${o.model} at U${o.u} runs past the top of the rack.`),
+  ].join(' ');
+
   dw.hidden = !clashes.length;
   if (clashes.length) {
     dw.textContent = clashes.map((c) =>

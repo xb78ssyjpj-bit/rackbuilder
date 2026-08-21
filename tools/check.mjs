@@ -28,6 +28,24 @@ console.log(`modules load — ${D.length} devices`);
 const undeclared = [...new Set(D.map((d) => d.category))].filter((c) => !CATEGORIES[c]);
 if (undeclared.length) bad(`category not in CATEGORIES: ${undeclared.join(', ')}`);
 
+// --- every module actually parses ------------------------------------------
+// node --check parses as CommonJS and will pass a file that cannot import, so
+// this uses --input-type=module. It exists because app.js was never parsed by
+// anything: a duplicate `const` shipped, app.js threw on load, and the whole
+// application was a blank page while every other check still said "all pass".
+{
+  const { execFileSync } = await import('node:child_process');
+  const { readFileSync } = await import('node:fs');
+  for (const f of ['app.js', 'panel.js', 'flow.js', 'devices.js', 'version.js']) {
+    try {
+      execFileSync(process.execPath, ['--input-type=module', '--check'],
+        { input: readFileSync(new URL(`../${f}`, import.meta.url)), stdio: ['pipe', 'pipe', 'pipe'] });
+    } catch (e) {
+      bad(`${f} does not parse as a module: ${String(e.stderr || e).split('\n').find((l) => l.includes('Error')) || ''}`);
+    }
+  }
+}
+
 // --- ids are unique ---------------------------------------------------------
 const ids = new Set();
 for (const d of D) {
