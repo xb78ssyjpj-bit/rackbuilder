@@ -814,10 +814,18 @@ export function autoLayout(items, ru = 1, left = FACE_L, right = FACE_R) {
 }
 
 // ---------------------------------------------------------------------------
-function chassis(g, ru, H, bg) {
+function chassis(g, ru, H, bg, body) {
   g.appendChild(el('rect', {
     x: 3, y: 3, width: W - 6, height: H - 6, rx: 4, fill: bg || 'none',
   }));
+  if (body) {
+    // The body sits central; everything outside it is blanking plate, so the
+    // seam is drawn where the real one is rather than at the rack ear.
+    const [bx0, bx1] = body;
+    g.appendChild(el('rect', {
+      x: bx0, y: 7, width: bx1 - bx0, height: H - 14, rx: 3, fill: bg || 'none',
+    }));
+  }
   path(g, `M${EAR_L},8 V${H - 8} M${EAR_R},8 V${H - 8}`);
   for (let u = 0; u < ru; u++) {
     [31, W - 31].forEach((ex) => {
@@ -875,7 +883,7 @@ export function renderPanel(spec, opt = {}) {
   const H = U * ru;
   const sw = opt.stroke || 3;
   const { svg, g } = panelSvg(W, H, sw);
-  chassis(g, ru, H, opt.bg);
+  chassis(g, ru, H, opt.bg, opt.body);
   drawElements(g, spec, sw);
   if (opt.hatch) hatchBacking(svg, g, H, { key: opt.hatchKey });
   return svg;
@@ -888,6 +896,27 @@ export function renderPanel(spec, opt = {}) {
 // the 1000-unit panel — the 19" figure includes the mounting ears, so halving it
 // makes the box too wide and it collides with the ears of whatever it sits on.
 // 438 units = 211.4 mm, against a real half-rack width of ~215.9 mm.
+// --- narrower-than-19" devices, mounted centrally with filler either side ----
+// Plenty of real gear is neither full width nor half: the Behringer XR18 is
+// 333 mm, the ATEM 1 M/E is two-thirds rack, the Shure ANI4IN is a third. They
+// rack with the manufacturer's own hardware, which is a bracket that centres
+// the body and fills the rest of the U — so that is exactly how they are
+// drawn: the body at its TRUE width in the middle, blanking plate either side.
+//
+// Occupancy is deliberately unchanged. A narrow device still claims the whole
+// row, because the filler plates are physically there and nothing else can go
+// beside it. That is the difference from `half`, where two boxes genuinely do
+// share a U.
+export const isNarrow = (dev) => !!dev && !dev.half && dev.widthMM > 0
+  && dev.widthMM < 482.6;
+
+// Body edges in panel units for a narrow device, centred on the face.
+export function bodyBounds(dev) {
+  const w = dev.widthMM * MM;
+  const x0 = (W - w) / 2;
+  return [x0, x0 + w];
+}
+
 export const HALF_W = (EAR_R - EAR_L) / 2;        // 438
 export const HALF_L = EAR_L;                      // left box starts here
 export const HALF_R = EAR_L + HALF_W;             // right box starts here
@@ -1144,6 +1173,24 @@ export function renderDevice(dev, view = 'front', item = null, opt = {}) {
     }
     return renderHalfPanel({ ru: dev.ru, elements: [], labels: [
       { text: `${dev.brand} ${dev.model}`, x: HALF_W / 2, y: (U * dev.ru) / 2 + 7,
+        size: 20, ls: 2, anchor: 'middle' }] }, o);
+  }
+  if (isNarrow(dev)) {
+    const [bx0, bx1] = bodyBounds(dev);
+    const inset = FACE_L - EAR_L;
+    o.body = [bx0, bx1];
+    if (layout && Array.isArray(layout.elements)) {
+      return renderPanel({ ru: dev.ru, ...layout }, o);
+    }
+    if (layout && layout.auto) {
+      return renderPanel({
+        ru: dev.ru,
+        elements: faceElements(layout, dev, item, bx0 + inset, bx1 - inset),
+        labels: layout.labels,
+      }, o);
+    }
+    return renderPanel({ ru: dev.ru, elements: [], labels: [
+      { text: `${dev.brand} ${dev.model}`, x: W / 2, y: (U * dev.ru) / 2 + 7,
         size: 20, ls: 2, anchor: 'middle' }] }, o);
   }
   // An explicitly empty `elements` array is a real layout — a blank panel.

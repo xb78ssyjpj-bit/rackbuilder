@@ -1,4 +1,4 @@
-// Behringer — 5 devices
+// Behringer — 6 devices
 
 export const BEHRINGER = [
   // 3U, 483 x 132 x 287 mm, 6.5 kg. 5" TFT flanked by button columns, six
@@ -242,9 +242,19 @@ export const BEHRINGER = [
   { id: 'behringer-s32', brand: 'Behringer', model: 'S32', category: 'audio',
     ru: 3, depth: 210, weight: 4.9, approx: true,
     src: 'https://www.thomannmusic.com/behringer_s32.htm',
-    front: { auto: [
-      { t: 'xlrf', n: 32, lbl: 'IN' },
-      { t: 'xlrm', n: 16, lbl: 'OUT' },
+    // Hand-placed as three rows of 16 rather than left to `auto`, because auto
+    // balanced them 12/12/24 and drew the last row overlapping — connectors at
+    // less than true size, which is the one thing this drawing must not do.
+    // 48 XLRs genuinely fit a 3U face (16 x 24 mm = 384 mm per row, three rows
+    // of 31 mm in 133 mm), and rows-of-16 is the S16's confirmed grammar
+    // scaled, which is what the user said this unit follows.
+    front: { elements: [
+      { t: 'xlrf', x: 104, y: 60, n: 16, gap: 52.75 },
+      { t: 'xlrf', x: 104, y: 150, n: 16, gap: 52.75 },
+      { t: 'xlrm', x: 104, y: 240, n: 16, gap: 52.75 },
+    ], labels: [
+      { text: 'IN 1-32', x: 78, y: 26, size: 11, ls: .8 },
+      { text: 'OUT 1-16', x: 78, y: 206, size: 11, ls: .8 },
     ] },
     rear: { auto: [
       { t: 'iec_in', n: 1 }, { t: 'usbb', n: 1 },
@@ -252,5 +262,45 @@ export const BEHRINGER = [
       { t: 'toslink', n: 2, lbl: ['ADAT OUT 1-8', 'ADAT OUT 9-16'] },
       { t: 'rj45', n: 1, sig: 'ultranet', lbl: 'ULTRANET' },
       { t: 'ethercon', n: 2, sig: 'aes50', lbl: ['AES50 A', 'AES50 B'] },
+    ] } },
+
+  // X AIR XR18. 333 mm wide — NARROWER THAN A RACK, and drawn that way.
+  //
+  // Behringer supply the rack hardware, and per the user it racks centrally
+  // with the body at its true width and filler either side. That is what
+  // `widthMM` does: the panel draws a 333 mm body in the middle of the U with
+  // blanking plate to each side, and the device still claims the whole row,
+  // because the filler is physically there. See panel.js `isNarrow`.
+  //
+  // PROVENANCE: Behringer's own X AIR X18/XR18 Quick Start Guide
+  // (QSG_BE_0605-AAA), whose specification table carries both models in
+  // parallel columns. The I/O below is the XR18 column verbatim.
+  //
+  // THE AXIS ORDER IS DERIVED, NOT LABELLED. The table gives "409 x 357 x 110
+  // mm" for the X18 and "333 x 149 x 140 mm" for the XR18 with no H/W/D
+  // header. 357 mm cannot be a height, so the order is W x D x H — which makes
+  // the XR18 333 wide, 149 deep and 140 tall. 140 mm is 3.15 U, recorded as
+  // `ru: 3.2`; Behringer state no rack-unit height anywhere, and the QSG
+  // contains no occurrence of "19 inch", "rack unit" or "rack ear" at all.
+  // Everything here is therefore `approx`.
+  //
+  // THE CONNECTOR FACE IS UNCONFIRMED. The QSG's specification table lists
+  // what the sockets are but never which face carries them, and a racked XR18
+  // is not in the same orientation as a desktop one. Drawn on the front, which
+  // is where you would patch it from in a rack. Worth one look. TODO §8f.
+  { id: 'behringer-xr18', brand: 'Behringer', model: 'XR18', category: 'audio',
+    ru: 3.2, depth: 149, weight: 3.2, power: 30, widthMM: 333, approx: true,
+    src: 'https://www.behringer.com/products/xr18',
+    front: { auto: [
+      { t: 'iec_in', n: 1 },
+      { t: 'combo', n: 16, lbl: 'IN' },
+      { t: 'trs', n: 2, lbl: ['AUX IN L', 'AUX IN R'] },
+      { t: 'xlrm', n: 2, lbl: ['MAIN L', 'MAIN R'] },
+      { t: 'xlrm', n: 6, lbl: 'AUX OUT' },
+      { t: 'trs', n: 1, lbl: 'PHONES' },
+      { t: 'rj45', n: 1, sig: 'ultranet', lbl: 'ULTRANET' },
+      { t: 'rj45', n: 1, lbl: 'ETHERNET' },
+      { t: 'midi', n: 2, lbl: ['MIDI IN', 'MIDI OUT'] },
+      { t: 'usbb', n: 1 },
     ] } },
 ];

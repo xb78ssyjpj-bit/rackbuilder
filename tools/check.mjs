@@ -13,6 +13,7 @@ import { CATEGORIES } from '../devices/_lib.js';
 import { OPTION_CARDS as C } from '../devices/cards.js';
 import {
   faceElements, sizeMM, heightMM, MM, FACE_L, FACE_R, PATCH_TYPES,
+  isNarrow, bodyBounds,
   SLOT_FORMATS, slotType, cardsFor,
 } from '../panel.js';
 import { devicePorts, portLabel, familyOf, FAMILIES } from '../flow.js';
@@ -44,8 +45,17 @@ for (const d of D) {
     if (!L || !L.auto) continue;
     panels++;
     const ru = d.ru || 1;
-    const out = faceElements(L, d, null, d.half ? 12 : FACE_L, d.half ? 426 : FACE_R);
-    const L0 = d.half ? 6 : 40, R0 = d.half ? 432 : 960, B = ru * 100;
+    // A narrow device is laid out inside its own body, not the full face, so
+    // the fit check has to measure against the same bounds the drawing uses.
+    const narrow = isNarrow(d);
+    const [nx0, nx1] = narrow ? bodyBounds(d) : [0, 0];
+    const inset = FACE_L - 62;
+    const left = d.half ? 12 : (narrow ? nx0 + inset : FACE_L);
+    const right = d.half ? 426 : (narrow ? nx1 - inset : FACE_R);
+    const out = faceElements(L, d, null, left, right);
+    const L0 = d.half ? 6 : (narrow ? nx0 - 2 : 40);
+    const R0 = d.half ? 432 : (narrow ? nx1 + 2 : 960);
+    const B = ru * 100;
     for (const e of out) {
       const w = (sizeMM(e.t) || 20) * MM, h = (heightMM(e.t) || 20) * MM;
       if (e.x - w / 2 < L0 - 0.5 || e.x + w / 2 > R0 + 0.5
