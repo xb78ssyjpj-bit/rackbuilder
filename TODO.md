@@ -518,6 +518,76 @@ drawing, call that 0 and 1000, and place everything as a fraction of it.
 - **The source-button numerals are not drawn.** Twenty buttons across 1U puts
   them ~32 units apart and they turn to mush, same as §9's connector numbering.
 
+## 8f. The Waves and Behringer pass — figures owed a check, and one device not entered
+
+Five devices added in v1.11.1 from three Haiku research passes. By instruction
+the figures were **not re-checked before entry** — same standing as the Pulse
+4K (§8c) and the PDS-4K (§8d). These are the numbers that owe a manual pass:
+
+- **Waves Titan / Titan-R** — 482 x 88 x 392 mm, 7.0 / 9.2 kg, 140 W.
+- **Waves Extreme-C** — 221 x 86 x 284 mm, 3.4 kg, 65 W.
+- **Behringer WING Rack** — 9.5 kg, 130 W typical, and the depth, on which see
+  below.
+- **Behringer S32** — 483 x 137 x 210 mm, 4.9 kg, from Thomann rather than
+  Behringer.
+
+### What each one is still missing
+
+- **No Waves server has a panel figure.** Waves' A&E PDFs are schematic
+  dimension drawings, so both faces are `auto`: right inventory, right sizes,
+  invented order. The fronts carry a confirmed inventory (power button, two
+  status LEDs, plus a PSU-fail LED on the Titan-R) at unconfirmed positions.
+- **The SoundGrid port is drawn as etherCON and might be a plain RJ45.** Waves'
+  A&E text names an "Ethercon connector" — a Neutrik locking shell, which draws
+  quite differently from a bare RJ45 — but no figure confirms it, and RJ45 is
+  the unsurprising fitting on a server. First thing to correct if wrong.
+- **Waves publish no inlet type**, so the IEC is this library's assumption on
+  all three, as it is on the Behringer S16.
+- **`waves-extreme-c` is the first half-rack device taller than 1U.** All 28
+  other half-rack entries are 1U. The half-panel renderers size on `U * ru` so
+  it should scale, but nothing has ever exercised it — worth one look.
+- **The WING Rack's width is a reconciliation, not a quoted figure.**
+  Behringer's QSG says "Dimensions (H x W x D) 183 x 326 x 486 mm" on a product
+  titled "Rackmount", and 326 mm is not a 19" panel. The QSG never says "19
+  inch", "rack unit", "rack ear" or "RU", has no mounting section and no figure
+  of it in a rack. The 4U height came from the user, not the document. One
+  straight-on front photograph, or one line of Behringer's mounting
+  instructions, settles both.
+- **The WING Rack's phones count is 4 or 5** and Behringer say both, in the same
+  document — the spec table says 5, the rear-panel text names four stereo pairs
+  on outputs 1/2, 3/4, 5/6 and 7/8. Four are drawn.
+- **No WING Rack XLR has a stated gender.** Inputs female, outputs male is this
+  library's convention applied, not Behringer's word. `STAGECONNECT` is the
+  softest: drawn male on nothing better than being named a host output.
+- **The S32 has no panel at all**, on purpose. The inventory is known from
+  retailers (2 x AES50, 2 x ADAT out, MIDI in/out, USB, one RJ45) but the FACE
+  is not, and the S16 puts all its I/O on the front — unusual enough that
+  assuming the S32 matches would be fitting the family grammar and calling it a
+  spec. Also missing: XLR counts and genders, and any power figure.
+
+### Behringer documentation is now hard to reach, and that is the real blocker
+
+behringer.com renders its **Downloads tab client-side**, so the
+`cdn-media.empowertribe.com` PDF links cannot be fetched without a browser, and
+the hashed paths cannot be guessed. Two research passes and a browser attempt
+failed on it; the WING Rack QSG was only obtained because a parallel pass
+happened to surface one URL. **The way in, for next time: open the product page
+in a real browser, copy the QSG and manual URLs out of the Downloads tab, and
+hand those URLs to the research pass.** Fetching and parsing them is easy once
+you have them.
+
+### Not added at all
+
+- **Behringer XR18, XR16 and XR12.** Nothing was obtained — not dimensions, not
+  weight, not power, not whether they are 19"-rackmountable at all, which is
+  the first question since some X AIR units are desktop boxes with optional
+  ears. Blocked on the documentation problem above rather than skipped.
+- **Waves Extreme Server, Proton Server and SoundGrid Server One-C** are
+  discontinued, on the same grounds as Martin's MA series (§7) and the Pulse²
+  (§8c).
+- **Waves Axis One / Axis Scope** are computers rather than SoundGrid servers,
+  and **DiGiGrid IOX / IOS** are interfaces. Out of scope rather than missing.
+
 ## 9. Smaller things
 
 - Individual connector numbering on high-density panels (DX168 etc.) is dropped

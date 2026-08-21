@@ -19,6 +19,83 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.11.1 — 2026-08-15
+
+**Added — five devices from three research passes, and one deliberately left out**
+
+- **Waves SoundGrid servers** — Titan, Titan-R and Extreme-C. New brand.
+  `category: 'audio'`, not `computing`: it is a server, but it is a server that
+  does nothing except run audio processing.
+- **Behringer WING Rack** — 4U, 24 combo mic inputs, 8 XLR out, 3 x AES50,
+  StageConnect, AES3 in/out.
+- **Behringer S32** — 3U, and **a labelled block on purpose**. See below.
+
+**Two firsts, neither of which needed any code**
+
+- **The Titan-R is the first device with two mains inlets**, the gap noted in
+  v1.10.7 against the ATEM 4 M/E. `auto` takes `n: 2` and draws two, and the
+  summary counts the device's draw once — right, because a redundant pair is
+  one load, not two.
+- **The Extreme-C is the first half-rack device taller than 1U.** All 28 other
+  half-rack entries are 1U. The half-panel renderers size on `U * ru`, so it
+  scales, but nothing had exercised it before. Worth one look.
+
+**Every face here is `auto`, and that is the trade**
+
+None of the three sources carries a captioned panel figure — Waves' A&E PDFs
+are schematic dimension drawings and Behringer's QSG has no numbered rear view.
+So the inventories and the connector sizes are real and the left-to-right order
+is the layout engine's. This was chosen deliberately over the hand-placed
+treatment the Pulse 4K and PDS-4K got: measuring pixels off a figure is what
+makes a panel recognisable, and there is no figure to measure.
+
+**What the passes got wrong, because the method is the point**
+
+The Waves pass returned specs and no panel data at all, having found the A&E
+PDFs and not opened them — the exact failure v1.10.5 recorded. Sent back, it
+delivered. The WING Rack pass inverted every XLR gender, putting mic inputs on
+male and outputs on female, which is backwards from convention and from the
+X32 RACK entry two files away; it also gave a width that is not a rack width.
+The S32 pass burned 110 tool calls hitting 403s without finding the CDN host a
+parallel pass had already used successfully.
+
+**The WING Rack needed a human, and this is the clearest case yet**
+
+Behringer's QSG says `Dimensions (H x W x D) 183 x 326 x 486 mm` for a product
+whose own title is "Rackmount 48 Channel ... Mixing Engine". 326 mm is not a
+19" panel. The document never says "19 inch", "rack unit", "rack ear" or "RU",
+has no mounting section, and shows no figure of it in a rack — so it cannot
+settle its own contradiction. **The 4U height came from the user, not from
+Behringer.** Without that the device would not have been entered: `ru` is the
+one field the README calls reliable throughout, and inventing it is the worst
+available error.
+
+Behringer contradict themselves twice more in the same document, both recorded
+in the entry: the mic inputs are "combo jack connectors" in the prose and
+"(XLR) 24" in the spec table, and the phones count is 5 in the table against
+four named stereo pairs in the text. Combo and four are drawn, both times
+because the prose is specific and the table is a bare number.
+
+**The S32 is a labelled block, not an oversight**
+
+Retailers give its dimensions, weight and an inventory. What nobody gives is
+**which face carries what** — and the S16, two entries above it in the same
+file, puts *all* of its I/O on the front. Assuming the S32 matches would be
+fitting the family grammar and calling it a spec. It gets rack space, weight
+and depth, which is most of what a rack drawing is for; the panel waits.
+
+**Not added: XR18, XR16, XR12.** Nothing was obtained — not even whether they
+are 19"-rackmountable, which is the first question, since some X AIR units are
+desktop boxes with optional ears.
+
+**Behringer documentation is now hard to reach**, and that is the real blocker
+for all of it: behringer.com renders its Downloads tab client-side, so the
+`cdn-media.empowertribe.com` PDF links need a browser and the hashed paths
+cannot be guessed. The way in next time is to copy those URLs out of a real
+browser and hand them to the pass. TODO §8f.
+
+---
+
 ## v1.11.0 — 2026-08-15
 
 **Added — audio-over-IP transports are their own signal families**
