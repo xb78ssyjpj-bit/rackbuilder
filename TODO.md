@@ -462,9 +462,12 @@ against a real 27 mm, the Pulse 4K's LCD comes out 16:9 for a 480x272 panel.
   be wrong about the thing it is meant to show. Needs a `rocker` primitive.
 - **The PDS-4K front has two panel step lines** at the top and bottom of the
   source-button block, spanning most of the face. `line` would draw them.
-- **The Pulse 4K's recorded 440 mm body width is contradicted by the source
-  photograph**, which puts the body between the ears at 454 mm. §8c already
-  lists that figure as owed a manual check; this is a second reason to make it.
+- ~~**The Pulse 4K's recorded 440 mm body width is contradicted by the source
+  photograph**~~ — **retracted.** The Eikos 4K, QuickMatriX 4K and QuickVu 4K
+  datasheets all state 440 x 88 x 434 mm for the same Midra 4K chassis, so 440
+  is Analog Way's figure across the range and the 454 mm photograph reading was
+  the outlier. The ear outer edge in that photo was evidently softer than it
+  looked.
 
 ### What the re-measure exposed: this app draws a rack ear twice as wide as a real one
 
@@ -586,6 +589,74 @@ you have them.
   (§8c).
 - **Waves Axis One / Axis Scope** are computers rather than SoundGrid servers,
   and **DiGiGrid IOX / IOS** are interfaces. Out of scope rather than missing.
+
+## 8g. The video-processor batch — what landed and what did not
+
+Six devices in v1.17.1 from four research passes. Figures NOT re-checked before
+entry, same standing as §8c, §8d and §8f.
+
+### Owed a manual check
+
+- **Eikos 4K / QuickMatriX 4K / QuickVu 4K** — 440 x 88 x 434 mm, 7.6 kg.
+- **NovaStar MX40 Pro** — 482.6 x 94.2 x 467 mm, 7.5 kg, 95 W max.
+- **NovaStar VX1000 / VX6S** — 483.6 x 50.1 x 351.2 and 483.6 x 51.4 x 276.4,
+  4.0 and 2.71 kg.
+
+### Specific gaps
+
+- **The Midra 4K power figure conflicts with itself.** All four QSGs, Pulse 4K
+  included, say "max consumption: 80W" **verbatim** — identical across four
+  models, which smells like boilerplate. A research pass reported 95 W from the
+  Eikos/QuickMatriX/QuickVu datasheets. 80 W is what is recorded, because it is
+  what was read here directly, but it may UNDER-state the ceiling, and
+  under-stating a feed is the dangerous direction. One look at a datasheet
+  settles it.
+- **Neither NovaStar VX publishes a power figure or names its mains inlet.**
+  The IEC is this library's assumption, as on the Behringer S16.
+- **No panel figure was obtained for any NovaStar**, so both faces are `auto`.
+- **The VX6S's DVI sockets are drawn as `dsub`.** There is no DVI primitive,
+  and DVI-I, DVI-D and DVI-A are three pinouts in one shell — so a `dvi`
+  primitive would have to pick one or be honest about not knowing. See §9b.
+
+### Not entered, and why
+
+- **The whole Aquilon RS range** (RS1-RS6, RS alpha) and **Picturall Mark II**.
+  The pass could not establish which face carries the video I/O — it first
+  reported inputs on the front and outputs on the rear, which is not how those
+  units are built, then correctly said it could not tell from the QSG text. A
+  6U frame's face assignment is the whole drawing, so nothing was entered.
+  **The QSG URLs are known and work** (`dwn01.analogway.com`), so this is one
+  session's work for somebody who renders page 2 of each and looks at it, the
+  way the Midra 4K trio was settled.
+- **Barco E2 (4U), S3-4K (3U) and EX (1U).** Physical figures obtained —
+  E2 178 x 432 x 569 mm / 31 kg / 826 W max, S3-4K 132.6 x 432 x 540 / 24 kg,
+  EX 43.7 x 484.1 x 404.1 / 5.53 kg / 125 W typical — but **no connector order
+  for any face**: the Event Master Devices User Guide (R5905948) is
+  JavaScript-protected on barco.com and could not be downloaded, and the spec
+  sheets are marketing documents with no panel figure. They would be labelled
+  blocks, which is worth doing, but the figures above want checking first.
+- **There is no Barco E3.** The current Event Master range is E2, E2 Gen 2,
+  E2 Jr., S3, S3-4K, S3-4K Jr., EX and the EC controllers. Recorded because the
+  name will come round again.
+- **Barco EC-200 and EC-210 are control consoles, not rack units** — 901 mm
+  wide. Out of scope rather than missing.
+- **The rest of the ATEM rack line** — 1 M/E Constellation HD and 4K, 4 M/E HD
+  and 4K, 4 M/E 4K Plus, Constellation 8K. Connector counts are solid from
+  Blackmagic's tech specs, but three things need settling first: the manual
+  carries an orthographic panel figure for the 2 M/E only, so the rest would be
+  `auto`; **Blackmagic publish no width in mm for the 1 M/E**, only the phrase
+  "2/3 rack unit width", from which 2/3 x 482.6 = 321.7 mm is derivable now
+  that `widthMM` exists; and **no power figure is published for the 4 M/E HD**
+  — a pass initially returned 147 W and, asked directly, confirmed it had
+  estimated it.
+- **NovaStar MX2000 Pro** and **PixelHue F8** are modular and would each need a
+  card format and a card range defined, like the A&H I/O Port. The F8's
+  published dimensions also do not resolve: 482.6 x 354.9 x 515.5 mm with a
+  515 mm height is 11.6 U, which is not a switcher, so the axes are scrambled.
+- **NovaStar H2 and H5** are video-wall splicers rather than LED processors,
+  and almost nothing was established about either.
+- **PixelHue P20, P10, F4 and Q8.** No current manufacturer documentation
+  found; the only Q8 datasheet located was a reseller's.
 
 ## 9. Smaller things
 

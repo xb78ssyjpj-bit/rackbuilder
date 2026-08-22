@@ -19,6 +19,70 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.17.1 — 2026-08-15
+
+**Added — six video processors, from four research passes of very uneven quality**
+
+- **Analog Way Eikos 4K, QuickMatriX 4K, QuickVu 4K** — the rest of the Midra
+  4K range.
+- **NovaStar MX40 Pro, VX1000, VX6S** — new brand.
+
+**The Midra 4K three are one chassis with different firmware, and that is read
+rather than assumed.** Page 2 of each Quick Start Guide — the same "FRONT &
+REAR PANELS DESCRIPTION" figure the Pulse 4K was drawn from — shows identical
+I/O on all four: Inputs 1&2 (HDMI 1.4 + 3G-SDI selectable), 3&4 (12G-SDI), 5
+and 8 (HDMI 2.0 with loop), 6&7 (HDMI 2.0), 9&10 (DisplayPort), Outputs 1&2
+(HDMI 2.0 + 12G-SDI simultaneously), multiviewer, genlock loop, control
+Ethernet and the same optional Dante card. Identical fascia, identical
+440 x 88 x 434 mm. So the front geometry is the Pulse 4K's, re-measured from
+source in v1.10.8, reused **because the QSGs show the same fascia** — not
+because the models are siblings.
+
+**Every NovaStar here is a fractional rack unit**, and none fits the whole-U
+height its marketing implies: MX40 Pro 94.2 mm = 2.12 U, VX1000 50.1 mm =
+1.13 U, VX6S 51.4 mm = 1.16 U. They carry the true fraction, as the Barco
+PDS-4K's 1.5 U does, so `usedU` correctly reserves three rows for a 94.2 mm box
+rather than two. A 94.2 mm unit does not go in 2 U of rack.
+
+**Retracted — the Pulse 4K's 440 mm width was right all along**
+
+v1.10.8 measured the QSG photograph and put the body between the ears at
+454 mm, and flagged the recorded 440 as doubtful. That was wrong: the Eikos,
+QuickMatriX and QuickVu datasheets all state 440 x 88 x 434 for the same
+chassis. 440 is Analog Way's figure across the range and the photograph reading
+was the outlier. Recorded in both the device file and TODO, because a retracted
+doubt is worth as much as a raised one.
+
+**What the passes got wrong, because it is the method that is on trial**
+
+The NovaStar pass first marked two 483.6 mm units as *not rack-mountable*, left
+RU "not established" while quoting the height in mm on the same line, and
+returned placeholders like `Video_inputs` instead of sockets. Named, it went
+back to the PDFs and produced real lists.
+
+The Analog Way pass put 32 input connectors on the **front** of every Aquilon
+with the outputs on the rear — inputs-on-front, outputs-on-rear across a whole
+range — and called Analog Way's 5-pin MCO *audio* connector a power inlet.
+Challenged, it correctly said it could not determine the faces from the QSG
+text, which is the right answer and why no Aquilon is in this release.
+
+The ATEM pass reported 147 W for the 4 M/E HD and, asked which figures were
+published, confirmed it had estimated it. **That is the most useful thing in
+the whole batch**: a wrong number that looks published is far worse here than a
+gap, because it is what everything else gets checked against.
+
+**Not entered, all recorded in TODO §8g**: the Aquilon RS range and Picturall
+(face unresolved); Barco E2, S3-4K and EX (physicals obtained, but the Event
+Master user guide is JavaScript-protected so no connector order); the rest of
+the ATEM rack line; NovaStar MX2000 Pro and PixelHue F8 (modular, and the F8's
+published dimensions give an 11.6 U height, so its axes are scrambled).
+
+**There is no Barco E3.** The current Event Master range is E2, E2 Gen 2,
+E2 Jr., S3, S3-4K, S3-4K Jr., EX and the EC controllers — and the EC-200/210
+are 901 mm control consoles, not rack units.
+
+---
+
 ## v1.17.0 — 2026-08-15
 
 **Added — an IEC C8 inlet, the figure-of-eight**

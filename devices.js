@@ -44,6 +44,7 @@ import { MARTIN_AUDIO } from './devices/martin-audio.js';
 import { MIDAS } from './devices/midas.js';
 import { MIKROTIK } from './devices/mikrotik.js';
 import { NETGEAR } from './devices/netgear.js';
+import { NOVASTAR } from './devices/novastar.js';
 import { PENN_ELCOM } from './devices/penn-elcom.js';
 import { PRESONUS } from './devices/presonus.js';
 import { QSC } from './devices/qsc.js';
@@ -82,6 +83,7 @@ export const SEED_DEVICES = [
   ...MIDAS,
   ...MIKROTIK,
   ...NETGEAR,
+  ...NOVASTAR,
   ...PENN_ELCOM,
   ...PRESONUS,
   ...QSC,
