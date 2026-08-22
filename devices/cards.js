@@ -133,6 +133,7 @@ export const OPTION_CARDS = [
     fmt: 'sonnet-macmini', note: 'Intel, 4 x Thunderbolt 3',
     src: 'https://support.apple.com/en-us/111912',
     auto: [
+      { t: 'iec_c7_in', n: 1, lbl: 'POWER' },
       { t: 'rj45', n: 1, lbl: 'ETHERNET' },
       { t: 'usbc', n: 4, lbl: 'TB3' },
       { t: 'hdmi', n: 1, lbl: 'HDMI' },
@@ -142,6 +143,7 @@ export const OPTION_CARDS = [
     fmt: 'sonnet-macmini', note: '2 x Thunderbolt / USB 4',
     src: 'https://support.apple.com/en-us/111894',
     auto: [
+      { t: 'iec_c7_in', n: 1, lbl: 'POWER' },
       { t: 'usbc', n: 2, lbl: 'TB4' },
       { t: 'hdmi', n: 1, lbl: 'HDMI' },
       { t: 'rj45', n: 1, lbl: 'ETHERNET' },
@@ -151,6 +153,7 @@ export const OPTION_CARDS = [
     fmt: 'sonnet-macmini', note: '2 x Thunderbolt 4',
     src: 'https://support.apple.com/en-us/111837',
     auto: [
+      { t: 'iec_c7_in', n: 1, lbl: 'POWER' },
       { t: 'usbc', n: 2, lbl: 'TB4' },
       { t: 'hdmi', n: 1, lbl: 'HDMI' },
       { t: 'rj45', n: 1, lbl: 'ETHERNET' },
@@ -160,6 +163,7 @@ export const OPTION_CARDS = [
     fmt: 'sonnet-macmini', note: '4 x Thunderbolt 4',
     src: 'https://support.apple.com/en-us/111837',
     auto: [
+      { t: 'iec_c7_in', n: 1, lbl: 'POWER' },
       { t: 'usbc', n: 4, lbl: 'TB4' },
       { t: 'hdmi', n: 1, lbl: 'HDMI' },
       { t: 'rj45', n: 1, lbl: 'ETHERNET' },

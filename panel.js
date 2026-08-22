@@ -160,6 +160,19 @@ function drawIec(g, x, y, male) {
   }
 }
 
+// IEC 60320 C8 inlet — the two-pin "figure of eight" a Mac mini takes. Drawn
+// as its own shape rather than a small C14, because the whole point of having
+// it is that you cannot plug a C13 lead into one: two poles, no earth, and the
+// twin-lobe outline instead of the C14's flat-topped hexagon.
+function drawIecC8(g, x, y) {
+  rect(g, x, y, 34, 20, 3);
+  // the figure-8 aperture: two overlapping lobes
+  ring(g, x - 5, y, 6);
+  ring(g, x + 5, y, 6);
+  path(g, `M${x - 11},${y - 3} h22 M${x - 11},${y + 3} h22`);
+  pin(g, x - 5, y, 2.2); pin(g, x + 5, y, 2.2);
+}
+
 // Single-pole (Powerlock family).
 function drawPowerlock(g, x, y, r, male) {
   ring(g, x, y, r); ring(g, x, y, r * 0.72);
@@ -302,6 +315,16 @@ const P = {
   true1_in:      { mm: 24, mmH: 31, nat: D_W, d(g, x, y) { drawTrue1(g, x, y, true); } },
   true1_thru:    { mm: 24, mmH: 31, nat: D_W, d(g, x, y) { drawTrue1(g, x, y, false); } },
   iec_in:        { mm: 27, nat: 38, d(g, x, y) { drawIec(g, x, y, true); } },
+
+  // IEC 60320 C8 inlet, the figure-of-eight. 24 x 12 mm from SCHURTER's own
+  // drawing for their type 2578 — panel cut-out 24.1 x 11.7 mm, which is the
+  // same basis `iec_in`'s 27 mm uses (the C14's body/cut-out, not its 30.5 mm
+  // flange). Much flatter than a C14 rather than much narrower, which is what
+  // it looks like on a panel.
+  //
+  // NO `_thru` VARIANT. A panel-mounted C7 outlet is not a thing you meet, the
+  // same reasoning that gives the 13 A socket no inlet.
+  iec_c7_in:     { mm: 24, mmH: 12, nat: 34, d(g, x, y) { drawIecC8(g, x, y); } },
   iec_thru:      { mm: 27, nat: 38, d(g, x, y) { drawIec(g, x, y, false); } },
 
   // Schuko and BS1363 are outlet-only in practice, but panel inlets exist.
@@ -663,7 +686,8 @@ export const CONNECTOR_GROUPS = [
   ]],
   ['Power — in', [
     ['socket_in', 'Schuko inlet'],
-    ['iec_in', 'IEC C14 inlet'], ['powercon_in', 'powerCON in'],
+    ['iec_in', 'IEC C14 inlet'], ['iec_c7_in', 'IEC C7 inlet'],
+    ['powercon_in', 'powerCON in'],
     ['true1_in', 'TRUE1 in'], ['cee16_in', 'CEE 16 A in'],
     ['cee32_1_in', 'CEE 32 A 1ph in'], ['cee32_3_in', 'CEE 32 A 3ph in'],
     ['cee63_1_in', 'CEE 63 A 1ph in'], ['cee125_3_in', 'CEE 125 A 3ph in'],
@@ -719,7 +743,7 @@ export const SHORT = {
   socket_in: 'SKOi', socket_thru: 'SKO', bs13a_thru: '13A',
   // Kept distinct on purpose: the code is the only thing telling an inlet from
   // an outlet in a patch cell or on a flow port row.
-  iec_in: 'IEC in', iec_thru: 'IEC out',
+  iec_in: 'IEC in', iec_thru: 'IEC out', iec_c7_in: 'C7 in',
   powercon_in: 'PCi', powercon_thru: 'PCo', true1_in: 'T1i', true1_thru: 'T1o',
   cee16_in: '16Ai', cee16_thru: '16Ao',
   cee32_1_in: '32/1i', cee32_1_thru: '32/1', cee32_3_in: '32/3i', cee32_3_thru: '32/3',

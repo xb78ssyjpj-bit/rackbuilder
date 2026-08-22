@@ -608,13 +608,6 @@ you have them.
 
 ## 9b. Connector detail still owed
 
-- **No IEC C7 primitive**, the two-pin figure-of-eight. It is what a Mac mini
-  takes, so the Mac mini cards added in v1.16.0 carry NO mains inlet at all:
-  `iec_in` draws a C14, and a C14 is a lie about what you can plug in. Same
-  call as the Penn Elcom universal sockets in §5b. A C7 is about 20 mm against
-  the C14's 27, so it is a real visual difference too. Each machine still needs
-  its own lead in reality.
-
 - **The Mac mini headphone jack's face is unresolved.** The research pass put
   it on the FRONT of the M1 and M2. Apple moved that jack to the front with the
   M4, so a REAR jack on the M1/M2 is the likelier reading — and rather than

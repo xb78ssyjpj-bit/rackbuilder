@@ -19,6 +19,29 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.17.0 — 2026-08-15
+
+**Added — an IEC C8 inlet, the figure-of-eight**
+
+`iec_c7_in`, 24 x 12 mm. From SCHURTER's own drawing for their type 2578:
+panel cut-out **24.1 x 11.7 mm**, which is the same basis `iec_in`'s 27 mm
+already used — the C14's body and cut-out rather than its 30.5 mm flange. So
+the two are measured the same way and are honestly comparable.
+
+It draws as its own shape, not a small C14: two lobes, two pins, no earth. That
+is the entire point of having it, because you cannot put a C13 lead into one.
+
+**No `_thru` variant**, for the same reason there is no 13 A inlet — a
+panel-mounted C7 outlet is not something you meet.
+
+**Changed — the Mac mini cards now carry their mains inlet**
+
+v1.16.0 left them with none, because a C14 would have been a lie about what you
+can plug in. With a real C8 they get the inlet they actually have, one per bay,
+so a two-Mac tray now shows the two leads it needs.
+
+---
+
 ## v1.16.0 — 2026-08-15
 
 **Added — the RackMac mini's bays take a Mac mini, chosen from a dropdown**

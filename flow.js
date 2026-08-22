@@ -118,6 +118,7 @@ const GENDER = {
   socket_in: 'in', iec_in: 'in', powercon_in: 'in', true1_in: 'in',
   cee16_in: 'in', cee32_1_in: 'in', cee32_3_in: 'in', cee63_1_in: 'in',
   cee125_3_in: 'in', powerlock_in: 'in', socapex_in: 'in', veam_in: 'in',
+  iec_c7_in: 'in',
   veam8_in: 'in', veam12_in: 'in', veam16_in: 'in', veam24_in: 'in', veam32_in: 'in', veam48_in: 'in',
   bs13a_thru: 'out', socket_thru: 'out', iec_thru: 'out', powercon_thru: 'out',
   true1_thru: 'out', cee16_thru: 'out', cee32_1_thru: 'out',

@@ -986,6 +986,7 @@ stops a row of 16 A CEE fitting where a row of XLR would.
 | MIDI 5-pin DIN | 21 mm | 19 |
 | ADAT / optical (TOSLINK) | 13 × 11 mm | 31 |
 | IEC C13/C14 | 27 mm | 15 |
+| IEC C8 inlet ("C7", figure-of-eight) | 24 x 12 mm | 16 |
 | HDMI Type A | 21 mm | 19 |
 | DisplayPort | 24 mm | 16 |
 | 13 A / Schuko (rack modules) | 46 / 45 mm | 8 |
@@ -1005,7 +1006,8 @@ cutout drawing per shell size replaces all of it. See `TODO.md` §9b.
 
 **In vs thru.** Every power connector has an `_in` and a `_thru` variant. In =
 solid pins (an inlet), thru = open holes (an outlet). There is no 13 A inlet,
-because that isn't a thing.
+because that isn't a thing — and for the same reason there is no C7 outlet: a
+panel-mounted figure-of-eight socket is not something you meet.
 
 **Neutrik iconography.** Every D-type draws the real D-series flange — the plate
 with the connector bore and two countersunk screw holes on the diagonal — which
