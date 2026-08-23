@@ -603,9 +603,66 @@ entry, same standing as §8c, §8d and §8f.
 ### Owed a manual check
 
 - **Eikos 4K / QuickMatriX 4K / QuickVu 4K** — 440 x 88 x 434 mm, 7.6 kg.
-- **NovaStar MX40 Pro** — 482.6 x 94.2 x 467 mm, 7.5 kg, 95 W max.
+- ~~**NovaStar MX40 Pro** — 482.6 x 94.2 x 467 mm, 7.5 kg, 95 W max.~~ —
+  **corrected**, `devices/novastar.js`. The original entry was an early,
+  coarse pass (all 20 outputs drawn as plain `rj45`) and had no front at
+  all; replaced with a full front and the real rear — EtherCon shells, in
+  two physically separate groups (16 + 4, not one strip), plus three HDMI
+  2.0 channels rather than the generic "HDMI 2.0 IN x3" the old entry had.
 - **NovaStar VX1000 / VX6S** — 483.6 x 50.1 x 351.2 and 483.6 x 51.4 x 276.4,
   4.0 and 2.71 kg.
+- ~~**NovaStar CX40 Pro / CX80 Pro**~~ — **done**, `devices/novastar.js`. Both
+  panels came off real photo-rendered manual pages (pdftoppm, not pdfimages —
+  the diagrams aren't raster objects in these PDFs), and both power figures
+  are genuinely unambiguous ("Power consumption" stated as its own line, not
+  the usual Barco-style single bare figure), so both carry `power`, not
+  `powerMax`. **The CX80 Pro's input section is a swappable card and only one
+  of Barco's two documented options ("Input Card 1") was transcribed in
+  enough detail to draw** — Input Card 2 (4x HDMI 2.0 + 4x 12G-SDI, no DP)
+  is confirmed to exist but not modelled. Same status as the PDS-4K's
+  blanked Option slot: a real aperture drawn as what's actually fitted, not
+  as a slots/cards mechanism, since that needs a measured aperture and none
+  was taken.
+- ~~**NovaStar MX30 / MX6000 Pro / KU20 / MX20**~~ — **done**,
+  `devices/novastar.js`. **MX6000 Pro is the big one**: a genuinely
+  card-based 6U cage (8 input-only bays, 8 output-only, 1 MVR-only, 1
+  CTRL-only, per the manual's own slot legend) — architecturally exactly
+  what the slots/cards mechanism is for, but not built that way here,
+  because no bay aperture was measured and inventing one would be the guess
+  this library refuses. Drawn instead as NovaStar's own illustrative
+  example config, which the manual explicitly disclaims as non-canonical
+  ("actual product may vary") — worth rebuilding as real slots + cards if a
+  bay dimension ever turns up; the card range is partly known already (see
+  the entry's own comment). Its 625 W power figure is the library's own
+  *interpretation* of an ambiguous multi-card-chassis figure, not a stated
+  maximum, and is flagged as such in the entry rather than silently treated
+  like every other `powerMax`.
+
+  **KU20 exposed a real gap in the `half: true` mechanism**: it's meant to
+  pair two side by side into one U (NovaStar's own "Connecting Piece"
+  bracket), exactly what `half` models, but `half` draws at this app's
+  fixed HALF_W (211 mm) and KU20's own connectors don't fit inside that —
+  unlike Shure's 197 mm half-rack gear, which is a small enough mismatch to
+  wave through. Drawn with `widthMM: 254` instead (its own true width,
+  centred rather than paired), which loses the pairing behaviour. `half`
+  taking a real width instead of the fixed constant would fix this
+  properly and let KU20 use it. Also corrected its 6 output ports from
+  `ethercon` (the family default) to `rj45` — the research pass itself
+  flagged the shell as uncertain, and only the narrower reading fits the
+  device's own stated width at all, which settles it.
+
+  **Both KU20 and MX20 are 1.2 U, and their first-draft fronts silently ran
+  the ADJUST encoder off the bottom edge** — reused the 2.2 U siblings' `y`
+  coordinate without rescaling for a much shorter panel. `check.mjs` cannot
+  catch this (hand-placed `elements` aren't bounds-checked, only `auto`
+  is); caught by rendering both faces, the same discipline the Ascender
+  48's front already established as necessary for this library's
+  button/display/encoder devices. **MX20's rear separately needed
+  hand-placing instead of `auto`** — at 1.2 U, `auto`'s row-splitting
+  produces bands too short for a 31 mm EtherCon shell once width forces a
+  second row, and this one `check.mjs` *did* catch (`ethercon outside the
+  panel`), unlike the Ascender 48's version of the same underlying
+  row-height limitation.
 
 ### Specific gaps
 
@@ -619,9 +676,6 @@ entry, same standing as §8c, §8d and §8f.
 - **Neither NovaStar VX publishes a power figure or names its mains inlet.**
   The IEC is this library's assumption, as on the Behringer S16.
 - **No panel figure was obtained for any NovaStar**, so both faces are `auto`.
-- **The VX6S's DVI sockets are drawn as `dsub`.** There is no DVI primitive,
-  and DVI-I, DVI-D and DVI-A are three pinouts in one shell — so a `dvi`
-  primitive would have to pick one or be honest about not knowing. See §9b.
 
 ### Not entered, and why
 
@@ -781,6 +835,19 @@ Tri-combo where their rear photograph shows 6.
 
 ## 9b. Connector detail still owed
 
+- **Analog Way Ascender 48** (`devices/analog-way.js`) has a few soft spots,
+  all recorded in the entry's own comment: `euroblock` x 9 draws nine 3-pin
+  blocks in place of the one continuous 9-way TALLY/GPI-O terminal strip
+  (no per-pin silkscreen was legible at source resolution, and there is no
+  single-strip N-pole primitive to draw it properly instead); MAINTENANCE
+  and DISPLAY are generic `dsub` with no confirmed pin count or format; the
+  3 x LINK connectors are Analog Way's proprietary LiveCore™ Link Cable,
+  mapped to `qsfp` only for its shape; GROUND is a captive lug, not
+  literally the `dcjack` used to draw it. The front panel's button/display
+  layout is a schematic grid (real inventory and labels, confirmed off
+  Analog Way's own QSG photo; unmeasured positions) — a future pass with
+  that source image could hand-place it properly, the way the Pulse 4K's
+  front was.
 - **No mini-DIN primitive.** Barco's Event Master E2 and S3-4K both carry six
   3-pin mini-DIN sockets (S3D In x4, S3D Out x2) that this library cannot
   draw, and does not fake — see §8g. Add `minidin` to `PRIMS` and both rears
