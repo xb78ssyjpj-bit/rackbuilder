@@ -497,6 +497,31 @@ export const SLOT_FORMATS = {
   // no more.
   'sonnet-macmini': { name: 'Mac mini bay', mm: 197, mmH: 36, approx: true },
 
+  // Barco Encore3 card bay. SIZE DERIVED FROM THE CHASSIS, not from Barco, who
+  // publish no aperture dimension — and arrived at by being told off by this
+  // file's own fit check, which is worth recording.
+  //
+  // The first attempt sized the bay from the widest card: a Tri-combo carries
+  // 1 x DisplayPort + 1 x HDMI + 6 x BNC, which is 24 + 21 + 96 = 141 mm in a
+  // row, so 145 mm looked like the floor. `check.mjs` then refused it —
+  // SEVEN 145 mm bays cannot fit a 4 U face, whose usable width is 407 mm.
+  // That is a real proof, not a nuisance: the bays cannot be that wide, so the
+  // cards cannot lay their connectors out in one row.
+  //
+  // Seven bays fit a 4 U face as two rows of four, and four at 100 mm span
+  // 400 mm of the 407 mm usable width — so 100 x 60 mm is the widest the bay
+  // can be. (95 mm was tried first and refused a second time: the DisplayPort
+  // Quad Input card is 4 x 24 = 96 mm, which would not fit it.) The Tri-combo's six BNCs are consequently
+  // declared `stack: 3` — two columns of three — which is FORCED BY THAT
+  // BOUND rather than read off a photograph, and is flagged as such on the
+  // card.
+  //
+  // It is a BOUND, not a measurement — the same standing as `ah-dl-io`, and
+  // `check.mjs` prints a note about it on every run. One dimensioned drawing
+  // of a card faceplate, or one straight-on rear photograph with the 19" span
+  // as the ruler, replaces the whole of this.
+  'barco-e3': { name: 'Encore3 card bay', mm: 100, mmH: 60, approx: true },
+
   // Allen & Heath dLive / Avantis 'I/O Port'. A larger, separate aperture from
   // the SQ's, which the cards themselves prove: M-DL-DXLINK alone puts four
   // etherCON in one row — 96 mm of flange before any spacing — against an 88 mm
@@ -544,8 +569,14 @@ export function registerCards(list) {
   (list || []).forEach((c) => CARD_REG.set(c.id, c));
 }
 export const cardById = (id) => CARD_REG.get(id) || null;
-export const cardsFor = (fmt) =>
-  [...CARD_REG.values()].filter((c) => c.fmt === fmt);
+// Cards that fit a slot. `accepts` is optional and only the Barco Encore3
+// needs it so far: its seven bays are not interchangeable — two take input
+// cards only, one takes an input or the link card, and four are flex and take
+// anything. A slot with no `accepts` takes any card of its format, which is
+// how every A&H and Sonnet slot already behaves, so nothing existing changes.
+export const cardsFor = (fmt, accepts) =>
+  [...CARD_REG.values()].filter((c) => c.fmt === fmt
+    && (!accepts || !c.role || accepts.includes(c.role)));
 
 // Flow a card's connectors inside the aperture. Deliberately not autoLayout:
 // that lays out a whole panel face in bands of a rack unit, and a card is a

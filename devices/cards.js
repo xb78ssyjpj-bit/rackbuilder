@@ -170,6 +170,68 @@ export const OPTION_CARDS = [
       { t: 'usba', n: 2, lbl: 'USB-A' },
     ] },
 
+  // --- Barco Encore3 -------------------------------------------------------
+  // Encore3 is BUILD-TO-ORDER with SEVEN physical card bays, and the bays are
+  // not interchangeable — which is why `role` and `accepts` exist. One bay
+  // takes an input card or the link card, two take input cards only, and four
+  // are flex and take either. The spec sheet's "7 input-capable" and
+  // "4 output-capable" describe overlapping uses of that ONE pool of seven,
+  // not eleven bays; reading them as separate banks is the obvious mistake and
+  // is the thing this comment exists to prevent.
+  //
+  // Connector complements and silkscreen are read off Barco's own rear-panel
+  // photograph on the Encore3 product page, cross-referenced against the card
+  // tables in manual R5917615. Figures NOT re-checked before entry — TODO §8g.
+  //
+  // ONE CONTRADICTION, LEFT AS BARCO LEFT IT. The manual's card table says the
+  // Tri-combo carries "1x DP 1.2; 1x HDMI 2.0; 4x 12G-SDI (BNC)". Barco's own
+  // rear photograph shows SIX individually numbered BNCs on the Tri-combo, on
+  // both the In and the Out card. Every other count on that page matches the
+  // spec sheet exactly, which is what makes the SDI figure the odd one rather
+  // than the photograph. Six are drawn, because the photograph is the panel;
+  // it may be that only four are electrically active, and Barco do not say.
+  { id: 'barco-e3-link-100g', brand: 'Barco', model: 'Encore3 Quad 100G Link',
+    fmt: 'barco-e3', role: 'link', note: '4 x 100G high-speed link',
+    src: 'https://www.barco.com/en/product/encore3',
+    auto: [{ t: 'qsfp', n: 4, lbl: 'HIGH SPEED LINK' }] },
+
+  { id: 'barco-e3-in-hdmi', brand: 'Barco', model: 'Encore3 HDMI 2.0 Quad Input',
+    fmt: 'barco-e3', role: 'in', note: '4 x HDMI 2.0 in',
+    src: 'https://www.barco.com/en/product/encore3',
+    auto: [{ t: 'hdmi', n: 4, lbl: 'IN HDMI 2.0' }] },
+
+  { id: 'barco-e3-in-dp', brand: 'Barco', model: 'Encore3 DisplayPort 1.2 Quad Input',
+    fmt: 'barco-e3', role: 'in', note: '4 x DisplayPort 1.2 in',
+    src: 'https://www.barco.com/en/product/encore3',
+    auto: [{ t: 'displayport', n: 4, lbl: 'IN DP1.2' }] },
+
+  // THE SIX BNCs ARE STACKED, and that is geometry rather than observation:
+  // 141 mm of connector in one row cannot fit a bay that must be <= 100 mm for
+  // seven of them to fit a 4 U face. Two columns of three is the arrangement
+  // that follows. No photograph confirms it. TODO §8g.
+  { id: 'barco-e3-in-tricombo', brand: 'Barco', model: 'Encore3 Tri-combo Input',
+    fmt: 'barco-e3', role: 'in', note: '1 x DP 1.2, 1 x HDMI 2.0, 6 x 12G-SDI in',
+    src: 'https://www.barco.com/en/product/encore3',
+    auto: [
+      { t: 'displayport', n: 1, lbl: 'IN DP1.2' },
+      { t: 'hdmi', n: 1, lbl: 'IN HDMI 2.0' },
+      { t: 'bnc', n: 6, stack: 3, lbl: 'IN SDI' },
+    ] },
+
+  { id: 'barco-e3-out-tricombo', brand: 'Barco', model: 'Encore3 Tri-combo Output',
+    fmt: 'barco-e3', role: 'out', note: '1 x DP 1.2, 1 x HDMI 2.0, 6 x 12G-SDI out',
+    src: 'https://www.barco.com/en/product/encore3',
+    auto: [
+      { t: 'displayport', n: 1, lbl: 'OUT DP1.2' },
+      { t: 'hdmi', n: 1, lbl: 'OUT HDMI 2.0' },
+      { t: 'bnc', n: 6, stack: 3, lbl: 'OUT SDI' },
+    ] },
+
+  { id: 'barco-e3-out-hdmi', brand: 'Barco', model: 'Encore3 HDMI 2.0 Quad Output',
+    fmt: 'barco-e3', role: 'out', note: '4 x HDMI 2.0 out',
+    src: 'https://www.barco.com/en/product/encore3',
+    auto: [{ t: 'hdmi', n: 4, lbl: 'OUT HDMI 2.0' }] },
+
   // Four AES3 variants on one faceplate: five XLR every time, split by model
   // name. The numbers in the name are CHANNELS and each XLR carries a stereo
   // pair, so 6I4O is three in and two out — confirmed against A&H's faceplate

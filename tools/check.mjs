@@ -138,6 +138,25 @@ for (const c of C) {
   if (cols < 1) bad(`${c.id}: no connectors`);
 }
 
+// --- roles are spelled the same on both sides -------------------------------
+// A slot's `accepts` and a card's `role` are matched by string, so a typo on
+// either side fails silently: the dropdown simply offers nothing and the slot
+// looks like it has no cards. Cheap to check, invisible to debug.
+const ROLES = new Set(['in', 'out', 'link']);
+for (const c of C) {
+  if (c.role && !ROLES.has(c.role)) bad(`${c.id}: unknown card role "${c.role}"`);
+}
+for (const d of D) {
+  for (const s of d.slots || []) {
+    for (const r of s.accepts || []) {
+      if (!ROLES.has(r)) bad(`${d.id}: slot ${s.id} accepts unknown role "${r}"`);
+    }
+    if (s.accepts && !cardsFor(s.fmt, s.accepts).length) {
+      bad(`${d.id}: slot ${s.id} accepts [${s.accepts}] but no ${s.fmt} card has those roles`);
+    }
+  }
+}
+
 // --- every declared slot has a format, and every format has a card ----------
 for (const d of D) {
   for (const s of d.slots || []) {

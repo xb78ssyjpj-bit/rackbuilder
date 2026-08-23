@@ -1177,6 +1177,17 @@ slots: [{ id: 'io', name: 'I/O Port', short: 'I/O', fmt: 'ah-sq-io' }],
 rear: { auto: [ …, { t: 'slot', slot: 'io' }, … ] },
 ```
 
+**A slot can restrict what fits it.** Give it `accepts: ['in']` and only cards
+declaring `role: 'in'` are offered. A slot with no `accepts` takes any card of
+its format, which is how every A&H and Sonnet slot behaves, so this changes
+nothing that already existed. The Barco Encore3 needs it: of its seven bays,
+two take input cards only, one takes an input or the link card, and four are
+flex. Reading its spec sheet's "7 input-capable" and "4 output-capable" as two
+separate banks gives you eleven bays and a wrong device — they are overlapping
+uses of the same seven. `check.mjs` verifies that every role spelled on a slot
+matches one spelled on a card, because a typo on either side fails silently:
+the dropdown just offers nothing.
+
 `fmt` names an entry in `SLOT_FORMATS` (panel.js), which carries the aperture's
 millimetre size. Cards live in `OPTION_CARDS` (devices.js) and declare the same
 `fmt` plus their own `auto` connector list. **Any card fits any slot of its

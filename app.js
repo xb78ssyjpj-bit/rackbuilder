@@ -1302,7 +1302,7 @@ function renderInspector() {
   // sockets become this unit's sockets, so they draw on the rear and patch in
   // the flow view exactly like the ones that were soldered in at the factory.
   (dev.slots || []).forEach((s) => {
-    const opts = cardsFor(s.fmt);
+    const opts = cardsFor(s.fmt, s.accepts);
     const row = document.createElement('label');
     row.className = 'row';
     row.innerHTML = `<span>${esc(s.name || 'Slot')}</span>`

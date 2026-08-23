@@ -19,6 +19,63 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.18.0 — 2026-08-15
+
+**Added — slots that restrict what fits them, and the Barco Encore3**
+
+Every option-card slot until now took any card of its format. The Encore3 does
+not: of its **seven** bays, two take input cards only, one takes an input or
+the link card, and four are flex. So a slot can now declare
+`accepts: ['in']` and a card a matching `role`. A slot with no `accepts`
+behaves exactly as before, so nothing existing changes.
+
+`check.mjs` verifies both sides spell the roles the same way, because a typo
+fails **silently** — the dropdown simply offers nothing and the bay looks like
+it has no cards.
+
+**Barco Encore3** — 4U, seven bays, with the card range: Quad 100G Link, HDMI
+2.0 Quad Input, DisplayPort 1.2 Quad Input, Tri-combo Input and Output, HDMI
+2.0 Quad Output. No cards are fitted by default; Barco's photographed
+"Standard" build is one BTO configuration, not what the chassis is.
+
+**Seven bays, not eleven.** Barco's spec sheet says "7 input-capable" and
+"4 output-capable"; those are overlapping uses of the same seven bays. Reading
+them as two banks gives eleven and a wrong device.
+
+**The bay size was produced by the fit check refusing two guesses**
+
+Worth writing down, because the gate did the reasoning:
+
+1. Sized from the widest card — a Tri-combo is 141 mm of connector in a row —
+   so 145 mm looked like the floor.
+2. **Refused**: seven 145 mm bays cannot fit a 4U face's 407 mm. That is a
+   proof that the cards cannot lay out in one row.
+3. Two rows of four at 100 mm span 400 mm of 407. 95 mm was **refused again**,
+   because the DisplayPort Quad card is 4 x 24 = 96 mm.
+
+So the bay is a bound the geometry allows, and the Tri-combo's `stack: 3` is
+forced by that bound rather than observed. Both are flagged, and `check.mjs`
+prints the derived-size note on every run.
+
+**It reproduces Barco's own numbers.** Fitting their photographed "Standard"
+build gives 9 HDMI in, 5 DP in, 5 HDMI out, 1 DP out — exactly their published
+totals for that configuration. Only SDI differs, which is the contradiction
+already recorded: their card table says 4 per Tri-combo, their rear photograph
+shows 6.
+
+**How the documentation was reached**, since it stopped an earlier pass dead:
+Barco's PDFs sit behind a Cloudflare challenge that defeats curl, but the HTML
+manual at `barco.com/manuals/R5917615/*.html` does not — and **the figure
+images embedded in it are not gated at all**. Browser for the DOM, then curl
+the image URLs out of it.
+
+**Not done:** the older Event Master generation (E2, S3-4K, EX) is a separate
+card format whose panel data is still missing, and it needs a **CXP**
+primitive — the E2's Expansion Link cards carry two each, and mapping CXP to
+`qsfp` because both are cages is the kind of lookalike this library refuses.
+
+---
+
 ## v1.17.1 — 2026-08-15
 
 **Added — six video processors, from four research passes of very uneven quality**

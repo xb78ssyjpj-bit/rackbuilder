@@ -134,6 +134,13 @@ run, and one straight-on photograph of a dLive MixRack rear would settle it: the
   real slots of a different kind — I/O modules rather than network cards — and
   the DX module range is its own format.
 - **Yamaha MY-cards, DiGiCo, Lake, Dante-in-anything** — each is a new format.
+- **Barco Event Master (E2 / S3-4K / EX) cards are not done.** The Encore3's
+  range is in (v1.18.0) but the older Event Master generation is a separate
+  format with its own cards, and its panel data is still missing — see §8g.
+  It also needs a **CXP** primitive: the E2's Expansion Link cards carry two
+  each, and CXP is an 84-pin copper connector with no equivalent here. Mapping
+  it to `qsfp` because both are cages would be the kind of lookalike this
+  library refuses.
 - No weight or power per card, because nobody publishes it. If a manufacturer
   does, the field is there to fill in.
 
@@ -672,6 +679,31 @@ entry, same standing as §8c, §8d and §8f.
   and almost nothing was established about either.
 - **PixelHue P20, P10, F4 and Q8.** No current manufacturer documentation
   found; the only Q8 datasheet located was a reseller's.
+
+### The Encore3 bay size, and how the check gate produced it
+
+`barco-e3` is **100 x 60 mm DERIVED**, and the derivation is worth recording
+because the fit check did the work:
+
+1. Sized from the widest card first — a Tri-combo is 1 x DP + 1 x HDMI +
+   6 x BNC = 141 mm in a row, so 145 mm looked like the floor.
+2. `check.mjs` refused it: seven 145 mm bays cannot fit a 4 U face, whose
+   usable width is 407 mm. That is a proof, not a nuisance — the bays cannot be
+   that wide, so the cards cannot lay out in one row.
+3. Seven bays fit as two rows of four, and four at 100 mm span 400 mm of 407.
+   95 mm was tried and refused again, because the DisplayPort Quad Input card
+   is 4 x 24 = 96 mm.
+
+So the bay is a **bound the geometry allows**, and the Tri-combo's `stack: 3`
+on its six BNCs is **forced by that bound**, not read off a photograph. One
+dimensioned faceplate drawing, or one straight-on rear photograph with the 19"
+span as the ruler, replaces all of it.
+
+**The validation worth knowing:** fitting Barco's own photographed "Standard
+Encore3 Configuration" yields 9 HDMI in, 5 DP in, 5 HDMI out and 1 DP out,
+which matches their published totals for that build exactly. Only the SDI count
+differs, and that is the documented contradiction — their card table says 4 per
+Tri-combo where their rear photograph shows 6.
 
 ## 9. Smaller things
 

@@ -1,4 +1,4 @@
-// Barco — 1 device
+// Barco — 2 devices
 //
 // PROVENANCE. Second entry from the Haiku subagent research pass. The figures
 // — 484.1 x 66.2 x 409 mm, 6.21 kg, 151 W — come from that pass and have NOT
@@ -132,5 +132,84 @@ export const BARCO = [
       { t: 'hdmi', x: 944, y: 128.5, lbl: 'MVR' },
     ], labels: [
       { text: '100-240V~ 50/60Hz, 2A', x: 37, y: 57, size: 7, ls: .3 },
+    ] } },
+
+  // Barco Encore3 — 4U build-to-order presentation system.
+  //
+  // PROVENANCE. Researched from Barco's own HTML manual R5917615 and the rear
+  // photograph on their product page. Figures NOT re-checked before entry —
+  // TODO §8g lists them.
+  //
+  // HOW IT WAS OBTAINED, because it is the way past a wall that stopped an
+  // earlier pass dead: Barco's PDF documentation sits behind a Cloudflare JS
+  // challenge that defeats curl. The HTML manual does not —
+  // `barco.com/manuals/R5917615/*.html` is a per-topic page each a few KB, and
+  // **the figure images embedded in it are not gated at all**. So the route in
+  // is: browser for the DOM, then curl the image URLs straight out of it.
+  //
+  // SEVEN BAYS, NOT ELEVEN, AND THEY ARE NOT INTERCHANGEABLE. One takes an
+  // input or the link card, two take input cards only, four are flex. Barco's
+  // spec sheet says "7 input-capable" and "4 output-capable"; those are
+  // overlapping uses of the same seven, and reading them as two banks is the
+  // obvious error. This is the first device here whose bays have roles, which
+  // is why `accepts` exists — see panel.js `cardsFor`.
+  //
+  // NO CARDS ARE FITTED BY DEFAULT. Barco photograph a build they call the
+  // "Standard Encore3 Configuration" — Quad 100G Link, 2 x HDMI Quad In,
+  // DP Quad In, Tri-combo In, Tri-combo Out, HDMI Quad Out — but that is one
+  // BTO build, not what the chassis is. Fit them from the inspector.
+  //
+  // POWER: "100-240Vac, 50/60Hz, 12-5A (x2), 1,100 W", unlabelled. Recorded as
+  // `powerMax`, because a ceiling is the only thing a single unlabelled figure
+  // can honestly be and under-stating a feed is the dangerous direction — the
+  // same call the PDS-4K above got.
+  //
+  // DEPTH is Barco's 672.29 mm "overall", not the 590.54 mm "front panel to
+  // rear panel without handles or connector protectors", matching the PDS-4K's
+  // "front of knob to back of connector protectors". WIDTH is 431.8 mm body /
+  // 485.3 mm over the handles, so a standard 19" panel and no `widthMM`.
+  // HEIGHT is 175.5 mm, which is 3.95 U and fits a 4 U opening.
+  //
+  // The two AC inlets carry a red-tabbed locking-lever bracket in the
+  // photograph rather than a bare socket. Barco name no locking-IEC series, so
+  // they are drawn as plain `iec_in`. The CONTROL port's shell looks like an
+  // etherCON in the photograph though the spec table says only "Ethernet
+  // RJ-45"; drawn `ethercon` from the shell. Both are in TODO §8g.
+  { id: 'barco-encore3', brand: 'Barco', model: 'Encore3',
+    category: 'video', ru: 4, depth: 672, weight: 29, powerMax: 1100,
+    approx: true,
+    src: 'https://www.barco.com/en/product/encore3',
+    slots: [
+      { id: 'b1', name: 'Bay 1 — link or input', short: 'B1', fmt: 'barco-e3',
+        accepts: ['link', 'in'] },
+      { id: 'b2', name: 'Bay 2 — input', short: 'B2', fmt: 'barco-e3',
+        accepts: ['in'] },
+      { id: 'b3', name: 'Bay 3 — input', short: 'B3', fmt: 'barco-e3',
+        accepts: ['in'] },
+      { id: 'b4', name: 'Bay 4 — flex', short: 'B4', fmt: 'barco-e3' },
+      { id: 'b5', name: 'Bay 5 — flex', short: 'B5', fmt: 'barco-e3' },
+      { id: 'b6', name: 'Bay 6 — flex', short: 'B6', fmt: 'barco-e3' },
+      { id: 'b7', name: 'Bay 7 — flex', short: 'B7', fmt: 'barco-e3' },
+    ],
+    front: { elements: [
+      { t: 'handle', x: 70, y: 200 },
+      { t: 'display', x: 330, y: 200, w: 300, h: 190 },
+      { t: 'usba', x: 520, y: 200, lbl: 'USB' },
+      { t: 'handle', x: 930, y: 200 },
+    ], labels: [
+      { text: 'Encore3', x: 620, y: 210, size: 24, ls: 2 },
+    ] },
+    // Chassis I/O only — everything else arrives with a card.
+    rear: { auto: [
+      { t: 'iec_in', n: 2, lbl: ['MAINS A', 'MAINS B'] },
+      { t: 'ethercon', n: 1, lbl: 'CONTROL' },
+      { t: 'rj45', n: 2, sig: 'dante', lbl: 'AUDIO NETWORK' },
+      { t: 'bnc', n: 1, lbl: 'LTC IN' },
+      { t: 'usbc', n: 1, lbl: 'USB-C' },
+      { t: 'bnc', n: 2, lbl: ['GENLOCK IN', 'GENLOCK OUT'] },
+      { t: 'slot', slot: 'b1' }, { t: 'slot', slot: 'b2' },
+      { t: 'slot', slot: 'b3' }, { t: 'slot', slot: 'b4' },
+      { t: 'slot', slot: 'b5' }, { t: 'slot', slot: 'b6' },
+      { t: 'slot', slot: 'b7' },
     ] } },
 ];
