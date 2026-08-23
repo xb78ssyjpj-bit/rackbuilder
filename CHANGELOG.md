@@ -19,6 +19,86 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.20.0 — 2026-08-23
+
+**Added — Barco Event Master E2, S3-4K and EX, and the card range the first
+two share**
+
+Fourteen years of card-based Event Master, the generation before the Encore3
+(v1.18.0): the E2 (4U, 14 card bays), the S3-4K (3U, 9 bays) and the EX (1U,
+fixed I/O, no cage). Connector inventory and left-to-right order for all
+three rears come from Barco's own orthographic figure — the Event Master
+Devices User Guide (R5905948), section 4.2 — measured directly rather than
+read off a spec sheet. The route to it: the guide's PDFs sit behind the same
+Cloudflare JS challenge that blocked the Encore3's, but the HTML manual's
+embedded images are not gated at all, so a browser for the DOM and a plain
+`curl` for the image URLs gets there.
+
+Two new option-card slot formats, deliberately not `barco-e3` — that is the
+newer Encore3's aperture, a different chassis:
+
+- `barco-em` (E2 / S3-4K, portrait, ~30.9 x 118 mm) carries the seven-card
+  range both chassis share: Expansion Link (2 x CXP), SDI Quad In/Out,
+  HDMI/DisplayPort Quad In, HDMI Quad Out, and — new — a Multiviewer Out
+  card carrying its own `mvr` role alongside `in` / `out` / `link`, because
+  EX's second flex bay is the only aperture in this library that can take
+  one and a plain output card is not a substitute for it.
+- `barco-ex-io` (EX, landscape, ~150 x 33 mm) carries EX's own HDMI in/out/mvr
+  set. EX's two banks are fixed hardware, not swappable cards — Barco
+  silkscreen them "Input or Output" and "Input or Output or MVR", a role
+  chosen in software — modelled as slots anyway because that is exactly what
+  `accepts` already does: pick a role from the inspector, whatever is or
+  isn't physically unplugged to get there.
+
+Every E2/S3-4K bay accepts any card in the range — unlike the Encore3, Barco
+document no per-bay restriction, and the figure shows one worked
+configuration, not a constraint, so inventing bay-shape rules the way the
+Encore3 genuinely has them would be the guess this library refuses to make.
+
+**Corrected — a card-bay height derived from the wrong axis**
+
+An earlier reading of the same figure put the card bay at ~140 mm tall, from
+the column's pixel height against the *width* scale (432 mm / 14 cards). That
+number is impossible: it does not fit inside the S3-4K, whose own published
+height is 132.6 mm end to end. The drawing's x and y pixel scales do not
+match, so a width-calibrated height was never valid. Measuring each chassis's
+card column against *that chassis's own* published height instead — real
+figures, not a pixel ratio — gives 119.8 mm (E2) and 111.7 mm (S3-4K), two
+independent devices agreeing to within 7% on a number that, because the two
+chassis are stated to share one card range, has to be the same. `barco-em`
+carries 118 mm, the rounded average. The fit check cannot catch this kind of
+error on its own: it proves a card's connectors fit a bay of a stated size,
+never that the bay is that size.
+
+**Found — the EX's first-draft rear overlapped, and only rendering it showed**
+
+Six chassis connectors plus two 150 mm slots leaves EX's 482.6 mm panel
+almost no slack (~411 mm of real connector against it), and an `auto` layout
+put the second CXP link connector on top of the first flex slot. check.mjs's
+auto-panel check passed the device clean — it proves elements sit inside the
+panel, never that they clear each other — so the collision was invisible
+until the rear was actually opened in the app. Fixed by hand-placing that
+face instead, the same approach the E2 and S3-4K rears already needed for
+their portrait card cages.
+
+**Fixed — CXP was drawable but not patchable**
+
+`cxp` has had a primitive since v1.19.0 (added for this exact device family)
+but was never added to `CONNECTOR_GROUPS`, so nothing using it could pass
+`check.mjs` and no CXP socket could appear in the flow view. This is the
+first device range to actually use CXP — the Encore3's own high-speed link
+card uses QSFP — so the gap went unnoticed until now.
+
+**Not done — no S3D connectors**
+
+Both the E2 and S3-4K carry six 3-pin mini-DIN sockets (S3D In x4, Out x2)
+for stereoscopic sync. There is no mini-DIN primitive in this library, and
+none is substituted — the nearest shape already here, 5-pin MIDI DIN, is a
+visibly different connector, and this library does not draw lookalikes. Left
+out of both rears; see TODO §9b.
+
+---
+
 ## v1.19.0 — 2026-08-15
 
 **Added — connectors can be mounted on their side**

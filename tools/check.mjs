@@ -153,7 +153,7 @@ for (const c of C) {
 // A slot's `accepts` and a card's `role` are matched by string, so a typo on
 // either side fails silently: the dropdown simply offers nothing and the slot
 // looks like it has no cards. Cheap to check, invisible to debug.
-const ROLES = new Set(['in', 'out', 'link']);
+const ROLES = new Set(['in', 'out', 'link', 'mvr']);
 for (const c of C) {
   if (c.role && !ROLES.has(c.role)) bad(`${c.id}: unknown card role "${c.role}"`);
 }

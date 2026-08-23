@@ -583,6 +583,55 @@ export const SLOT_FORMATS = {
   // One straight-on photograph of a dLive MixRack rear would replace this with
   // a real figure, the 19" span being the ruler.
   'ah-dl-io': { name: 'I/O Port', mm: 170, mmH: 48, approx: true },
+
+  // Barco Event Master card bay (E2 / S3-4K). NOT 'barco-e3' — that is the
+  // newer Encore3's aperture, a different chassis and a different card range
+  // that merely looks similar (portrait, option-card slots, CXP links).
+  //
+  // WIDTH is Barco's own arithmetic and is corroborated by code already in
+  // this file: the Event Master Devices User Guide (R5905948, Image 4-5) shows
+  // 14 cards spanning a 432 mm E2 chassis, 432/14 = 30.86 mm — the exact figure
+  // the `rot: 90` mechanism above was built to accommodate, because a Dual
+  // Link DVI card (53 mm) only fits a card this narrow turned on its side.
+  // Independently re-measured off the same figure: the 14-card row spans
+  // 1279 px for that 432 mm width (0.338 mm/px), and the S3-4K's own 9-card
+  // row in the same figure spans 826 px for 9 cards — 91.8 px/card against the
+  // E2's 91.4 px/card, confirming the two chassis share one card face width.
+  //
+  // HEIGHT IS NOT 140 mm, though an early pass here read the figure that way.
+  // Measuring the card column's pixel height against the 432 mm width gives
+  // ~139 mm — but that number is IMPOSSIBLE: a 139 mm card cannot fit inside
+  // the S3-4K, whose own published height is 132.6 mm (3U) end to end, rail to
+  // rail, chassis I/O included. The width-based reading silently assumed the
+  // figure's x and y pixel scales match; they do not — this drawing is not
+  // isometric. What replaces it: each chassis's card column was measured
+  // against ITS OWN published overall height instead — a real figure, not a
+  // pixel ratio. E2: card column 412 px of a 612 px (178 mm / 4U) rail-to-rail
+  // body = 119.8 mm. S3-4K: card column 411 px of a 488 px (132.6 mm / 3U)
+  // body = 111.7 mm. Two independent devices, two independent calibrations,
+  // agreeing to within 7% on a figure that — because E2 and S3-4K are stated
+  // to share one card range — must be the same real number: about 116 mm.
+  // 118 mm is used here, the average rounded up slightly for safety margin.
+  // This is exactly the trap the fit check cannot catch on its own: it proves
+  // a card's connectors fit a bay of a given size, never that the bay is that
+  // size. See TODO §9b.
+  'barco-em': { name: 'Event Master card bay', mm: 30.9, mmH: 118, approx: true },
+
+  // Barco Event Master EX. A DIFFERENT, smaller aperture from 'barco-em' — EX
+  // is 1U and its two flex banks of 4 HDMI are landscape, not portrait cards.
+  // Measured off the EX rear figure (R5905948, Image 4-7) the same way as
+  // above: the panel's rack-ear-to-rack-ear span is 788 px for Barco's stated
+  // 484.1 mm (0.614 mm/px), and each flex zone measures 244-248 px wide by
+  // 53 px tall against that scale — 150 x 33 mm. Cross-checked against the
+  // panel's own outer body, which measures 77 px tall against the same scale
+  // (47 mm) for a published 43.7 mm chassis — within measurement error.
+  //
+  // These are not physically swappable cards on the real unit — EX's HDMI
+  // banks are fixed hardware, software-configured as input, output or
+  // multiviewer. Modelled as slots anyway because that is exactly what
+  // `accepts` is for: choosing a role from the inspector, whether or not
+  // anything is actually unplugged to do it.
+  'barco-ex-io': { name: 'EX flex I/O bank', mm: 150, mmH: 33, approx: true },
 };
 
 export const slotType = (fmt) => `slot_${String(fmt).replace(/[^a-z0-9]/gi, '')}`;
@@ -794,7 +843,7 @@ export const CONNECTOR_GROUPS = [
   ]],
   ['Data / video', [
     ['bnc', 'BNC'], ['rj45', 'RJ45'], ['ethercon', 'etherCON'],
-    ['opticalcon', 'opticalCON'], ['sfp', 'SFP/SFP+'], ['qsfp', 'QSFP'],
+    ['opticalcon', 'opticalCON'], ['sfp', 'SFP/SFP+'], ['qsfp', 'QSFP'], ['cxp', 'CXP'],
     ['hdmi', 'HDMI'], ['displayport', 'DisplayPort'],
     ['usba', 'USB-A'], ['usbb', 'USB-B'], ['usbc', 'USB-C'], ['dsub', 'D-sub'],
     ['dcjack', 'DC barrel'],

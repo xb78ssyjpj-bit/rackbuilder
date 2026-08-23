@@ -134,13 +134,11 @@ run, and one straight-on photograph of a dLive MixRack rear would settle it: the
   real slots of a different kind — I/O modules rather than network cards — and
   the DX module range is its own format.
 - **Yamaha MY-cards, DiGiCo, Lake, Dante-in-anything** — each is a new format.
-- **Barco Event Master (E2 / S3-4K / EX) cards are not done.** The Encore3's
-  range is in (v1.18.0) but the older Event Master generation is a separate
-  format with its own cards, and its panel data is still missing — see §8g.
-  It also needs a **CXP** primitive: the E2's Expansion Link cards carry two
-  each, and CXP is an 84-pin copper connector with no equivalent here. Mapping
-  it to `qsfp` because both are cages would be the kind of lookalike this
-  library refuses.
+- ~~**Barco Event Master (E2 / S3-4K / EX) cards are not done.**~~ — **done.**
+  E2, S3-4K and EX are all in, on the `barco-em` (E2/S3-4K, portrait) and
+  `barco-ex-io` (EX, landscape) formats, with the seven-card range the first
+  two share. See §8g for the full account, including a bay-height correction
+  and an `auto`-layout overlap the render-and-look step caught.
 - No weight or power per card, because nobody publishes it. If a manufacturer
   does, the field is there to fill in.
 
@@ -635,13 +633,70 @@ entry, same standing as §8c, §8d and §8f.
   **The QSG URLs are known and work** (`dwn01.analogway.com`), so this is one
   session's work for somebody who renders page 2 of each and looks at it, the
   way the Midra 4K trio was settled.
-- **Barco E2 (4U), S3-4K (3U) and EX (1U).** Physical figures obtained —
-  E2 178 x 432 x 569 mm / 31 kg / 826 W max, S3-4K 132.6 x 432 x 540 / 24 kg,
-  EX 43.7 x 484.1 x 404.1 / 5.53 kg / 125 W typical — but **no connector order
-  for any face**: the Event Master Devices User Guide (R5905948) is
-  JavaScript-protected on barco.com and could not be downloaded, and the spec
-  sheets are marketing documents with no panel figure. They would be labelled
-  blocks, which is worth doing, but the figures above want checking first.
+- ~~**Barco E2 (4U), S3-4K (3U) and EX (1U).**~~ — **done.** The wall this note
+  describes was the PDF being gated; the HTML manual was not, and its embedded
+  images were reachable with a plain `curl` once pulled from the DOM in a
+  browser — R5905948, section 4.2 "Rear panel", Image 4-5 (E2 top / S3-4K
+  bottom, one true orthographic drawing) and Image 4-7 (EX). Connector
+  inventory and order for all three faces come from measuring that figure
+  directly, the same method as the PDS-4K and Encore3.
+
+  Dimensions are as this file already had them, still not re-checked. Power:
+  E2's 826 W is unlabelled → `powerMax`; S3-4K publishes no figure at all →
+  neither field, counts toward the `+`; EX's 125 W is stated "typical" →
+  `power`.
+
+  **Two new slot formats, deliberately not `barco-e3`.** `barco-em` (E2 /
+  S3-4K, portrait, ~30.9 x 118 mm) and `barco-ex-io` (EX, landscape,
+  ~150 x 33 mm) — the Encore3's aperture is a different, newer chassis and
+  does not apply here. Both are `approx: true`; see panel.js for the
+  measurements.
+
+  **The card-bay height is 118 mm, not the ~140 mm an earlier read of this
+  same figure gave.** That number came from the card column's pixel height
+  against the *width* scale (432 mm / 14 cards) and assumed the drawing's x
+  and y pixel scales match. They do not, and the proof is physical: a 140 mm
+  card cannot fit inside the S3-4K, whose own published height is 132.6 mm
+  end to end, 3U, chassis I/O included. Measuring each chassis's card column
+  against *that chassis's own* published height instead — a real figure, not
+  a pixel ratio — gives 119.8 mm for the E2 and 111.7 mm for the S3-4K, two
+  independent devices agreeing to within 7% on a number that (E2 and S3-4K
+  being stated to share one card range) has to be the same. 118 mm is the
+  rounded average. This is the exact trap the README already names: the fit
+  check proves a card fits *a* bay of a given size, never that the bay *is*
+  that size.
+
+  **The EX's `auto` rear had a real overlap, caught only by rendering it.**
+  Six chassis connectors plus two 150 mm slots leaves almost no slack in a
+  482.6 mm panel (~411 mm of real connector against it), and `auto`'s
+  per-item padding put the second CXP on top of the first flex slot.
+  check.mjs's auto-panel check does not catch this — it proves elements sit
+  inside the panel, never that they clear each other — so it passed clean
+  while the render was wrong. Fixed by hand-placing that face too, the same
+  as the E2 and S3-4K.
+
+  **No S3D connectors on either the E2 or the S3-4K.** Both carry a bank of
+  six 3-pin mini-DIN sockets (4 × S3D In, 2 × S3D Out) for stereoscopic sync.
+  There is no mini-DIN primitive in this library, and none was substituted —
+  the nearest shape already here, the 5-pin MIDI DIN, is a visibly different
+  connector, and a lookalike is exactly what this library refuses to draw.
+  Add a `minidin` primitive and both rears gain six sockets each. See §9b.
+
+  **EX's two flex I/O banks are fixed hardware, not swappable cards.** Barco
+  silkscreen them "Input or Output" and "Input or Output or MVR" — a
+  role picked in software, nothing unplugged. Modelled with `slots` and
+  `accepts` anyway, because choosing a role from the inspector is exactly
+  what that mechanism does regardless of whether anything physically comes
+  out. This is also why `mvr` is now a real card `role` alongside `in` /
+  `out` / `link` — EX's second bay is the only aperture anywhere in this
+  library that can take a multiviewer card and a plain output card is not
+  a substitute for it.
+
+  **E2 and S3-4K bays carry no `accepts` restriction.** Unlike the Encore3,
+  nothing in Barco's documentation says a given Event Master bay is
+  input-only or output-only, and the figure shows one worked example
+  configuration, not a constraint. Every bay on both chassis therefore takes
+  any card in the range — the honest reading, not an invented one.
 - ~~**There is no Barco E3.**~~ — **WRONG, and corrected here.** A research
   pass searched the literal string "E3", found nothing, and this file recorded
   its absence as fact. The product is **Encore3**, with a Barco product page
@@ -726,6 +781,10 @@ Tri-combo where their rear photograph shows 6.
 
 ## 9b. Connector detail still owed
 
+- **No mini-DIN primitive.** Barco's Event Master E2 and S3-4K both carry six
+  3-pin mini-DIN sockets (S3D In x4, S3D Out x2) that this library cannot
+  draw, and does not fake — see §8g. Add `minidin` to `PRIMS` and both rears
+  gain their S3D bank.
 - **The Mac mini headphone jack's face is unresolved.** The research pass put
   it on the FRONT of the M1 and M2. Apple moved that jack to the front with the
   M4, so a REAR jack on the M1/M2 is the likelier reading — and rather than

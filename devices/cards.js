@@ -262,6 +262,83 @@ export const OPTION_CARDS = [
       { t: 'xlrf', n: 3, sig: 'aes3', lbl: 'AES IN' },
       { t: 'xlrm', n: 2, sig: 'aes3', lbl: 'AES OUT' },
     ] },
+
+  // --- Barco Event Master (E2 / S3-4K) --------------------------------------
+  // The older Event Master generation, NOT the Encore3's card range above —
+  // different chassis, different aperture ('barco-em', not 'barco-e3'), and a
+  // genuinely modular architecture: Barco document no per-bay restriction the
+  // way Encore3's bays have one, so every E2/S3-4K slot accepts any card of
+  // this range. See TODO §5 / §8g.
+  //
+  // Inventory and left-to-right order read off Barco's own orthographic rear
+  // elevation (Event Master Devices User Guide R5905948, Image 4-5, E2 top /
+  // S3-4K bottom) — a true line drawing, not a photograph, and confirmed
+  // identical between the two chassis card-for-card. No connector is labelled
+  // with a bit rate or resolution on that figure, so none is claimed here.
+  { id: 'barco-em-link', brand: 'Barco', model: 'Event Master Expansion Link',
+    fmt: 'barco-em', role: 'link', note: '2 x CXP high-speed link',
+    src: 'https://www.barco.com/manuals/R5905948/xmagz5rhquo7.html',
+    auto: [{ t: 'cxp', n: 2, lbl: 'LINK' }] },
+
+  { id: 'barco-em-in-sdi', brand: 'Barco', model: 'Event Master SDI Quad Input',
+    fmt: 'barco-em', role: 'in', note: '4 x SDI in',
+    src: 'https://www.barco.com/manuals/R5905948/xmagz5rhquo7.html',
+    auto: [{ t: 'bnc', n: 4, lbl: 'IN' }] },
+
+  // THE ONE CARD `rot: 90` EXISTS FOR. A Dual Link DVI shell is 53 mm across —
+  // more than the 30.9 mm card face — and only fits because Barco mount it
+  // sideways. One per card; the figure shows nothing else on this faceplate.
+  { id: 'barco-em-in-dvi', brand: 'Barco', model: 'Event Master Dual Link DVI Input',
+    fmt: 'barco-em', role: 'in', note: '1 x Dual Link DVI-I in, mounted sideways',
+    src: 'https://www.barco.com/manuals/R5905948/xmagz5rhquo7.html',
+    auto: [{ t: 'dsub', n: 1, rot: 90, lbl: 'IN' }] },
+
+  { id: 'barco-em-in-combo', brand: 'Barco', model: 'Event Master HDMI/DisplayPort Quad Input',
+    fmt: 'barco-em', role: 'in', note: '2 x DisplayPort in, 2 x HDMI in',
+    src: 'https://www.barco.com/manuals/R5905948/xmagz5rhquo7.html',
+    auto: [
+      { t: 'displayport', n: 2, lbl: 'IN DP' },
+      { t: 'hdmi', n: 2, lbl: 'IN HDMI' },
+    ] },
+
+  { id: 'barco-em-out-hdmi', brand: 'Barco', model: 'Event Master HDMI Quad Output',
+    fmt: 'barco-em', role: 'out', note: '4 x HDMI out',
+    src: 'https://www.barco.com/manuals/R5905948/xmagz5rhquo7.html',
+    auto: [{ t: 'hdmi', n: 4, lbl: 'OUT' }] },
+
+  { id: 'barco-em-out-sdi', brand: 'Barco', model: 'Event Master SDI Quad Output',
+    fmt: 'barco-em', role: 'out', note: '4 x SDI out',
+    src: 'https://www.barco.com/manuals/R5905948/xmagz5rhquo7.html',
+    auto: [{ t: 'bnc', n: 4, lbl: 'OUT' }] },
+
+  // 'mvr' is its own role, not 'out' — the E2's card 14 and the S3-4K carry no
+  // other multiviewer card, and EX's second flex bay is silkscreened "Input or
+  // Output or MVR", a THIRD option beside plain in/out on that one bay only.
+  // Folding it into 'out' would let it fit the E2/S3-4K's plain output bays
+  // too, which nothing here confirms.
+  { id: 'barco-em-mvr', brand: 'Barco', model: 'Event Master Multiviewer Output',
+    fmt: 'barco-em', role: 'mvr', note: '4 x HDMI multiviewer out',
+    src: 'https://www.barco.com/manuals/R5905948/xmagz5rhquo7.html',
+    auto: [{ t: 'hdmi', n: 4, lbl: 'MVR' }] },
+
+  // --- Barco Event Master EX -------------------------------------------------
+  // EX's two HDMI banks are fixed hardware, not a removable card range — see
+  // the 'barco-ex-io' note in panel.js. These three exist so the bank's role
+  // can be picked from the inspector; nothing is physically unplugged.
+  { id: 'barco-ex-in-hdmi', brand: 'Barco', model: 'Event Master EX HDMI Quad Input',
+    fmt: 'barco-ex-io', role: 'in', note: '4 x HDMI in',
+    src: 'https://www.barco.com/manuals/R5905948/xmagz5rhquo7.html',
+    auto: [{ t: 'hdmi', n: 4, lbl: 'IN' }] },
+
+  { id: 'barco-ex-out-hdmi', brand: 'Barco', model: 'Event Master EX HDMI Quad Output',
+    fmt: 'barco-ex-io', role: 'out', note: '4 x HDMI out',
+    src: 'https://www.barco.com/manuals/R5905948/xmagz5rhquo7.html',
+    auto: [{ t: 'hdmi', n: 4, lbl: 'OUT' }] },
+
+  { id: 'barco-ex-mvr', brand: 'Barco', model: 'Event Master EX Multiviewer Output',
+    fmt: 'barco-ex-io', role: 'mvr', note: '4 x HDMI multiviewer out',
+    src: 'https://www.barco.com/manuals/R5905948/xmagz5rhquo7.html',
+    auto: [{ t: 'hdmi', n: 4, lbl: 'MVR' }] },
 ];
 
 // Registered here rather than by the index, so the data and the side

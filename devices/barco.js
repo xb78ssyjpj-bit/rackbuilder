@@ -230,4 +230,189 @@ export const BARCO = [
       { text: 'LTC', x: 363, y: 340, size: 7, ls: .2, anchor: 'middle' },
       { text: 'Genlock', x: 445, y: 340, size: 7, ls: .2, anchor: 'middle' },
     ] } },
+
+  // Barco Event Master E2 / S3-4K / EX — the older, modular Event Master
+  // generation. NOT the Encore3 above: a different chassis, a different card
+  // aperture ('barco-em' / 'barco-ex-io', not 'barco-e3'), and — per Barco's
+  // own documentation — no per-bay restriction the way Encore3's bays have
+  // one, so every E2/S3-4K slot takes any card in the range. See TODO §5/§8g.
+  //
+  // PROVENANCE. Barco's PDF manuals sit behind a Cloudflare JS challenge that
+  // defeats curl, same wall as the Encore3 hit — but the HTML manual's
+  // embedded images are not gated at all, so the route in is the same: browser
+  // for the DOM, then curl the image URLs straight out of it.
+  // https://www.barco.com/manuals/R5905948/xmagz5rhquo7.html (section 4.2,
+  // "Rear panel") carries Image 4-5 — E2 and S3-4K rear, together, as a true
+  // orthographic line drawing with every slot numbered — and Image 4-7 is the
+  // EX rear. Both were downloaded directly and read pixel-for-pixel; the
+  // connector inventory and left-to-right order below come from that figure,
+  // not from a spec-sheet table.
+  //
+  // DIMENSIONS ARE A RESEARCH-PASS FIGURE, NOT RE-CHECKED, same standing as
+  // the Encore3's and every §8c/§8d/§8f/§8g entry before it: E2 178 x 432 x
+  // 622 mm overall, 31 kg; S3-4K 132.6 x 432 x 540 mm, 24 kg; EX 43.7 x 484.1
+  // x 404.1 mm, 5.53 kg. Owed a manual pass.
+  //
+  // POWER. E2 is "826 W", unlabelled — recorded as `powerMax`, the same call
+  // as the Encore3 and PDS-4K: a single unlabelled figure can only honestly be
+  // a ceiling, and under-stating a feed is the dangerous direction. S3-4K
+  // carries NO power figure at all — none was found — so it is left off
+  // entirely and the unit counts toward the summary's `+`. EX's 125 W is
+  // explicitly stated "typical", so it is `power`, not `powerMax`.
+  //
+  // NO S3D CONNECTORS. Both E2 and S3-4K carry a bank of six S3D 3-pin
+  // mini-DIN sockets on the chassis (4 in, 2 out) for stereoscopic sync. There
+  // is no mini-DIN primitive in this library and none is invented — per
+  // standing policy a lookalike (the closest shape here is the round MIDI
+  // primitive, which is a 5-pin DIN, a visibly different connector) would be
+  // worse than the omission. Left out of both rears; add a `minidin`
+  // primitive to fix properly. See TODO §9b.
+  { id: 'barco-e2', brand: 'Barco', model: 'Event Master E2',
+    category: 'video', ru: 4, depth: 622, weight: 31, powerMax: 826,
+    approx: true,
+    src: 'https://www.barco.com/manuals/R5905948/xmagz5rhquo7.html',
+    slots: [
+      { id: 'b1', name: 'Bay 1', short: 'B1', fmt: 'barco-em' },
+      { id: 'b2', name: 'Bay 2', short: 'B2', fmt: 'barco-em' },
+      { id: 'b3', name: 'Bay 3', short: 'B3', fmt: 'barco-em' },
+      { id: 'b4', name: 'Bay 4', short: 'B4', fmt: 'barco-em' },
+      { id: 'b5', name: 'Bay 5', short: 'B5', fmt: 'barco-em' },
+      { id: 'b6', name: 'Bay 6', short: 'B6', fmt: 'barco-em' },
+      { id: 'b7', name: 'Bay 7', short: 'B7', fmt: 'barco-em' },
+      { id: 'b8', name: 'Bay 8', short: 'B8', fmt: 'barco-em' },
+      { id: 'b9', name: 'Bay 9', short: 'B9', fmt: 'barco-em' },
+      { id: 'b10', name: 'Bay 10', short: 'B10', fmt: 'barco-em' },
+      { id: 'b11', name: 'Bay 11', short: 'B11', fmt: 'barco-em' },
+      { id: 'b12', name: 'Bay 12', short: 'B12', fmt: 'barco-em' },
+      { id: 'b13', name: 'Bay 13', short: 'B13', fmt: 'barco-em' },
+      { id: 'b14', name: 'Bay 14', short: 'B14', fmt: 'barco-em' },
+    ],
+    // Hand-placed from Barco's own orthographic rear figure (Image 4-5, top
+    // half). `auto` cannot draw this face — it bands by rack unit, and a
+    // 118 mm portrait card would either split across rows or hang off the
+    // edge, the exact failure the Encore3's rear comment already documents.
+    //
+    // x = (px - 100) / 1358 * 1000, matched against the fourteen-slot row's
+    // own measured pixel centres and linearly compressed just enough to clear
+    // this app's L0/R0 hand-placement bounds (40..960) — the source drawing
+    // puts bay 1 closer to the panel edge than this app allows any element to
+    // sit. y = 148 for every bay, all one row; the mains/network strip below
+    // is a separate band at y = 340.
+    rear: { elements: [
+      { t: 'iec_in', x: 83, y: 340, lbl: 'MAINS A' },
+      { t: 'iec_in', x: 225, y: 340, lbl: 'MAINS B' },
+      { t: 'ethercon', x: 435, y: 340, lbl: 'ETHERNET' },
+      { t: 'bnc', x: 510, y: 340, lbl: 'GENLOCK IN' },
+      { t: 'bnc', x: 558, y: 340, lbl: 'GENLOCK LOOP' },
+      { t: 'slot', slot: 'b1', x: 72, y: 148 },
+      { t: 'slot', slot: 'b2', x: 142, y: 148 },
+      { t: 'slot', slot: 'b3', x: 206, y: 148 },
+      { t: 'slot', slot: 'b4', x: 273, y: 148 },
+      { t: 'slot', slot: 'b5', x: 339, y: 148 },
+      { t: 'slot', slot: 'b6', x: 405, y: 148 },
+      { t: 'slot', slot: 'b7', x: 470, y: 148 },
+      { t: 'slot', slot: 'b8', x: 535, y: 148 },
+      { t: 'slot', slot: 'b9', x: 601, y: 148 },
+      { t: 'slot', slot: 'b10', x: 666, y: 148 },
+      { t: 'slot', slot: 'b11', x: 732, y: 148 },
+      { t: 'slot', slot: 'b12', x: 797, y: 148 },
+      { t: 'slot', slot: 'b13', x: 863, y: 148 },
+      { t: 'slot', slot: 'b14', x: 929, y: 148 },
+    ] } },
+
+  // S3-4K shares the E2's card range and card aperture, confirmed by the same
+  // figure: its own 9-slot row measures 91.8 px/card against the E2's
+  // 91.4 px/card, the cross-check that this really is one card family, not
+  // two similar ones. What differs is the LAYOUT, not the parts — S3-4K is
+  // only 3 U, too short to stack a mains/network strip below a 118 mm card
+  // the way the E2 does, so Barco put it beside the cards instead: a two-row
+  // cluster (mains above, network below) to the left of a single row of 9
+  // bays. Bays 2 and 3 are VPU modules — Barco's own figure shows them as
+  // blank apertures, no connectors, and nothing in the manual suggests they
+  // are user-swappable, so they are drawn as fixed blanked bays rather than
+  // declared as slots. Bay numbering below follows Barco's own silkscreen
+  // (1, 4-9), not a renumbered 1-7, so a bay's id is legible against the unit.
+  { id: 'barco-s3-4k', brand: 'Barco', model: 'Event Master S3-4K',
+    category: 'video', ru: 3, depth: 540, weight: 24, approx: true,
+    src: 'https://www.barco.com/manuals/R5905948/xmagz5rhquo7.html',
+    slots: [
+      { id: 's1', name: 'Bay 1', short: 'S1', fmt: 'barco-em' },
+      { id: 's4', name: 'Bay 4', short: 'S4', fmt: 'barco-em' },
+      { id: 's5', name: 'Bay 5', short: 'S5', fmt: 'barco-em' },
+      { id: 's6', name: 'Bay 6', short: 'S6', fmt: 'barco-em' },
+      { id: 's7', name: 'Bay 7', short: 'S7', fmt: 'barco-em' },
+      { id: 's8', name: 'Bay 8', short: 'S8', fmt: 'barco-em' },
+      { id: 's9', name: 'Bay 9', short: 'S9', fmt: 'barco-em' },
+    ],
+    // x = (px - 103) / 1352 * 1000, the same measure-and-compress approach as
+    // the E2, calibrated against this chassis's own body width (1352 px for
+    // the same 432 mm) rather than reusing the E2's scale.
+    rear: { elements: [
+      { t: 'iec_in', x: 100, y: 90, lbl: 'MAINS A' },
+      { t: 'iec_in', x: 200, y: 90, lbl: 'MAINS B' },
+      { t: 'ethercon', x: 100, y: 205, lbl: 'ETHERNET' },
+      { t: 'bnc', x: 190, y: 215, lbl: 'GENLOCK IN' },
+      { t: 'bnc', x: 250, y: 215, lbl: 'GENLOCK LOOP' },
+      // Bays 2 and 3 — VPU. Fixed, no connectors, drawn at the same footprint
+      // a card bay would occupy (30.9 x 118 mm) rather than as a real slot.
+      { t: 'bar', x: 467, y: 150, w: 64, h: 266, rx: 3 },
+      { t: 'bar', x: 533, y: 150, w: 64, h: 266, rx: 3 },
+      { t: 'slot', slot: 's1', x: 402, y: 150 },
+      { t: 'slot', slot: 's4', x: 598, y: 150 },
+      { t: 'slot', slot: 's5', x: 663, y: 150 },
+      { t: 'slot', slot: 's6', x: 728, y: 150 },
+      { t: 'slot', slot: 's7', x: 793, y: 150 },
+      { t: 'slot', slot: 's8', x: 858, y: 150 },
+      { t: 'slot', slot: 's9', x: 924, y: 150 },
+    ], labels: [
+      { text: 'VPU', x: 467, y: 150, size: 9, ls: .3, anchor: 'middle' },
+      { text: 'VPU', x: 533, y: 150, size: 9, ls: .3, anchor: 'middle' },
+    ] } },
+
+  // Barco Event Master EX — the smallest of the range, 1 U, and the simplest
+  // rear: no card cage at all. Its two "flex" HDMI banks are FIXED hardware,
+  // silkscreened "Input or Output" and "Input or Output or MVR" — a software
+  // role choice, not a swap. Modelled as slots anyway, because that is
+  // exactly what `accepts` is for: choosing a role from the inspector. The
+  // second bay's extra MVR option is the whole reason `mvr` is its own role
+  // rather than folded into `out` — nothing confirms the first bay can be a
+  // multiviewer too, and the silkscreen says it cannot.
+  //
+  // LINK 1 / LINK 2 are on the CHASSIS here, not a card — one CXP each, fixed,
+  // unlike the E2/S3-4K where the link is itself a card in the cage, and
+  // stacked one above the other in a single column, not side by side — the
+  // figure shows "Link 1" over "Link 2", the same arrangement the E2/S3-4K's
+  // Expansion Link card uses for its own pair.
+  //
+  // HAND-PLACED, NOT `auto`. It looks like the simple case — everything here
+  // is a normal 1U-height item — but `auto`'s layout put the second CXP and
+  // the first flex slot on top of each other: the panel this dense (six
+  // chassis connectors plus two 150 mm slots in one 482.6 mm row, ~411 mm of
+  // real connector against 482.6 mm of panel) has almost no spare width for
+  // `auto`'s fixed per-item padding to absorb. Exactly the trap TODO/README
+  // describe: check.mjs proves elements sit inside the panel, never that they
+  // clear each other, and the only way to catch it was to render this face
+  // and look. x below is a manual sequential lay-out (minimal 5.5 mm gaps,
+  // the same total connector width `auto` would have used) rather than a
+  // photograph measurement.
+  { id: 'barco-ex', brand: 'Barco', model: 'Event Master EX',
+    category: 'video', ru: 1, depth: 404, weight: 5.53, power: 125,
+    approx: true,
+    src: 'https://www.barco.com/manuals/R5905948/xmagz5rhquo7.html',
+    slots: [
+      { id: 'io1', name: 'Bay — input or output', short: 'IO1', fmt: 'barco-ex-io',
+        accepts: ['in', 'out'] },
+      { id: 'io2', name: 'Bay — input, output or MVR', short: 'IO2', fmt: 'barco-ex-io',
+        accepts: ['in', 'out', 'mvr'] },
+    ],
+    rear: { elements: [
+      { t: 'iec_in', x: 68, y: 50, lbl: 'MAINS' },
+      { t: 'ethercon', x: 132, y: 50, lbl: 'ETHERNET' },
+      { t: 'bnc', x: 185, y: 50, lbl: 'GENLOCK IN' },
+      { t: 'bnc', x: 230, y: 50, lbl: 'GENLOCK OUT' },
+      { t: 'cxp', x: 287, y: 32, lbl: 'LINK 1' },
+      { t: 'cxp', x: 287, y: 68, lbl: 'LINK 2' },
+      { t: 'slot', slot: 'io1', x: 482, y: 50 },
+      { t: 'slot', slot: 'io2', x: 804, y: 50 },
+    ] } },
 ];
