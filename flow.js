@@ -74,7 +74,7 @@ const FAM_OF = {
   nl2: 'speaker', nl4: 'speaker', nl8: 'speaker',
   rj45: 'network', ethercon: 'network', opticalcon: 'network',
   sfp: 'network', qsfp: 'network', cxp: 'network',
-  bnc: 'video', hdmi: 'video', displayport: 'video',
+  bnc: 'video', hdmi: 'video', displayport: 'video', hd15: 'video', dvi: 'video',
   midi: 'control', usba: 'control', usbb: 'control', usbc: 'control',
   dcjack: 'power',
   socapex_in: 'multipin', socapex_thru: 'multipin',

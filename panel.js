@@ -348,6 +348,29 @@ const P = {
     path(g, `M${x - 26},${y - 8} h52 l-4,16 h-44 z`);
     ring(g, x - 34, y, 4); ring(g, x + 34, y, 4);
   } },
+  // HD15 / DE-15 — the VGA "E" shell, the same shell DB9 uses. 30.9 x 16.3 mm,
+  // Amphenol CN-DSUB9SKT00-000 (a DB9 female datasheet, sourced for the shell
+  // size rather than a VGA-branded one because it is the same E shell and the
+  // DB9 drawing was the one with legible dimensions). Added for the Analog Way
+  // Ascender 48's "Universal Analog" inputs — this library previously had no
+  // HD15 primitive at all, which is why the Pulse² family (TODO note in
+  // devices/analog-way.js) was left out rather than drawn with dsub as a
+  // lookalike. Same call here: dsub is the DB25 shell, visibly wider and
+  // shorter, and using it for HD15 would be exactly that lookalike.
+  hd15: { mm: 30.9, mmH: 16.3, nat: 40, d(g, x, y) {
+    path(g, `M${x - 15},${y - 10.5} h30 l-2.5,21 h-25 z`);
+    ring(g, x - 20, y, 3); ring(g, x + 20, y, 3);
+  } },
+  // DVI-I / DVI-D — one shape for both. The 4-pin analog cluster that makes an
+  // -I an -I rather than a -D sits inside the same shell and doesn't change
+  // the panel footprint, so there is nothing to draw differently — the same
+  // reasoning `jack` already uses for TRS vs TS. 36.8 x 17.8 mm, Omron XM4M
+  // DVI connector datasheet. Also new for the Ascender 48; see the hd15 note.
+  dvi: { mm: 36.8, mmH: 17.8, nat: 47, d(g, x, y) {
+    rect(g, x, y, 42, 24, 2);
+    rect(g, x - 14, y, 26, 16, 1);
+    ring(g, x - 23, y, 3); ring(g, x + 23, y, 3);
+  } },
 
   // --- power: every type has an IN (pins) and a THRU (holes) variant --------
   powercon_in:   { mm: 24, mmH: 31, nat: D_W, d(g, x, y) { drawPowercon(g, x, y, true); } },
@@ -846,6 +869,7 @@ export const CONNECTOR_GROUPS = [
     ['opticalcon', 'opticalCON'], ['sfp', 'SFP/SFP+'], ['qsfp', 'QSFP'], ['cxp', 'CXP'],
     ['hdmi', 'HDMI'], ['displayport', 'DisplayPort'],
     ['usba', 'USB-A'], ['usbb', 'USB-B'], ['usbc', 'USB-C'], ['dsub', 'D-sub'],
+    ['hd15', 'HD15 / VGA'], ['dvi', 'DVI-I / DVI-D'],
     ['dcjack', 'DC barrel'],
   ]],
   ['Power — in', [
@@ -903,6 +927,7 @@ export const SHORT = {
   sfp: 'SFP', qsfp: 'QSFP', cxp: 'CXP',
   hdmi: 'HDMI', displayport: 'DP',
   usba: 'USBa', usbb: 'USBb', usbc: 'USBc', dsub: 'DSUB',
+  hd15: 'HD15', dvi: 'DVI',
   dcjack: 'DC',
   socket_in: 'SKOi', socket_thru: 'SKO', bs13a_thru: '13A',
   // Kept distinct on purpose: the code is the only thing telling an inlet from
