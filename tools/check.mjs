@@ -13,7 +13,7 @@ import { CATEGORIES } from '../devices/_lib.js';
 import { OPTION_CARDS as C } from '../devices/cards.js';
 import {
   faceElements, sizeMM, heightMM, MM, FACE_L, FACE_R, PATCH_TYPES,
-  isNarrow, bodyBounds,
+  isNarrow, bodyBounds, elemMM,
   SLOT_FORMATS, slotType, cardsFor,
 } from '../panel.js';
 import { devicePorts, portLabel, familyOf, FAMILIES } from '../flow.js';
@@ -75,7 +75,8 @@ for (const d of D) {
     const R0 = d.half ? 432 : (narrow ? nx1 + 2 : 960);
     const B = ru * 100;
     for (const e of out) {
-      const w = (sizeMM(e.t) || 20) * MM, h = (heightMM(e.t) || 20) * MM;
+      const { w: wmm, h: hmm } = elemMM(e);
+      const w = wmm * MM, h = hmm * MM;
       if (e.x - w / 2 < L0 - 0.5 || e.x + w / 2 > R0 + 0.5
           || e.y - h / 2 < 1 || e.y + h / 2 > B - 1) {
         bad(`${d.id} ${plane}: ${e.t} outside the panel`);
@@ -128,13 +129,23 @@ for (const c of C) {
   for (const e of c.auto || []) {
     const n = e.n || 1, st = Math.max(1, Math.min(e.stack || 1, n));
     cols += Math.ceil(n / st);
-    tall = Math.max(tall, st * (heightMM(e.t) || 12));
+    tall = Math.max(tall, st * (elemMM(e).h || 12));
   }
-  const wide = (c.auto || []).reduce(
-    (a, e) => a + Math.ceil((e.n || 1) / Math.max(1, Math.min(e.stack || 1, e.n || 1)))
-                * (sizeMM(e.t) || 12), 0);
+  // A portrait aperture holds a vertical card: its runs go DOWN the face, so
+  // the width is the widest single connector and the height is the sum. Laid
+  // out across, an Event Master Tri-combo would need 61 mm in a 31 mm card and
+  // would be refused — correctly for a horizontal card, wrongly for this one.
+  const portrait = f.mmH > f.mm;
+  const wide = portrait
+    ? (c.auto || []).reduce((a, e) => Math.max(a, elemMM(e).w || 12), 0)
+    : (c.auto || []).reduce(
+        (a, e) => a + Math.ceil((e.n || 1) / Math.max(1, Math.min(e.stack || 1, e.n || 1)))
+                    * (elemMM(e).w || 12), 0);
+  const high = portrait
+    ? (c.auto || []).reduce((a, e) => a + (e.n || 1) * (elemMM(e).h || 12), 0)
+    : tall;
   if (wide > f.mm) bad(`${c.id}: ${wide.toFixed(0)} mm of connectors in a ${f.mm} mm ${c.fmt} slot`);
-  if (tall > f.mmH) bad(`${c.id}: ${tall.toFixed(0)} mm tall in a ${f.mmH} mm ${c.fmt} slot`);
+  if (high > f.mmH) bad(`${c.id}: ${high.toFixed(0)} mm tall in a ${f.mmH} mm ${c.fmt} slot`);
   if (cols < 1) bad(`${c.id}: no connectors`);
 }
 
@@ -162,7 +173,10 @@ for (const d of D) {
   for (const s of d.slots || []) {
     if (!SLOT_FORMATS[s.fmt]) bad(`${d.id}: slot ${s.id} has unknown format ${s.fmt}`);
     else if (!cardsFor(s.fmt).length) bad(`${d.id}: slot ${s.id} has no cards to fit it`);
-    const decl = JSON.stringify((d.rear && d.rear.auto) || []) + JSON.stringify((d.front && d.front.auto) || []);
+    // Both shapes of face, since v1.19.0: a slot can sit in a hand-placed
+    // `elements` array as well as an `auto` list.
+    const faces = [d.rear, d.front].filter(Boolean);
+    const decl = JSON.stringify(faces.map((f) => [f.auto || [], f.elements || []]));
     if (!decl.includes(`"slot":"${s.id}"`)) {
       bad(`${d.id}: declares slot ${s.id} but no face places it`);
     }

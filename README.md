@@ -1236,6 +1236,28 @@ arrangement over the alternative, which was drawing every connector smaller than
 it really is. Runs of one or two are left alone; folding a lone S/PDIF pair into
 a 1-wide column buys no width and asserts something unverified.
 
+### Connectors on their side
+
+`rot: 90` on an element turns a connector and swaps its footprint. Barco's
+Event Master cards are why: fourteen span a 432 mm chassis, so a card face is
+30.9 mm — and a Dual Link DVI is 53 mm across, which only fits because Barco
+mount it sideways. Without rotation the fit check refused that card, correctly.
+
+The drawn shape picks up the panel's existing ~8% anisotropy, since a unit of x
+and a unit of y are not the same number of millimetres and rotating swaps which
+applies. The *footprint* used by the fit checks is computed from the mm fields,
+so the physical test stays exact even though the picture carries the usual
+squash.
+
+### Portrait card apertures
+
+A slot taller than it is wide holds a **vertical** card, and its connectors run
+down the face rather than across it. An Event Master Tri-combo is a
+DisplayPort, an HDMI and six BNC: 61 mm laid across, which will not go in a
+31 mm card, but 141 mm as a column, which fits a 145 mm one. Both `layoutIn`
+and `check.mjs` switch on the aperture's own proportions, so nothing needs to
+declare it.
+
 To add a new connector or control type, add it to `PRIMS` in `panel.js` and to
 `CONNECTOR_TYPES` so it shows up in the + Device form.
 

@@ -73,7 +73,7 @@ const FAM_OF = {
   toslink: 'digital',
   nl2: 'speaker', nl4: 'speaker', nl8: 'speaker',
   rj45: 'network', ethercon: 'network', opticalcon: 'network',
-  sfp: 'network', qsfp: 'network',
+  sfp: 'network', qsfp: 'network', cxp: 'network',
   bnc: 'video', hdmi: 'video', displayport: 'video',
   midi: 'control', usba: 'control', usbb: 'control', usbc: 'control',
   dcjack: 'power',
@@ -145,7 +145,13 @@ const declaredName = (e) => {
 function planePorts(spec, dev, item, plane, out, tally) {
   if (!spec) return;
   let placed;
-  if (spec.elements) {
+  // A hand-placed face that carries option-card slots has to go through
+  // faceElements as well, or the fitted card's sockets never become ports —
+  // it drew the aperture and the card, and had nothing to patch. Faces with no
+  // slot keep the cheap path, which needs no device or item context.
+  const hasSlot = Array.isArray(spec.elements)
+    && spec.elements.some((e) => e.t === 'slot');
+  if (spec.elements && !hasSlot) {
     placed = [];
     spec.elements.forEach((e) => {
       if (!CONN.has(e.t)) return;
@@ -155,7 +161,7 @@ function planePorts(spec, dev, item, plane, out, tally) {
                       lbl: e.lbl, sig: e.sig, _i: i, _n: n });
       }
     });
-  } else if (spec.auto) {
+  } else if (spec.elements || spec.auto) {
     // Through faceElements, not autoLayout, so a fitted option card's sockets
     // are ports too. The slot aperture itself is not a connector type, so it
     // falls out here on its own and never becomes something you can patch to.

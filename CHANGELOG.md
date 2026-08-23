@@ -19,6 +19,72 @@ capability, **patch** is fixes and data corrections.
 
 ---
 
+## v1.19.0 — 2026-08-15
+
+**Added — connectors can be mounted on their side**
+
+`rot: 90` turns a connector and swaps its footprint. Barco's Event Master cards
+forced it: fourteen cards span a 432 mm chassis, so a card face is **30.9 mm**,
+and a Dual Link DVI is **53 mm** across. It only fits because Barco mount it
+sideways — and until now the fit check refused that card, correctly, because
+nothing could say so.
+
+The footprint used by every fit check is computed from the mm fields, so the
+physical test stays exact. The drawn shape picks up the panel's existing ~8%
+anisotropy, which is the squash the whole drawing already carries.
+
+**Added — portrait card apertures hold vertical cards**
+
+A slot taller than it is wide lays its connectors down the face rather than
+across it. An Event Master Tri-combo is a DisplayPort, an HDMI and six BNC:
+61 mm across, which will not go in a 31 mm card, but 141 mm as a column, which
+fits. `layoutIn` and `check.mjs` both switch on the aperture's own proportions,
+so no declaration is needed.
+
+**Added — a CXP primitive, and it is the softest figure in the file**
+
+28 mm, on Barco Event Master Expansion Link cards. **No dimensioned drawing
+could be reached** — TE, Amphenol, Molex, both big distributors and the
+InfiniBand specification are all behind access controls. What bounds it is
+Barco's own orthographic figure: a CXP sits on a card whose face is 30.9 mm and
+reads nearly full-width, so it is wider than the 22 mm QSFP beside it and no
+wider than 31 mm. Fourth soft figure after `ah-dl-io`, `displayport` and VEAM.
+
+**Fixed — the Encore3 bay was the wrong shape, and it shipped that way**
+
+v1.18.0 reasoned the bay must be ~100 x 60 mm and horizontal, from "seven bays
+fit a 4U face as two rows of four". **The premise was invented.** Barco's own
+rear photograph shows the cards are vertical, in one row, on the right-hand
+half of the panel. The fit check accepted it because it tests whether
+connectors fit a bay — not whether the bay is the right shape.
+
+It is now **30 x 145 mm**, measured: the chassis spans 1732 px for Barco's
+stated 485.3 mm over the handles, and the seven card headers span 769 px =
+215 mm, so a card face is 30.8 mm — within a millimetre of the older
+generation's 30.9. The height comes from the *horizontal* scale as well,
+because the photograph is a three-quarter render showing the top of the case,
+so its vertical pixel scale is not the panel's: 140 mm measured against the
+width, against 114 from the naive vertical reading.
+
+**Fixed — option-card slots only ever worked on `auto` faces**
+
+A `{ t: 'slot' }` in a hand-placed `elements` array drew an aperture and
+nothing else: no card connectors, no ports, nothing to patch. It turned out to
+be the same omission in **three** places — `faceElements` returned early,
+`renderDevice` passed the raw array to the drawing, and `flow.js`'s
+`planePorts` had its own branch that walked the array without expanding. All
+three now expand slots; faces without one keep the cheap path.
+
+The Encore3 is the first face that needs both, because `auto` bands by rack
+unit and cannot place seven 145 mm apertures in a row. Its rear is hand-placed
+from the photograph: `x = (px - 139) / 1732 * 1000`.
+
+**Still true after all of that:** fitting Barco's photographed "Standard" build
+gives 14 HDMI and 6 DisplayPort — 9 in and 5 out, 5 in and 1 out — exactly
+their published totals for that configuration.
+
+---
+
 ## v1.18.0 — 2026-08-15
 
 **Added — slots that restrict what fits them, and the Barco Encore3**

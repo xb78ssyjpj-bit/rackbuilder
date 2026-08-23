@@ -199,17 +199,35 @@ export const BARCO = [
     ], labels: [
       { text: 'Encore3', x: 620, y: 210, size: 24, ls: 2 },
     ] },
-    // Chassis I/O only — everything else arrives with a card.
-    rear: { auto: [
-      { t: 'iec_in', n: 2, lbl: ['MAINS A', 'MAINS B'] },
-      { t: 'ethercon', n: 1, lbl: 'CONTROL' },
-      { t: 'rj45', n: 2, sig: 'dante', lbl: 'AUDIO NETWORK' },
-      { t: 'bnc', n: 1, lbl: 'LTC IN' },
-      { t: 'usbc', n: 1, lbl: 'USB-C' },
-      { t: 'bnc', n: 2, lbl: ['GENLOCK IN', 'GENLOCK OUT'] },
-      { t: 'slot', slot: 'b1' }, { t: 'slot', slot: 'b2' },
-      { t: 'slot', slot: 'b3' }, { t: 'slot', slot: 'b4' },
-      { t: 'slot', slot: 'b5' }, { t: 'slot', slot: 'b6' },
-      { t: 'slot', slot: 'b7' },
+    // Hand-placed from Barco's own rear photograph. The chassis spans
+    // 1732 px for their stated 485.3 mm over the handles, so
+    // x = (px - 139) / 1732 * 1000 and y = (py - 90) / 775 * 400.
+    //
+    // `auto` cannot do this face: it bands by rack unit and would either split
+    // the seven bays across rows or hang a 125 mm aperture off the edge. The
+    // bays are a single row down the right-hand half with the chassis I/O to
+    // their left, which is what the photograph shows.
+    rear: { elements: [
+      { t: 'iec_in', x: 110, y: 170, lbl: 'MAINS A' },
+      { t: 'iec_in', x: 110, y: 284, lbl: 'MAINS B' },
+      { t: 'ethercon', x: 208, y: 300, lbl: 'CONTROL' },
+      { t: 'rj45', x: 266, y: 300, sig: 'dante', lbl: 'AUDIO NETWORK 1' },
+      { t: 'rj45', x: 314, y: 300, sig: 'dante', lbl: 'AUDIO NETWORK 2' },
+      { t: 'bnc', x: 363, y: 300, lbl: 'LTC IN' },
+      { t: 'usbc', x: 413, y: 258, lbl: 'USB-C' },
+      { t: 'bnc', x: 428, y: 300, lbl: 'GENLOCK IN' },
+      { t: 'bnc', x: 462, y: 300, lbl: 'GENLOCK OUT' },
+      { t: 'slot', slot: 'b1', x: 531, y: 237 },
+      { t: 'slot', slot: 'b2', x: 595, y: 237 },
+      { t: 'slot', slot: 'b3', x: 658, y: 237 },
+      { t: 'slot', slot: 'b4', x: 722, y: 237 },
+      { t: 'slot', slot: 'b5', x: 785, y: 237 },
+      { t: 'slot', slot: 'b6', x: 849, y: 237 },
+      { t: 'slot', slot: 'b7', x: 912, y: 237 },
+    ], labels: [
+      { text: 'Control', x: 208, y: 340, size: 7, ls: .2, anchor: 'middle' },
+      { text: 'Audio Network', x: 290, y: 340, size: 7, ls: .2, anchor: 'middle' },
+      { text: 'LTC', x: 363, y: 340, size: 7, ls: .2, anchor: 'middle' },
+      { text: 'Genlock', x: 445, y: 340, size: 7, ls: .2, anchor: 'middle' },
     ] } },
 ];

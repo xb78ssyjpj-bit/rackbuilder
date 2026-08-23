@@ -18,6 +18,27 @@ export const FACE_L = 78;    // usable face, left
 export const FACE_R = 922;   // usable face, right
 
 export const MM = W / 482.6;          // 2.0721 units per mm (19" = 482.6 mm)
+
+// --- rotated connectors -----------------------------------------------------
+// A connector mounted on its side. Barco's Event Master cards are the reason:
+// 14 of them span a 432 mm chassis, so a card face is 30.9 mm — and a Dual Link
+// DVI is 53 mm across, which only fits because Barco turn it 90 degrees. Until
+// now the fit check would (correctly) have refused that card, because nothing
+// could say the connector was on its side.
+//
+// `rot: 90` on an element swaps its footprint and turns the drawing. Note the
+// drawn shape picks up the panel's existing ~8% anisotropy — the viewBox is
+// 1000 x 100·U, so a unit of x and a unit of y are not the same number of
+// millimetres, and rotating swaps which one applies. That is the same
+// squash the whole drawing already carries; physical truth lives in the mm
+// fields, and the FOOTPRINT below is computed from those, not from the
+// drawing.
+export const isRot = (e) => !!e && (e.rot === 90 || e.rot === 270);
+
+// A connector's footprint in real millimetres, honouring rotation.
+export const elemMM = (e) => (isRot(e)
+  ? { w: heightMM(e.t) || 20, h: sizeMM(e.t) || 20 }
+  : { w: sizeMM(e.t) || 20, h: heightMM(e.t) || 20 });
 export const U_MM = 44.45;            // one rack unit in mm
 export const FACE_MM = (FACE_R - FACE_L) / MM;   // usable face width in mm (~407)
 
@@ -270,6 +291,25 @@ const P = {
     path(g, `M${x - 13},${y - 11} h26 v15 h-8 v7 h-10 v-7 h-8 z`);
   } },
   // QSFP is a wider cage than SFP — 40/100G uplinks are not the same size.
+  // CXP — the InfiniBand 84-pin, 12-lane copper cage on Barco Event Master
+  // Expansion Link cards. 28 mm is a BOUND, NOT A MEASUREMENT, and it is the
+  // softest figure in this file.
+  //
+  // No dimensioned drawing could be reached: TE, Amphenol, Molex, the two big
+  // distributors and the InfiniBand specification are all behind access
+  // controls. What pins it is Barco's own orthographic rear figure (Image 4-5,
+  // manual R5905948): a CXP sits on an Event Master card, fourteen of which
+  // span a 432 mm chassis, so the card face is 30.9 mm and the cage reads
+  // nearly full-width on it. So: wider than the 22 mm QSFP beside it in this
+  // file, and no wider than 31 mm.
+  //
+  // One dimensioned cage drawing replaces this. See TODO §9b.
+  cxp: { mm: 28, mmH: 12, nat: 40, d(g, x, y) {
+    rect(g, x, y, 40, 17, 2);
+    rect(g, x, y, 33, 11, 1);
+    path(g, `M${x - 12},${y - 5.5} v11 M${x + 12},${y - 5.5} v11`);
+  } },
+
   qsfp: { mm: 22, nat: 44, d(g, x, y) {
     rect(g, x, y, 44, 20); rect(g, x, y, 32, 9);
   } },
@@ -497,30 +537,31 @@ export const SLOT_FORMATS = {
   // no more.
   'sonnet-macmini': { name: 'Mac mini bay', mm: 197, mmH: 36, approx: true },
 
-  // Barco Encore3 card bay. SIZE DERIVED FROM THE CHASSIS, not from Barco, who
-  // publish no aperture dimension — and arrived at by being told off by this
-  // file's own fit check, which is worth recording.
+  // Barco Encore3 card bay. VERTICAL, and this was corrected in v1.19.0 after
+  // being shipped wrong.
   //
-  // The first attempt sized the bay from the widest card: a Tri-combo carries
-  // 1 x DisplayPort + 1 x HDMI + 6 x BNC, which is 24 + 21 + 96 = 141 mm in a
-  // row, so 145 mm looked like the floor. `check.mjs` then refused it —
-  // SEVEN 145 mm bays cannot fit a 4 U face, whose usable width is 407 mm.
-  // That is a real proof, not a nuisance: the bays cannot be that wide, so the
-  // cards cannot lay their connectors out in one row.
+  // v1.18.0 reasoned the bay must be about 100 x 60 mm and horizontal, from
+  // "seven bays fit a 4 U face as two rows of four". The fit check accepted
+  // that, because it tests whether connectors fit a bay — not whether the bay
+  // is the right shape. Barco's own rear photograph shows the seven cards are
+  // VERTICAL, in a single row, and occupy only the right-hand portion of the
+  // panel. So the reasoning was sound and the premise was invented.
   //
-  // Seven bays fit a 4 U face as two rows of four, and four at 100 mm span
-  // 400 mm of the 407 mm usable width — so 100 x 60 mm is the widest the bay
-  // can be. (95 mm was tried first and refused a second time: the DisplayPort
-  // Quad Input card is 4 x 24 = 96 mm, which would not fit it.) The Tri-combo's six BNCs are consequently
-  // declared `stack: 3` — two columns of three — which is FORCED BY THAT
-  // BOUND rather than read off a photograph, and is flagged as such on the
-  // card.
+  // 30 x 145 mm, measured off that photograph: the chassis spans 1732 px for
+  // Barco's stated 485.3 mm over the handles, and the seven coloured card
+  // headers span 769 px = 215 mm, so a card face is 30.8 mm. That lands within
+  // a millimetre of the older Event Master generation's 30.9 mm — fourteen
+  // cards across a 432 mm chassis — which is the cross-check that the reading
+  // is right. HEIGHT COMES FROM THE HORIZONTAL SCALE TOO: the photograph is a
+  // three-quarter render showing the top of the case, so its vertical pixel
+  // scale is not the panel's — measuring the card height against the width
+  // gives 140 mm where the naive vertical reading gives 114. Still a BOUND rather than a
+  // measurement — Barco publish no aperture dimension — but now a bound taken
+  // from a photograph of the thing rather than from an assumed layout. It
+  // agrees with the older Event Master generation, whose fourteen cards across
+  // a 432 mm chassis give 30.9 mm.
   //
-  // It is a BOUND, not a measurement — the same standing as `ah-dl-io`, and
-  // `check.mjs` prints a note about it on every run. One dimensioned drawing
-  // of a card faceplate, or one straight-on rear photograph with the 19" span
-  // as the ruler, replaces the whole of this.
-  'barco-e3': { name: 'Encore3 card bay', mm: 100, mmH: 60, approx: true },
+  'barco-e3': { name: 'Encore3 card bay', mm: 30, mmH: 145, approx: true },
 
   // Allen & Heath dLive / Avantis 'I/O Port'. A larger, separate aperture from
   // the SQ's, which the cards themselves prove: M-DL-DXLINK alone puts four
@@ -590,8 +631,8 @@ function layoutIn(items, cx, cy, w, h) {
   });
   if (!flat.length) return [];
 
-  const wOf = (t) => (sizeMM(t) || 12) * MM + 5;
-  const hOf = (t) => (heightMM(t) || 12) * MM;
+  const wOf = (e) => (elemMM(e).w || 12) * MM + 5;
+  const hOf = (e) => (elemMM(e).h || 12) * MM;
 
   // Runs of the same connector at the same stack depth, as on a panel face.
   // A card is small enough that one band is always the right answer, so the
@@ -601,15 +642,34 @@ function layoutIn(items, cx, cy, w, h) {
   flat.forEach((it) => {
     const want = Math.max(1, it.stack || 1);
     const last = runs[runs.length - 1];
-    if (last && last.t === it.t && last.want === want) last.items.push(it);
-    else runs.push({ t: it.t, want, items: [it] });
+    if (last && last.t === it.t && last.want === want && last.rot === it.rot) last.items.push(it);
+    else runs.push({ t: it.t, rot: it.rot, want, items: [it] });
   });
   runs.forEach((r) => {
-    r.stack = Math.max(1, Math.min(r.want, Math.floor(h / hOf(r.t)) || 1, r.items.length));
+    r.stack = Math.max(1, Math.min(r.want, Math.floor(h / hOf(r)) || 1, r.items.length));
     r.cols = Math.ceil(r.items.length / r.stack);
   });
 
-  const total = runs.reduce((a, r) => a + r.cols * wOf(r.t), 0);
+  // A PORTRAIT APERTURE HOLDS A VERTICAL CARD, so its runs go down the face
+  // rather than across it. Barco's Event Master and Encore3 cages are both
+  // like this: fourteen cards across a 432 mm chassis leaves 31 mm of width
+  // and the whole height of the box, so a Tri-combo's DisplayPort, HDMI and
+  // six BNC are a column, not a row. Laying them across would need 61 mm and
+  // the card would read as impossible.
+  if (h > w) {
+    runs.forEach((r) => { r.stack = r.items.length; r.cols = 1; });
+    const totalH = runs.reduce((a, r) => a + r.items.length * hOf(r), 0);
+    const scv = totalH > h ? h / totalH : 1;
+    let y = cy - (totalH * scv) / 2;
+    const col = [];
+    runs.forEach((r) => {
+      const step = hOf(r) * scv;
+      r.items.forEach((it) => { col.push({ ...it, x: cx, y: y + step / 2 }); y += step; });
+    });
+    return col;
+  }
+
+  const total = runs.reduce((a, r) => a + r.cols * wOf(r), 0);
   // Overflow tightens the spacing rather than shrinking the connectors, so a
   // card that cannot physically fit its aperture reads as one on the drawing
   // instead of quietly scaling itself down until it does.
@@ -618,8 +678,8 @@ function layoutIn(items, cx, cy, w, h) {
 
   const out = [];
   runs.forEach((r) => {
-    const cw = wOf(r.t) * sc;
-    const pitch = r.stack > 1 ? Math.min(hOf(r.t) + 5, h / r.stack) : 0;
+    const cw = wOf(r) * sc;
+    const pitch = r.stack > 1 ? Math.min(hOf(r) + 5, h / r.stack) : 0;
     r.items.forEach((it, i) => {
       out.push({
         ...it,
@@ -652,10 +712,34 @@ export const slotDef = (dev, id) =>
 // fitted card cannot appear on the panel but be missing from the patch.
 export function faceElements(spec, dev, item, left = FACE_L, right = FACE_R) {
   if (!spec) return [];
-  if (Array.isArray(spec.elements)) return spec.elements;
+  const fitted = (item && item.cards) || {};
+
+  // A HAND-PLACED FACE CAN CARRY SLOTS TOO. It used to return early here, so
+  // `{ t: 'slot' }` in an `elements` array drew an aperture and nothing else —
+  // the fitted card's connectors never appeared, and it had no ports in the
+  // flow view. Only `auto` faces expanded them. The Barco Encore3 is the first
+  // face that needs both: seven bays at measured positions, which `auto`
+  // cannot place because it bands by rack unit.
+  if (Array.isArray(spec.elements)) {
+    const out = [];
+    for (const e of spec.elements) {
+      if (e.t !== 'slot') { out.push(e); continue; }
+      const def = slotDef(dev, e.slot);
+      const f = def && SLOT_FORMATS[def.fmt];
+      if (!def || !f) { out.push(e); continue; }
+      out.push({ ...e, t: slotType(def.fmt), slot: e.slot, fmt: def.fmt });
+      const card = cardById(fitted[e.slot]);
+      if (!card) continue;
+      const pad = 7 * MM;
+      const pre = def.short || def.name || '';
+      out.push(...layoutIn(card.auto, e.x, e.y, f.mm * MM - pad, f.mmH * MM - pad)
+        .map((k) => ({ ...k, _card: card.id, _slot: e.slot,
+          lbl: k.lbl ? (Array.isArray(k.lbl) ? k.lbl : `${pre} ${k.lbl}`) : k.lbl })));
+    }
+    return out;
+  }
   if (!spec.auto) return [];
 
-  const fitted = (item && item.cards) || {};
   const declared = spec.auto.map((e) => {
     if (e.t !== 'slot') return e;
     const def = slotDef(dev, e.slot);
@@ -767,7 +851,7 @@ export const SHORT = {
   euroblock: 'EURO', toslink: 'ADAT', midi: 'MIDI', rca: 'RCA',
   nl2: 'NL2', nl4: 'NL4', nl8: 'NL8',
   bnc: 'BNC', rj45: 'RJ45', ethercon: 'EC', opticalcon: 'OC',
-  sfp: 'SFP', qsfp: 'QSFP',
+  sfp: 'SFP', qsfp: 'QSFP', cxp: 'CXP',
   hdmi: 'HDMI', displayport: 'DP',
   usba: 'USBa', usbb: 'USBb', usbc: 'USBc', dsub: 'DSUB',
   dcjack: 'DC',
@@ -819,8 +903,8 @@ function runsOf(list) {
   list.forEach((it) => {
     const want = Math.max(1, it.stack || 1);
     const last = runs[runs.length - 1];
-    if (last && last.t === it.t && last.want === want) last.items.push(it);
-    else runs.push({ t: it.t, want, items: [it] });
+    if (last && last.t === it.t && last.want === want && last.rot === it.rot) last.items.push(it);
+    else runs.push({ t: it.t, rot: it.rot, want, items: [it] });
   });
   return runs;
 }
@@ -837,12 +921,12 @@ export function autoLayout(items, ru = 1, left = FACE_L, right = FACE_R) {
 
   const faceW = right - left;
   const out = [];
-  const width = (t) => (sizeMM(t) ? sizeMM(t) * MM : 40) + 12;
+  const width = (e) => (elemMM(e).w ? elemMM(e).w * MM : 40) + 12;
 
   const rows = [];
   let row = [], used = 0;
   flat.forEach((it) => {
-    const w = width(it.t);
+    const w = width(it);
     if (row.length && used + w > faceW && rows.length < ru - 1) {
       rows.push(row); row = []; used = 0;
     }
@@ -874,7 +958,7 @@ export function autoLayout(items, ru = 1, left = FACE_L, right = FACE_R) {
     const bandH = bands[ri];
     const runs = runsOf(r);
     const cols = (run) => Math.ceil(run.items.length / run.stack);
-    const runW = (run) => cols(run) * width(run.t);
+    const runW = (run) => cols(run) * width(run);
     const totalW = () => runs.reduce((a, run) => a + runW(run), 0);
 
     runs.forEach((run) => {
@@ -899,7 +983,7 @@ export function autoLayout(items, ru = 1, left = FACE_L, right = FACE_R) {
     const cy = tops[ri] + bandH / 2;
 
     runs.forEach((run) => {
-      const w = width(run.t) * scale;
+      const w = width(run) * scale;
       const nc = cols(run);
       const pitch = run.stack > 1
         ? Math.min((heightMM(run.t) || 20) * MM + 6, (bandH - 16) / run.stack)
@@ -949,16 +1033,23 @@ function drawElements(g, spec, sw) {
     const gap = e.gap || 0;
     for (let i = 0; i < n; i++) {
       const cx = e.x + i * gap;
+      // Turn the connector on its side about its own centre. Done as an outer
+      // group so it composes with `scale:` below rather than fighting it.
+      let host = g;
+      if (isRot(e)) {
+        host = el('g', { transform: `rotate(${e.rot} ${p1(cx)} ${p1(e.y)})` });
+        g.appendChild(host);
+      }
       if (Math.abs(s - 1) > 0.001) {
         const sg = el('g', {
           transform: `translate(${p1(cx)} ${p1(e.y)}) scale(${p1(s)}) `
                    + `translate(${p1(-cx)} ${p1(-e.y)})`,
           'stroke-width': p1(sw / s),
         });
-        g.appendChild(sg);
+        host.appendChild(sg);
         prim.d(sg, cx, e.y, e);
       } else {
-        prim.d(g, cx, e.y, e);
+        prim.d(host, cx, e.y, e);
       }
     }
   });
@@ -1299,7 +1390,13 @@ export function renderDevice(dev, view = 'front', item = null, opt = {}) {
   }
   // An explicitly empty `elements` array is a real layout — a blank panel.
   if (layout && Array.isArray(layout.elements)) {
-    return renderPanel({ ru: dev.ru, ...layout }, o);
+    // A hand-placed face carrying slots has to be expanded first, or the
+    // apertures and their fitted cards never reach the drawing. Faces with no
+    // slot go straight through, which is every hand-placed face but one.
+    const els = layout.elements.some((e) => e.t === 'slot')
+      ? faceElements(layout, dev, item)
+      : layout.elements;
+    return renderPanel({ ru: dev.ru, ...layout, elements: els }, o);
   }
   if (layout && layout.auto) {
     return renderPanel({ ru: dev.ru, elements: faceElements(layout, dev, item),
