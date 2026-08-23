@@ -635,9 +635,24 @@ entry, same standing as §8c, §8d and §8f.
   JavaScript-protected on barco.com and could not be downloaded, and the spec
   sheets are marketing documents with no panel figure. They would be labelled
   blocks, which is worth doing, but the figures above want checking first.
-- **There is no Barco E3.** The current Event Master range is E2, E2 Gen 2,
-  E2 Jr., S3, S3-4K, S3-4K Jr., EX and the EC controllers. Recorded because the
-  name will come round again.
+- ~~**There is no Barco E3.**~~ — **WRONG, and corrected here.** A research
+  pass searched the literal string "E3", found nothing, and this file recorded
+  its absence as fact. The product is **Encore3**, with a Barco product page
+  (`barco.com/en/product/encore3`) and its own manual, R5917615. A later pass
+  found both. The lesson is the one this file keeps relearning: "not found" is
+  a statement about a search, not about the world, and it should never have
+  been written down as the latter.
+
+  **Encore3 is researched and not yet entered** — 3.95 U (175.5 mm), 672.29 mm
+  overall depth, 29 kg in standard configuration, 1,100 W unlabelled. It is
+  **build-to-order with 7 physical card slots** (1 link-or-input, 2 input-only,
+  4 flex that take input OR output cards), so it wants the option-card
+  mechanism rather than a frozen rear. Two findings worth keeping: the spec
+  sheet's "7 input-capable" and "4 output-capable" describe overlapping uses of
+  that same pool of 7, not eleven slots; and the manual's card table says the
+  Tri-combo card has 4x 12G-SDI while Barco's own rear photograph shows 6
+  numbered BNCs on both the In and Out cards, with every other count on the
+  page matching exactly.
 - **Barco EC-200 and EC-210 are control consoles, not rack units** — 901 mm
   wide. Out of scope rather than missing.
 - **The rest of the ATEM rack line** — 1 M/E Constellation HD and 4K, 4 M/E HD

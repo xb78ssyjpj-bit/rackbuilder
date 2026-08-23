@@ -77,9 +77,11 @@ Master user guide is JavaScript-protected so no connector order); the rest of
 the ATEM rack line; NovaStar MX2000 Pro and PixelHue F8 (modular, and the F8's
 published dimensions give an 11.6 U height, so its axes are scrambled).
 
-**There is no Barco E3.** The current Event Master range is E2, E2 Gen 2,
-E2 Jr., S3, S3-4K, S3-4K Jr., EX and the EC controllers — and the EC-200/210
-are 901 mm control consoles, not rack units.
+**On Barco's range:** the EC-200/210 are 901 mm control consoles, not rack
+units. (This entry originally also claimed "there is no Barco E3". That was
+wrong — the product is **Encore3**, manual R5917615. A pass searched the string
+"E3", found nothing, and the absence was written down as fact. Corrected in
+TODO §8g.)
 
 ---
 
