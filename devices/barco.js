@@ -415,4 +415,105 @@ export const BARCO = [
       { t: 'slot', slot: 'io1', x: 482, y: 50 },
       { t: 'slot', slot: 'io2', x: 804, y: 50 },
     ] } },
+
+  // Barco ImagePRO-4K — a 1U scaler/switcher, NOT branded Event Master, but
+  // card-compatible with it: it "comes loaded from the factory with a
+  // Tri-Combo input/output card" and the spec sheet notes "future support
+  // for 2nd generation Event Master input and output cards". That plural
+  // "future support" is the only mention of any other card — there is no
+  // second confirmed configuration, so this is drawn as a fixed rear, not
+  // as a slots+cards device. Inventing a slot format from one vague sentence
+  // is exactly the kind of guess this library refuses; if a second card
+  // shows up in Barco's own documentation, this is the entry to convert.
+  //
+  // PROVENANCE. Entirely curl-able: no Cloudflare gate anywhere in this
+  // pass. The QSG came from a third-party mirror (a rental house's site)
+  // found by search, which gave the real document number, which found the
+  // correct dedicated spec sheet at assets.barco.com. ONE TRAP WORTH
+  // RECORDING: the first spec sheet a search surfaced
+  // (.../ImagePRO-II-series-en-Spec-sheet.pdf) is a different, older
+  // product — "ImagePRO-II", analog/DVI/HDMI/DP/3G-SDI, five sub-models —
+  // whose own text never says 4K or Tri-Combo. Per the standing rule
+  // against inferring one model's spec from a same-family sibling's, that
+  // PDF was discarded entirely rather than treated as "close enough", and a
+  // second, more specific search found the actual ImagePRO-4K sheet dated
+  // 27 Nov 2025, which every figure below comes from.
+  //
+  // THE REAR PANEL BITMAP WAS TOO LOW-RESOLUTION TO READ, so labels are NOT
+  // from it. The same QSG page carries the callouts as real extractable PDF
+  // text next to the diagram, and that text is what is used here; the
+  // bitmap itself was only good enough to confirm left-to-right grouping
+  // (AC/Ethernet/Genlock, then the input card, then the output card) and
+  // that "4x 12G SDI" per side is four distinct BNCs, not one quad block —
+  // confirmed against the spec sheet's own connector-count table, since its
+  // "2x 12G SDI 4K60p ... or 4x 3G SDI" line is a bandwidth-mode
+  // description (full rate on 2 of the 4 physical BNCs, or reduced rate on
+  // all 4), not a claim about how many sockets are there.
+  //
+  // THE FRONT PANEL BITMAP WAS legible, but only after finding it was
+  // embedded upside down: a plain 180-degree rotation produced
+  // backwards-reading glyphs, and what actually fixed it was a pure
+  // vertical flip with no horizontal mirroring. Once corrected, "BARCO",
+  // "ImagePRO | 4K", "ADJUST / PUSH TO SEL", "SOURCES" and "OUTPUTS" all
+  // read correctly and confirm the SRC 1-8 / OUT 1-6 buttons and order —
+  // but only the module-level layout, not pixel positions, so the front
+  // below is a schematic grid, the same standing as the Ascender 48's.
+  //
+  // RU: Barco state 43.7 mm, 0.98 U — the same figure the EX carries, and
+  // treated the same way: ordinary 1U manufacturing tolerance, not a
+  // fractional rack unit worth modelling, so `ru: 1`.
+  //
+  // POWER: "100-240 VAC 50/60Hz 125W" is a bare "Input power" line with no
+  // TYPICAL/MAXIMUM qualifier — the same ambiguity every Barco datasheet in
+  // this library has had, resolved the same way: `powerMax`, not `power`,
+  // because a single unlabelled figure can only honestly be a ceiling.
+  //
+  // WIDTH: 484.1 mm "incl. rack mount" is close enough to the standard
+  // 482.6 mm that no `widthMM` is set, the same call as every other
+  // full-width Barco entry here.
+  //
+  // NOT CONFIRMED, all left out or generic rather than guessed: whether the
+  // 125 W figure is typical or peak; whether Ethernet is a plain RJ45 shell
+  // or a locking one (the spec text says plain RJ-45 and is trusted over
+  // the too-soft bitmap impression of a round shell); the AC inlet's exact
+  // sub-type beyond a C14-shaped body with an integrated rocker; whether
+  // the four front-panel buttons around the ADJUST encoder carry any
+  // printed text beyond arrow icons (none legible, so left unlabelled);
+  // the exact green LED bargraph segment count (drawn as 16, the pass's own
+  // best count, not silkscreened anywhere so not load-bearing).
+  { id: 'barco-imagepro-4k', brand: 'Barco', model: 'ImagePRO-4K',
+    category: 'video', ru: 1, depth: 404, weight: 6.8, powerMax: 125,
+    approx: true,
+    src: 'https://assets.barco.com/m/3e8cdadf32d467c1/original/ImagePRO-4K-en-Spec-sheet.pdf',
+    front: { elements: [
+      { t: 'led', x: 65, y: 28 },
+      { t: 'usba', x: 91, y: 28 },
+      { t: 'display', x: 157, y: 28, w: 90, h: 40 },
+      { t: 'encoder', x: 228, y: 28, r: 20, lbl: 'ADJUST' },
+      { t: 'button', x: 263, y: 28, n: 4, gap: 24, w: 18, h: 16 },
+      { t: 'button', x: 365, y: 28, n: 2, gap: 36, w: 30, h: 16,
+        lbl: ['MENU / MON', 'LED Setup'] },
+      { t: 'button', x: 437, y: 28, n: 2, gap: 36, w: 30, h: 16,
+        lbl: ['ESC', 'TEST PATT'] },
+      { t: 'led', x: 499, y: 28, n: 3, gap: 10.5 },
+      { t: 'button', x: 72, y: 68, n: 8, gap: 30, w: 24, h: 18,
+        lbl: ['SRC 1', 'SRC 2', 'SRC 3', 'SRC 4', 'SRC 5', 'SRC 6', 'SRC 7', 'SRC 8'] },
+      { t: 'button', x: 322, y: 68, n: 6, gap: 30, w: 24, h: 18,
+        lbl: ['OUT 1', 'OUT 2', 'OUT 3', 'OUT 4', 'OUT 5', 'OUT 6'] },
+      { t: 'button', x: 512, y: 68, w: 24, h: 18, lbl: 'FRZ' },
+      { t: 'button', x: 551, y: 68, w: 30, h: 18, lbl: 'TAKE' },
+      { t: 'led', x: 587, y: 68, n: 16, gap: 9 },
+    ] },
+    rear: { auto: [
+      { t: 'iec_in', n: 1, lbl: 'AC' },
+      { t: 'rj45', n: 1, lbl: 'ETHERNET' },
+      { t: 'bnc', n: 1, lbl: 'GENLOCK IN' },
+      { t: 'bnc', n: 1, lbl: 'GENLOCK OUT' },
+      { t: 'displayport', n: 1, lbl: 'IN DP1.2' },
+      { t: 'hdmi', n: 1, lbl: 'IN HDMI2.0' },
+      { t: 'bnc', n: 4, lbl: 'IN SDI' },
+      { t: 'displayport', n: 1, lbl: 'OUT DP1.2' },
+      { t: 'hdmi', n: 1, lbl: 'OUT HDMI2.0' },
+      { t: 'bnc', n: 4, lbl: 'OUT SDI' },
+    ] } },
 ];
