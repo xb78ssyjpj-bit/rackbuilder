@@ -485,24 +485,32 @@ export const BARCO = [
     category: 'video', ru: 1, depth: 404, weight: 6.8, powerMax: 125,
     approx: true,
     src: 'https://assets.barco.com/m/3e8cdadf32d467c1/original/ImagePRO-4K-en-Spec-sheet.pdf',
+    // Schematic grid, not measured (see the entry note above) — but spread
+    // across the true ~60..920 usable face width, group by functional
+    // cluster, rather than left-packed at tight intra-group pitch. The
+    // first version of this row packed every group tight against its
+    // neighbour and left roughly the right 40% of the face empty; visibly
+    // wrong once rendered, and exactly what "schematic, not measured"
+    // should not mean — the inventory being unmeasured doesn't excuse the
+    // gross layout being wrong too.
     front: { elements: [
-      { t: 'led', x: 65, y: 28 },
-      { t: 'usba', x: 91, y: 28 },
-      { t: 'display', x: 157, y: 28, w: 90, h: 40 },
-      { t: 'encoder', x: 228, y: 28, r: 20, lbl: 'ADJUST' },
-      { t: 'button', x: 263, y: 28, n: 4, gap: 24, w: 18, h: 16 },
-      { t: 'button', x: 365, y: 28, n: 2, gap: 36, w: 30, h: 16,
+      { t: 'led', x: 64.5, y: 28 },
+      { t: 'usba', x: 148.5, y: 28 },
+      { t: 'display', x: 273, y: 28, w: 90, h: 40 },
+      { t: 'encoder', x: 407, y: 28, r: 20, lbl: 'ADJUST' },
+      { t: 'button', x: 496, y: 28, n: 4, gap: 24, w: 18, h: 16 },
+      { t: 'button', x: 641, y: 28, n: 2, gap: 36, w: 30, h: 16,
         lbl: ['MENU / MON', 'LED Setup'] },
-      { t: 'button', x: 437, y: 28, n: 2, gap: 36, w: 30, h: 16,
+      { t: 'button', x: 756, y: 28, n: 2, gap: 36, w: 30, h: 16,
         lbl: ['ESC', 'TEST PATT'] },
-      { t: 'led', x: 499, y: 28, n: 3, gap: 10.5 },
+      { t: 'led', x: 871, y: 28, n: 3, gap: 10.5 },
       { t: 'button', x: 72, y: 68, n: 8, gap: 30, w: 24, h: 18,
         lbl: ['SRC 1', 'SRC 2', 'SRC 3', 'SRC 4', 'SRC 5', 'SRC 6', 'SRC 7', 'SRC 8'] },
-      { t: 'button', x: 322, y: 68, n: 6, gap: 30, w: 24, h: 18,
+      { t: 'button', x: 370, y: 68, n: 6, gap: 30, w: 24, h: 18,
         lbl: ['OUT 1', 'OUT 2', 'OUT 3', 'OUT 4', 'OUT 5', 'OUT 6'] },
-      { t: 'button', x: 512, y: 68, w: 24, h: 18, lbl: 'FRZ' },
-      { t: 'button', x: 551, y: 68, w: 30, h: 18, lbl: 'TAKE' },
-      { t: 'led', x: 587, y: 68, n: 16, gap: 9 },
+      { t: 'button', x: 608, y: 68, w: 24, h: 18, lbl: 'FRZ' },
+      { t: 'button', x: 699, y: 68, w: 30, h: 18, lbl: 'TAKE' },
+      { t: 'led', x: 782.5, y: 68, n: 16, gap: 9 },
     ] },
     rear: { auto: [
       { t: 'iec_in', n: 1, lbl: 'AC' },
