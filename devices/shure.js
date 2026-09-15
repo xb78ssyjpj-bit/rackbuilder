@@ -517,6 +517,66 @@ export const SHURE = [
     rear: { auto: [{ t: 'rj45', n: 1 }, { t: 'iec_in', n: 1 }] } },
 
   // Legacy analog Axient distro — still in plenty of touring racks.
+  // Axient Spectrum Manager. Faces hand-placed from the numbered front/rear
+  // elevations in the Shure user guide (pp. 4-5) — research pass, unverified.
+  // Front: two displays each with a 4-button navigate column, enter/exit,
+  // control wheel, monitor section (clip/on LEDs, level knob, 1/4" jack),
+  // power switch at far right. Rear: rocker mains switch, IEC in + cascade
+  // out, 2x RJ45 (PoE class 1) with speed/link LEDs, then antenna in A/B over
+  // cascade out A/B on the right. The fan is on the side, so not drawn.
+  { id: 'shure-axt600', brand: 'Shure', model: 'AXT600', category: 'wireless',
+    ru: 1, depth: 366, weight: 5.5, approx: true,
+    bands: ['470 - 952 MHz'],
+    src: 'https://pubs.shure.com/view/guide/AXT600/en-US.pdf',
+    front: { elements: [
+      { t: 'display', x: 322, y: 52, w: 141, h: 53 },
+      { t: 'button', x: 413, y: 31, w: 16, h: 8 },
+      { t: 'button', x: 413, y: 44, w: 16, h: 8 },
+      { t: 'button', x: 413, y: 59, w: 16, h: 8 },
+      { t: 'button', x: 413, y: 74, w: 16, h: 8 },
+      { t: 'display', x: 609, y: 52, w: 141, h: 53 },
+      { t: 'button', x: 699, y: 31, w: 16, h: 8 },
+      { t: 'button', x: 699, y: 44, w: 16, h: 8 },
+      { t: 'button', x: 699, y: 59, w: 16, h: 8 },
+      { t: 'button', x: 699, y: 74, w: 16, h: 8 },
+      { t: 'button', x: 733, y: 36, w: 20, h: 16 },
+      { t: 'button', x: 733, y: 67, w: 20, h: 16 },
+      { t: 'encoder', x: 772, y: 46, r: 20 },
+      { t: 'led', x: 804, y: 24 },
+      { t: 'led', x: 804, y: 44 },
+      { t: 'knob', x: 835, y: 33, r: 11 },
+      { t: 'trs', x: 835, y: 69 },
+      { t: 'button', x: 887, y: 50, w: 24, h: 50 },
+    ], labels: [
+      { text: 'SHURE', x: 96, y: 36, size: 11, ls: 1 },
+      { text: 'AXT600', x: 96, y: 58, size: 9, ls: .5 },
+      { text: 'SPECTRUM MANAGER', x: 96, y: 78, size: 6, ls: .3 },
+      { text: 'navigate', x: 413, y: 20, size: 5, anchor: 'middle' },
+      { text: 'navigate', x: 699, y: 20, size: 5, anchor: 'middle' },
+      { text: 'control', x: 772, y: 18, size: 5, anchor: 'middle' },
+      { text: 'monitor', x: 822, y: 18, size: 5, anchor: 'middle' },
+      { text: 'power', x: 887, y: 18, size: 5, anchor: 'middle' },
+    ] },
+    rear: { elements: [
+      { t: 'button', x: 58, y: 50, w: 40, h: 54 },
+      { t: 'iec_in', x: 125, y: 49 },
+      { t: 'iec_thru', x: 218, y: 48 },
+      { t: 'led', x: 305, y: 25 },
+      { t: 'led', x: 331, y: 25 },
+      { t: 'rj45', x: 318, y: 40, lbl: 'Ethernet 1' },
+      { t: 'rj45', x: 318, y: 70, lbl: 'Ethernet 2' },
+      { t: 'bnc', x: 826, y: 28, lbl: 'Antenna In B' },
+      { t: 'bnc', x: 895, y: 28, lbl: 'Antenna In A' },
+      { t: 'led', x: 859, y: 38 },
+      { t: 'bnc', x: 826, y: 69, lbl: 'Cascade Out B' },
+      { t: 'bnc', x: 895, y: 69, lbl: 'Cascade Out A' },
+    ], labels: [
+      { text: 'SHURE  AXT600', x: 40, y: 12, size: 5, ls: .5 },
+      { text: 'PoE Class 1', x: 318, y: 92, size: 4, anchor: 'middle' },
+      { text: 'B', x: 826, y: 92, size: 5, anchor: 'middle' },
+      { text: 'A', x: 895, y: 92, size: 5, anchor: 'middle' },
+    ] } },
+
   { id: 'shure-axt630', brand: 'Shure', model: 'AXT630', category: 'wireless',
     ru: 1, depth: 366, weight: 4.6, approx: true,
     bands: ['AXT630: 470 - 698 MHz', 'AXT631: 606 - 814 MHz',

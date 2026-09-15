@@ -54,6 +54,7 @@ import { RIELLO } from './devices/riello.js';
 import { SENNHEISER } from './devices/sennheiser.js';
 import { SHURE } from './devices/shure.js';
 import { SONNET } from './devices/sonnet.js';
+import { TP_LINK } from './devices/tp-link.js';
 import { UBIQUITI } from './devices/ubiquiti.js';
 import { WAVES } from './devices/waves.js';
 import { YAMAHA } from './devices/yamaha.js';
@@ -93,6 +94,7 @@ export const SEED_DEVICES = [
   ...SENNHEISER,
   ...SHURE,
   ...SONNET,
+  ...TP_LINK,
   ...UBIQUITI,
   ...WAVES,
   ...YAMAHA,
